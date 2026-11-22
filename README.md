@@ -6,6 +6,8 @@ Deathmatch CQB retro en un laberinto, inspirado en Bomberman y Pac-Man.
 
 - Un jugador contra 4 IAs con estilos distintos (asaltante, flanqueador, campero, recolector).
 - En línea sin cuentas: crea una sala, comparte el enlace o el código de 4 letras y juega con hasta 5 combatientes (humanos + IAs).
+- 7 escenarios: Búnker, Jungla, Ladrillo, Arcade (con túneles laterales como Pac-Man), Volcán (con lava), Desierto y Killhouse.
+- Las cajas, arbustos, tambos y llantas se rompen y a veces sueltan armas, granadas o botiquines.
 - Funciona en computadora (teclado) y en celular (controles táctiles).
 
 ## Controles
