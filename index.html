@@ -15,6 +15,8 @@ body.touch{overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tou
 body.touch .hint{display:none}
 body.touch .touch-ui{display:grid}
 body.touch canvas{touch-action:none}
+html,body.touch,body.touch #game{touch-action:manipulation}
+#pad,#pad *,#btns,#btns *{touch-action:none;-webkit-tap-highlight-color:transparent}
 #game{display:flex;flex-direction:column;align-items:center;gap:10px}
 body.touch #game{display:grid;width:100%;height:100%;box-sizing:border-box;padding:10px;gap:12px;
  grid-template-areas:"screen screen" "pad btns";grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;align-items:center}
@@ -1488,6 +1490,19 @@ function padUpdate(x,y){
  const k=d?Math.min(1,d/MAXR)*48:0;
  knob.style.transform=`translate(${d?dx/d*k:0}px,${d?dy/d*k:0}px)`;
 }
+// iPhone/iPad: Safari ignora "user-scalable=no", así que bloqueamos aquí el zoom por doble toque y por pellizco.
+pad.addEventListener('touchstart',ev=>ev.preventDefault(),{passive:false});
+pad.addEventListener('touchend',ev=>ev.preventDefault(),{passive:false});
+$('btns').addEventListener('touchend',ev=>ev.preventDefault(),{passive:false});
+let lastTouchEnd=0;
+document.addEventListener('touchend',ev=>{
+ const now=Date.now(),t=ev.target;
+ const typing=t&&t.closest&&t.closest('input,textarea,select,details,button,a,.ovl'); // menús y botones funcionan normal
+ if(!typing&&now-lastTouchEnd<350)ev.preventDefault(); // segundo toque rápido = no zoom
+ lastTouchEnd=now;
+},{passive:false});
+for(const n of ['gesturestart','gesturechange','gestureend'])document.addEventListener(n,ev=>ev.preventDefault(),{passive:false});
+document.addEventListener('dblclick',ev=>{if(isTouch)ev.preventDefault();},{passive:false});
 pad.addEventListener('pointerdown',ev=>{
  ev.preventDefault();try{pad.setPointerCapture(ev.pointerId);}catch(e){}
  padId=ev.pointerId;pad.classList.add('active');
