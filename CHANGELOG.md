@@ -10,6 +10,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.10.2] - 2026-11-22
+
+### Corregido
+- Instrucciones para instalar en iPhone más claras: en iOS 26 el botón Compartir está dentro del menú ⋯ de Safari.
+
 ## [0.10.1] - 2026-11-22
 
 ### Corregido

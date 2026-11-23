@@ -17,7 +17,7 @@ function installHelp(){
  const standalone=(window.matchMedia&&(matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches))||navigator.standalone;
  if(standalone)return 'Ya lo tienes instalado ✓';
  if(!/github\.io$|^127\.0\.0\.1$|^localhost$/.test(location.hostname))return 'Para instalarlo, abre chuckgarcia.github.io/pixel-breach';
- if(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1))return 'En iPhone/iPad: toca Compartir (□↑) y luego "Agregar a inicio"';
+ if(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1))return 'En Safari: toca ⋯ (junto a la dirección, abajo) → Compartir → "Agregar a inicio". En iOS anteriores, el botón Compartir (□↑) está en la barra de abajo. Si no ves la barra, toca la orilla de abajo de la pantalla.';
  if(/Android/.test(ua))return 'Abre el menú ⋮ del navegador y elige "Instalar app" o "Agregar a pantalla principal"';
  if(/Firefox/.test(ua))return 'Firefox no permite instalarlo; usa Chrome o Edge';
  if(/Safari/.test(ua)&&!/Chrome|Edg/.test(ua))return 'En Safari: menú Archivo → "Agregar al Dock"';

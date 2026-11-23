@@ -2,7 +2,7 @@
 // Pixel Breach — Versión, constantes, escenarios, armas, roles y estado global
 // Versionado semántico vMAYOR.MENOR.PARCHE (ver CHANGELOG.md).
 // Cambios en el protocolo en línea suben MENOR: anfitrión e invitado deben coincidir en MAYOR.MENOR.
-const VERSION='0.10.1';
+const VERSION='0.10.2';
 const cv=document.getElementById('c'), ctx=cv.getContext('2d');
 const T=32,COLS=21,ROWS=15,HUD=44,W=COLS*T,H=ROWS*T;
 const FLOOR=0,WALL=1,CRATE=2,LAVA=3; // LAVA: no se puede pisar, pero las balas, granadas y la vista pasan por encima
