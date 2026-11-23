@@ -49,7 +49,10 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 #menu .lbl{color:#facc15;font-weight:bold;min-width:6.5em;text-align:right}
 #pname{font:bold 1.1em "Courier New",monospace;width:11ch;padding:5px 8px;background:#0f131b;color:#e2e8f0;border:2px solid #334155;border-radius:4px;text-transform:uppercase}
 #pname:focus{outline:none;border-color:#4ade80}
-#swatches{display:flex;gap:6px}
+#swatches,#lswatches{display:flex;flex-wrap:wrap;gap:5px;max-width:198px;justify-content:center}
+#lswatches button{width:28px;height:28px;border-radius:4px;border:3px solid #0f131b;cursor:pointer;padding:0}
+#lswatches button.sel{border-color:#fff;box-shadow:0 0 0 2px #4ade80}
+#lswatches button:disabled{opacity:.25;cursor:not-allowed}
 #swatches button{width:28px;height:28px;border-radius:4px;border:3px solid #0f131b;cursor:pointer;padding:0}
 #swatches button.sel{border-color:#fff;box-shadow:0 0 0 2px #4ade80}
 .mbtn{font:bold 1em "Courier New",monospace;background:#151a24;color:#e2e8f0;border:2px solid #334155;border-radius:4px;padding:4px 10px;cursor:pointer}
@@ -68,6 +71,8 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 #lplayers i{width:12px;height:12px;display:inline-block}
 #lplayers small{color:#64748b;font-weight:normal}
 #lwait{color:#94a3b8}
+#lsummary{color:#cbd5e1;font-weight:bold;text-align:center}
+@media (max-height:480px){#llink{display:none}}
 #lobby .note{color:#64748b;font-size:.85em;text-align:center}
 #lobby .lbl{color:#facc15;font-weight:bold}
 #aiCount,#ldName{min-width:7ch;text-align:center;color:#e2e8f0}
@@ -82,7 +87,15 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 #menu>:last-child,#lobby>:last-child{margin-bottom:auto}
 #lobby .lbl{margin-right:.4em}
 @media (max-height:480px){#lobby .note{display:none}#lobby{gap:4px}#lcode{font-size:30px}}
-#pv{width:2.6em;height:3.2em;image-rendering:pixelated;background:#0f131b;border:2px solid #334155;border-radius:4px;margin-left:4px}
+#menu .invonly{display:none}
+#menu.invite>:not(.inv){display:none}
+#menu.invite .invonly{display:block}
+#menu.invite{justify-content:center}
+#menu.invite>*{margin-top:0;margin-bottom:0}
+#menu.invite #netMsg{order:-1;font-size:1.05em}
+#menu.invite h1{order:-3}#menu.invite .sub{order:-2}
+.linkbtn{background:none;border:none;color:#94a3b8;text-decoration:underline;font-size:.9em}
+#lpv,#pv{width:2.6em;height:3.2em;image-rendering:pixelated;background:#0f131b;border:2px solid #334155;border-radius:4px;margin-left:4px}
 .tn{min-width:9ch;text-align:center;color:#e2e8f0}
 #wrap::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px)}
 .hint{font-size:12px;opacity:.6;line-height:1.4;text-align:center;padding:0 8px}
@@ -92,14 +105,16 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 <div id="game">
 <div id="wrap"><canvas id="c" width="672" height="524" tabindex="0"></canvas>
  <div id="menu" class="ovl">
-  <h1>PIXEL BREACH</h1><div class="sub">DEATHMATCH CQB</div>
-  <div class="row"><span class="lbl">NOMBRE</span><input id="pname" maxlength="10" autocomplete="off" spellcheck="false" placeholder="JUGADOR"></div>
+  <h1 class="inv">PIXEL BREACH</h1><div class="sub inv">DEATHMATCH CQB</div>
+  <div class="row inv"><span class="lbl">NOMBRE</span><input id="pname" maxlength="10" autocomplete="off" spellcheck="false" placeholder="JUGADOR"></div>
+  <button class="mbtn big invonly inv" id="joinInvite">UNIRSE</button>
+  <button class="mbtn invonly inv linkbtn" id="inviteCancel">ir al menú principal</button>
   <div class="row"><span class="lbl">COLOR</span><div id="swatches"></div><canvas id="pv" width="52" height="64" aria-label="Vista previa de tu soldado"></canvas></div>
   <div class="row"><span class="lbl">DIFICULTAD</span><button class="mbtn" id="dprev" aria-label="Menos difícil">◀</button><b id="dname"></b><button class="mbtn" id="dnext" aria-label="Más difícil">▶</button></div>
   <div class="row"><span class="lbl">ESCENARIO</span><button class="mbtn" id="tprev" aria-label="Escenario anterior">◀</button><b id="tname" class="tn"></b><button class="mbtn" id="tnext" aria-label="Escenario siguiente">▶</button></div>
   <button class="mbtn big" id="playAI">JUGAR CONTRA IAs</button>
   <div class="row"><button class="mbtn" id="mkRoom">CREAR SALA</button><span class="or">o</span><input id="jcode" maxlength="4" autocomplete="off" spellcheck="false" placeholder="CÓDIGO"><button class="mbtn" id="joinBtn">UNIRSE</button></div>
-  <div id="netMsg"></div>
+  <div id="netMsg" class="inv"></div>
   <details><summary>¿Cómo se juega?</summary><div id="howto"></div></details>
  </div>
  <div id="lobby" class="ovl">
@@ -107,10 +122,12 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
   <div id="lcode"></div>
   <div class="row"><input id="llink" readonly><button class="mbtn" id="lcopy">COPIAR ENLACE</button></div>
   <div id="lplayers"></div>
-  <div class="row" id="laiRow"><span class="lbl">IAs</span><button class="mbtn hostonly" id="aiMinus">◀</button><b id="aiCount"></b><button class="mbtn hostonly" id="aiPlus">▶</button></div>
-  <div class="row"><span class="lbl">ESCENARIO</span><button class="mbtn hostonly" id="ltPrev">◀</button><b id="ltName" class="tn"></b><button class="mbtn hostonly" id="ltNext">▶</button></div>
-  <div class="row"><span class="lbl">NIEBLA</span><button class="mbtn hostonly" id="lfPrev">◀</button><b id="lfName" class="tn"></b><button class="mbtn hostonly" id="lfNext">▶</button></div>
-  <div class="row"><span class="lbl">DIFICULTAD</span><button class="mbtn hostonly" id="ldPrev">◀</button><b id="ldName"></b><button class="mbtn hostonly" id="ldNext">▶</button></div>
+  <div class="row" style="flex-wrap:nowrap"><span class="lbl">TU COLOR</span><div id="lswatches"></div><canvas id="lpv" width="52" height="64" aria-label="Vista previa de tu soldado"></canvas></div>
+  <div id="lsummary"></div>
+  <div class="row hostrow" id="laiRow"><span class="lbl">IAs</span><button class="mbtn hostonly" id="aiMinus">◀</button><b id="aiCount"></b><button class="mbtn hostonly" id="aiPlus">▶</button></div>
+  <div class="row hostrow"><span class="lbl">ESCENARIO</span><button class="mbtn hostonly" id="ltPrev">◀</button><b id="ltName" class="tn"></b><button class="mbtn hostonly" id="ltNext">▶</button></div>
+  <div class="row hostrow"><span class="lbl">NIEBLA</span><button class="mbtn hostonly" id="lfPrev">◀</button><b id="lfName" class="tn"></b><button class="mbtn hostonly" id="lfNext">▶</button></div>
+  <div class="row hostrow"><span class="lbl">DIFICULTAD</span><button class="mbtn hostonly" id="ldPrev">◀</button><b id="ldName"></b><button class="mbtn hostonly" id="ldNext">▶</button></div>
   <div id="lwait">Esperando a que el anfitrión empiece…</div>
   <div class="row"><button class="mbtn big hostonly" id="lstart">EMPEZAR</button><button class="mbtn" id="lleave">SALIR</button></div>
   <div class="note">Máximo 5 combatientes por partida (humanos + IAs). Comparte el enlace o el código.</div>
@@ -177,7 +194,8 @@ const PERS=[
  {key:'recolector',name:'RECOLECTOR',color:'#fb923c',react:.30,dodge:.55,speed:3.75},
 ];
 // colores para el jugador: ninguno coincide con los de las IAs (rojo, rosa, cian, naranja)
-const PALETTE=[['VERDE','#4ade80'],['AMARILLO','#facc15'],['MORADO','#a78bfa'],['AZUL','#3b82f6'],['BLANCO','#f1f5f9'],['CAFÉ','#b07d4a']];
+const PALETTE=[['VERDE','#4ade80'],['AMARILLO','#facc15'],['MORADO','#a78bfa'],['AZUL','#3b82f6'],['BLANCO','#f1f5f9'],['CAFÉ','#b07d4a'],
+ ['LIMA','#bef264'],['ÍNDIGO','#6366f1'],['GRIS','#9ca3af'],['MAGENTA','#c026d3'],['VINO','#9f1239'],['TURQUESA','#0d9488']];
 const AI_NAMES=['RON','ICE','FRANK','VIPER','DOC','MAX','TANK','RAZOR','GHOST','BLAZE','ZED','HAWK','JACK','NOVA','REX','DUKE','SARGE','KILO'];
 let playerName='',playerColor=PALETTE[0][1];
 try{const n=localStorage.getItem('pb_name'),c=localStorage.getItem('pb_color');if(n)playerName=n.slice(0,10);if(PALETTE.some(p=>p[1]===c))playerColor=c;}catch(e){}
@@ -1052,7 +1070,7 @@ function render(){
  if(flashA>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(1,flashA)})`;ctx.fillRect(0,HUD,W,H);}
  syncOverlays();
  if(state==='intro'){drawIntro();return;}
- if(state==='title'||state==='lobby'){drawTitle();if(state==='title')drawPreview();return;}
+ if(state==='title'||state==='lobby'){drawTitle();if(state==='title')drawPreview();else if(NET&&lpvx)drawPreview(lpvx,myLobbyColor());return;}
  drawHUD();drawFeed();
  const p=me();
  if(state==='over'){
@@ -1108,7 +1126,7 @@ function press(c,repeat){
 }
 function release(c){keys[c]=false;dirStack=dirStack.filter(k=>k!==c);if(NET&&NET.role==='client')sendInput();}
 addEventListener('keydown',ev=>{
- if(ev.target&&ev.target.tagName==='INPUT'){if(ev.code==='Enter'){ev.target.blur();if(ev.target.id==='jcode')joinRoom(ev.target.value);else{press('Enter');release('Enter');}}return;}
+ if(ev.target&&ev.target.tagName==='INPUT'){if(ev.code==='Enter'){ev.target.blur();if(ev.target.id==='jcode')joinRoom(ev.target.value);else if(inviteCode&&ev.target.id==='pname')joinRoom(inviteCode);else{press('Enter');release('Enter');}}return;}
  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Tab'].includes(ev.code))ev.preventDefault();
  press(ev.code,ev.repeat);
 });
@@ -1149,12 +1167,14 @@ function stepTheme(d){const i=THEME_OPTS.indexOf(themeChoice);themeChoice=THEME_
 $('tprev').addEventListener('click',()=>stepTheme(-1));$('tnext').addEventListener('click',()=>stepTheme(1));
 $('tname').textContent=themeLabel(themeChoice);
 // vista previa del soldado con el color elegido: camina y gira
-const pv=$('pv'),pvx=pv.getContext('2d');
-function drawPreview(){
+const pv=$('pv');window.pvxMain=pv.getContext('2d');
+const lpvx=$('lpv').getContext('2d');
+function drawPreview(pvx,color){
+ pvx=pvx||window.pvxMain;color=color||playerColor;
  const faces=['down','right','up','left'],face=faces[Math.floor(clock/1.1)%4],frame=Math.floor(clock*6)%2?1:2;
  pvx.imageSmoothingEnabled=false;pvx.clearRect(0,0,52,64);
  pvx.fillStyle='rgba(0,0,0,.35)';pvx.fillRect(8,56,36,6);
- const spr=sprite(playerColor,face==='left'?'right':face,frame,false);
+ const spr=sprite(color,face==='left'?'right':face,frame,false);
  const gun=()=>{const [gx,gy,w,h]=GUN_RECT[face];pvx.fillStyle='#05070b';pvx.fillRect(2+gx*4-2,2+gy*4-2,w*4+4,h*4+4);pvx.fillStyle='#1f2937';pvx.fillRect(2+gx*4,2+gy*4,w*4,h*4);};
  if(face==='up')gun();
  if(face==='left'){pvx.save();pvx.translate(52,0);pvx.scale(-1,1);pvx.drawImage(spr,0,0,52,64);pvx.restore();}else pvx.drawImage(spr,0,0,52,64);
@@ -1225,7 +1245,7 @@ function lobbyPlayers(){
 }
 function clampAIs(){const n=NET.role==='host'?NET.clients.size+1:(NET.lobby?NET.lobby.players.length:1);NET.ais=Math.max(n<2?1:0,Math.min(MAX_PLAYERS-n,NET.ais));}
 function hostBroadcast(msg){for(const c of NET.clients.values())if(c.conn.open)try{c.conn.send(msg);}catch(e){}}
-function hostLobbyUpdate(){clampAIs();hostBroadcast({t:'lobby',players:lobbyPlayers().map(p=>({name:p.name,color:p.color,host:!!p.host})),ais:NET.ais,diff,theme:themeChoice,fog:NET.fog,code:NET.code});if(state==='lobby')renderLobby();}
+function hostLobbyUpdate(){clampAIs();hostBroadcast({t:'lobby',players:lobbyPlayers().map(p=>({key:p.key,name:p.name,color:p.color,host:!!p.host})),ais:NET.ais,diff,theme:themeChoice,fog:NET.fog,code:NET.code});if(state==='lobby')renderLobby();}
 function hostAccept(conn){
  conn.on('data',d=>{
   if(!d||typeof d!=='object')return;
@@ -1240,6 +1260,9 @@ function hostAccept(conn){
    conn.send({t:'welcome',color,code:NET.code});
    if(state==='over')state='lobby';
    hostLobbyUpdate();showToast(name+' ENTRÓ A LA SALA',color);snd('pick',0,0);
+  }else if(d.t==='color'&&c&&state!=='play'){ // un invitado cambia su color en la sala
+   const taken=new Set([playerColor,...[...NET.clients.values()].filter(x=>x!==c).map(x=>x.color)]);
+   if(PALETTE.some(p=>p[1]===d.c)&&!taken.has(d.c)){c.color=d.c;hostLobbyUpdate();}else hostLobbyUpdate();
   }else if(d.t==='i'&&c){
    const I={d:Number.isInteger(d.d)?d.d:-1,f:!!d.f,fc:d.fc|0,gc:d.gc|0,qc:d.qc|0};c.input=I;if(c.ent)c.ent.input=I;
   }
@@ -1301,11 +1324,12 @@ async function joinRoom(code){
 function clientOnData(d){
  if(!d||typeof d!=='object')return;
  switch(d.t){
-  case 'welcome':NET.welcomed=true;if(PALETTE.some(p=>p[1]===d.color))NET.color=d.color;state='lobby';netMsg('');break;
+  case 'welcome':NET.welcomed=true;if(inviteCode)clearInvite();if(PALETTE.some(p=>p[1]===d.color))NET.color=d.color;state='lobby';netMsg('');break;
   case 'full':netLeave('La sala está llena (máximo '+MAX_PLAYERS+' combatientes).');break;
   case 'busy':netLeave('La partida ya empezó. Intenta de nuevo cuando termine.');break;
   case 'closed':netLeave('El anfitrión cerró la sala.');break;
-  case 'lobby':NET.lobby=d;if(state!=='title')state='lobby';if(Number.isInteger(d.diff)&&DIFF[d.diff])diff=d.diff;NET.fog=d.fog!==false;if(THEME_OPTS.includes(d.theme))themeChoice=d.theme;$('tname').textContent=themeLabel(themeChoice);renderLobby();break;
+  case 'lobby':NET.lobby=d;if(state!=='title')state='lobby';if(Number.isInteger(d.diff)&&DIFF[d.diff])diff=d.diff;{const mine=Array.isArray(d.players)&&d.players.find(p=>p.key===NET.peer.id);if(mine&&PALETTE.some(p=>p[1]===mine.color)){NET.color=mine.color;if(playerColor!==mine.color){playerColor=mine.color;save();buildSwatches();}}}
+  NET.fog=d.fog!==false;if(THEME_OPTS.includes(d.theme))themeChoice=d.theme;$('tname').textContent=themeLabel(themeChoice);renderLobby();break;
   case 'start':clientStart(d);break;
   case 's':if(state==='play'||state==='over')applySnapshot(d);break;
  }
@@ -1364,6 +1388,15 @@ function netTick(dt){
  }
 }
 // --- pantalla de sala ---
+function myLobbyColor(){
+ if(!NET)return playerColor;if(NET.role==='host')return playerColor;
+ const me=NET.lobby&&NET.lobby.players.find(p=>p.key===NET.peer.id);return me?me.color:(NET.color||playerColor);
+}
+function pickLobbyColor(c){
+ if(!NET||state!=='lobby')return;
+ playerColor=c;save();buildSwatches();
+ if(NET.role==='host')hostLobbyUpdate();else{try{NET.conn.send({t:'color',c});}catch(e){}}
+}
 function renderLobby(){
  if(!NET)return;
  const host=NET.role==='host';
@@ -1378,7 +1411,16 @@ function renderLobby(){
  for(let i=0;i<ais;i++){const r=document.createElement('div');r.innerHTML='<i style="background:#475569"></i><span style="color:#64748b">IA</span>';box.appendChild(r);}
  $('aiCount').textContent=String(ais);$('ldName').textContent=DIFF[diff].name;$('ltName').textContent=themeLabel(themeChoice);$('lfName').textContent=NET.fog!==false?'SÍ':'NO';
  document.querySelectorAll('#lobby .hostonly').forEach(b=>b.style.display=host?'':'none');
+ document.querySelectorAll('#lobby .hostrow').forEach(b=>b.style.display=host?'':'none');
  $('lwait').style.display=host?'none':'';
+ $('lsummary').style.display=host?'none':'';
+ $('lsummary').textContent=`${ais} IA${ais===1?'':'s'} · ${themeLabel(themeChoice)} · NIEBLA ${NET.fog!==false?'SÍ':'NO'} · ${DIFF[diff].name}`;
+ // colores: los que ya tomó otro jugador aparecen apagados
+ const mine=myLobbyColor(),taken=new Set(players.filter(p=>(host?p.key!=='host':p.key!==NET.peer.id)).map(p=>p.color));
+ const ls=$('lswatches');ls.textContent='';
+ for(const [n,c] of PALETTE){const b=document.createElement('button');b.style.background=c;b.title=n;b.setAttribute('aria-label',n);
+  if(c===mine)b.classList.add('sel');if(taken.has(c)){b.disabled=true;b.title=n+' (ocupado)';}
+  b.addEventListener('click',()=>pickLobbyColor(c));ls.appendChild(b);}
 }
 $('mkRoom').addEventListener('click',()=>{audio();createRoom();});
 $('joinBtn').addEventListener('click',()=>{audio();joinRoom($('jcode').value);});
@@ -1393,7 +1435,18 @@ $('lfPrev').addEventListener('click',()=>{NET.fog=!NET.fog;hostLobbyUpdate();});
 $('ldNext').addEventListener('click',()=>{diff=Math.min(4,diff+1);hostLobbyUpdate();});
 $('lcopy').addEventListener('click',()=>{const l=$('llink');try{navigator.clipboard.writeText(l.value).then(()=>{$('lcopy').textContent='¡COPIADO!';setTimeout(()=>$('lcopy').textContent='COPIAR ENLACE',1500);},()=>{l.select();});}catch(e){l.select();}});
 // enlace de invitación: pixel-breach/#K7QF
-function readInvite(){const m=location.hash.match(/^#([A-Za-z0-9]{4})$/);if(m&&!NET){$('jcode').value=m[1].toUpperCase();netMsg('Te invitaron a la sala '+m[1].toUpperCase()+': elige tu nombre y color, y presiona UNIRSE.',true);}}
+const CALLSIGNS=['HALCON','LOBO','COBRA','TITAN','RAYO','SOMBRA','PUMA','JAGUAR','CUERVO','TIGRE','BUHO','FENIX'];
+let inviteCode=null;
+function readInvite(){
+ const m=location.hash.match(/^#([A-Za-z0-9]{4})$/);if(!m||NET)return;
+ inviteCode=m[1].toUpperCase();$('jcode').value=inviteCode;
+ if(!playerName.trim()){playerName=CALLSIGNS[ri(0,CALLSIGNS.length-1)]+ri(10,99);nameEl.value=playerName;save();} // nombre sugerido, se puede cambiar
+ menuEl.classList.add('invite');$('joinInvite').textContent='UNIRSE A LA SALA '+inviteCode;
+ netMsg('Te invitaron a una partida en línea.',true);
+}
+function clearInvite(){inviteCode=null;menuEl.classList.remove('invite');try{history.replaceState(null,'',location.href.split('#')[0]);}catch(e){}}
+$('joinInvite').addEventListener('click',()=>{audio();joinRoom(inviteCode);});
+$('inviteCancel').addEventListener('click',()=>{clearInvite();netMsg('');});
 readInvite();addEventListener('hashchange',readInvite);
 addEventListener('beforeunload',()=>{if(NET&&NET.role==='host')try{hostBroadcast({t:'closed'});}catch(e){}});
 
