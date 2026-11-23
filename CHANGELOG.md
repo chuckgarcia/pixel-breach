@@ -10,6 +10,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.10.1] - 2026-11-22
+
+### Corregido
+- En Ajustes, la opción de instalar casi nunca aparecía: el botón solo salía cuando el navegador lo ofrecía. Ahora siempre hay una fila INSTALAR con el botón (si el navegador lo permite) o las instrucciones para tu dispositivo (iPhone, Android, computadora, o la dirección correcta si abriste otra versión).
+- Ícono de 192×192 para la instalación en Android.
+
 ## [0.10.0] - 2026-11-22
 
 ### Añadido

@@ -11,6 +11,18 @@ function closeSettings(){
  if(!settingsOpen)return;settingsOpen=false;$('settings').style.display='none';
  if(pausedBySettings){paused=false;pausedBySettings=false;}
 }
+// Cómo instalar según el dispositivo (el botón solo existe cuando el navegador ofrece instalar)
+function installHelp(){
+ const ua=navigator.userAgent||'';
+ const standalone=(window.matchMedia&&(matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches))||navigator.standalone;
+ if(standalone)return 'Ya lo tienes instalado ✓';
+ if(!/github\.io$|^127\.0\.0\.1$|^localhost$/.test(location.hostname))return 'Para instalarlo, abre chuckgarcia.github.io/pixel-breach';
+ if(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1))return 'En iPhone/iPad: toca Compartir (□↑) y luego "Agregar a inicio"';
+ if(/Android/.test(ua))return 'Abre el menú ⋮ del navegador y elige "Instalar app" o "Agregar a pantalla principal"';
+ if(/Firefox/.test(ua))return 'Firefox no permite instalarlo; usa Chrome o Edge';
+ if(/Safari/.test(ua)&&!/Chrome|Edg/.test(ua))return 'En Safari: menú Archivo → "Agregar al Dock"';
+ return 'Usa el ícono de instalar en la barra de direcciones, o el menú ⋮ → "Instalar Pixel Breach"';
+}
 function syncSettingsUI(){
  const tog=(id,on)=>{const b=$(id);b.textContent=on?'SÍ':'NO';b.classList.toggle('on',!!on);};
  tog('sSfx',SETTINGS.sfx);tog('sMus',SETTINGS.music);tog('sVib',SETTINGS.vibrate);
@@ -20,7 +32,7 @@ function syncSettingsUI(){
  $('sVibRow').style.display=isTouch&&navigator.vibrate?'':'none';
  $('sFsRow').style.display=fsOK?'':'none';$('sFs').textContent=document.fullscreenElement?'SALIR':'COMPLETA';
  $('sInstall').style.display=installEvt?'':'none';
- const ios=/iPhone|iPad|iPod/.test(navigator.userAgent||'')&&!(navigator.standalone);$('sIosNote').style.display=ios?'':'none';
+ $('sInstallNote').textContent=installEvt?'':installHelp();
 }
 $('sSfx').addEventListener('click',()=>{SETTINGS.sfx=!SETTINGS.sfx;muted=!SETTINGS.sfx;audio();applyVolumes();saveSettings();syncSettingsUI();sfx('pick');});
 $('sMus').addEventListener('click',()=>{SETTINGS.music=!SETTINGS.music;audio();applyVolumes();saveSettings();syncSettingsUI();musicForState();});
@@ -37,8 +49,9 @@ $('gearMenu').addEventListener('click',()=>{audio();openSettings();});
 $('gearGame').addEventListener('click',()=>{audio();openSettings();});
 $('rotateOk').addEventListener('click',()=>document.body.classList.add('portrait-ok'));
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(settingsOpen)syncSettingsUI();});
+addEventListener('appinstalled',()=>{installEvt=null;if(settingsOpen)syncSettingsUI();showToast('PIXEL BREACH INSTALADO','#4ade80');});
 // instalable y sin internet (solo en la página publicada, no dentro de Claude)
-if('serviceWorker' in navigator&&location.protocol==='https:'&&/github\.io$/.test(location.hostname)){
+if('serviceWorker' in navigator&&(location.protocol==='https:'&&/github\.io$/.test(location.hostname)||/^(127\.0\.0\.1|localhost)$/.test(location.hostname))){
  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
 
