@@ -840,9 +840,11 @@ const DRAW={
    const h=hsh(x,y);rect('#5a4636',px+1,py+1,T-2,T-2);rect('#7a604a',px+3,py+2,T-10,8);rect('#7a604a',px+3,py+10,8,10);
    rect('#3a2c22',px+T-9,py+8,8,T-10);rect('#3a2c22',px+6,py+T-7,T-8,6);rect('#8d7158',px+5+(h%8),py+4,4,3);
    rect(((x+y)&1)?'#231816':'#271a17',px,py,3,3);rect(((x+y)&1)?'#231816':'#271a17',px+T-3,py+T-3,3,3);},
-  crate:(px,py,x,y,hp)=>{rect('#2a1c14',px+2,py+2,T-4,T-4);rect('#3f2a1d',px+5,py+5,T-10,T-10);
-   const w=.5+.5*Math.sin(clock*4+x+y);ctx.fillStyle=`rgba(249,115,22,${.4+w*.5})`;ctx.fillRect(px+8,py+15,16,2);ctx.fillRect(px+15,py+8,2,16);
-   crackMarks(px,py,hp,'#f97316');},
+  crate:(px,py,x,y,hp)=>{ // caja de madera tradicional, chamuscada en las orillas
+   woodCrate(px,py,hp);
+   ctx.fillStyle='rgba(20,10,5,.45)';ctx.fillRect(px+2,py+2,T-4,3);ctx.fillRect(px+2,py+T-5,T-4,3);ctx.fillRect(px+2,py+2,3,T-4);ctx.fillRect(px+T-5,py+2,3,T-4);
+   const w=.5+.5*Math.sin(clock*4+x*2+y);ctx.fillStyle=`rgba(251,146,60,${.45+w*.5})`;
+   ctx.fillRect(px+4,py+T-5,3,2);ctx.fillRect(px+T-9,py+T-5,4,2);ctx.fillRect(px+T-5,py+9,2,3);},
  },
 };
 function drawPickups(){
