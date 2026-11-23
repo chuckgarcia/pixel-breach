@@ -32,15 +32,49 @@ async function createRoom(){
  try{await loadPeer();}catch(e){netMsg('No se pudo cargar el modo en línea. Revisa tu conexión.');return;}
  const attempt=(tries)=>{
   const code=genCode(),peer=new Peer(peerIdFor(code),peerOpts());let opened=false;
-  peer.on('open',()=>{opened=true;NET={role:'host',peer,code,clients:new Map(),ais:Math.max(1,MAX_PLAYERS-2),sendT:0,fog:true};myId=0;state='lobby';netMsg('');renderLobby();});
+  peer.on('open',()=>{
+   if(opened){if(NET&&NET.peer===peer)setSig('ok');return;} // reconexión: la sala y sus jugadores se conservan
+   opened=true;NET={role:'host',peer,code,clients:new Map(),ais:Math.max(1,MAX_PLAYERS-2),sendT:0,fog:true,sig:'ok',rcTries:0};myId=0;state='lobby';netMsg('');renderLobby();
+  });
   peer.on('connection',conn=>hostAccept(conn));
-  peer.on('disconnected',()=>{try{peer.reconnect();}catch(e){}});
+  peer.on('disconnected',()=>{if(NET&&NET.peer===peer&&!NET.forcing){setSig('reconnecting');hostReconnect(800);}});
   peer.on('error',err=>{
    if(!opened&&err.type==='unavailable-id'&&tries<4){try{peer.destroy();}catch(e){}attempt(tries+1);return;}
-   if(!opened){try{peer.destroy();}catch(e){}netMsg('No se pudo crear la sala ('+err.type+').');}
+   if(!opened){try{peer.destroy();}catch(e){}netMsg('No se pudo crear la sala ('+err.type+').');return;}
+   if(NET&&NET.peer===peer&&err.type!=='peer-unavailable'){setSig('reconnecting');hostReconnect(err.type==='unavailable-id'?3000:1500);}
   });
  };attempt(0);
 }
+// ---- la sala sobrevive a cambiar de app ----
+// En el celular, al ir a WhatsApp u otra app, el sistema congela la página y el servidor de salas
+// suelta la conexión sin que el juego se entere. Al volver, se vuelve a registrar la sala con el
+// mismo código; los jugadores que ya estaban siguen dentro.
+function setSig(s){if(!NET||NET.role!=='host')return;const was=NET.sig;NET.sig=s;if(s==='ok'){NET.rcTries=0;if(was==='reconnecting'&&state==='play')showToast('SALA RECUPERADA','#4ade80');}if(state==='lobby')renderLobby();}
+function hostReconnect(delay,force){
+ if(!NET||NET.role!=='host')return;
+ clearTimeout(NET.rcT);
+ NET.rcT=setTimeout(()=>{
+  if(!NET||NET.role!=='host')return;const p=NET.peer;if(p.destroyed)return;
+  NET.rcTries++;
+  if(p.disconnected){try{p.reconnect();}catch(e){}}
+  else if(force){NET.forcing=true;try{p.disconnect();}catch(e){}setTimeout(()=>{if(NET)NET.forcing=false;try{p.reconnect();}catch(e){}},250);}
+  // si no quedó en línea, reintentar (cada vez más espaciado, máximo cada 8 s)
+  setTimeout(()=>{if(NET&&NET.role==='host'&&NET.peer===p&&(p.disconnected||NET.sig!=='ok'))hostReconnect(Math.min(8000,1000*NET.rcTries));},4000);
+ },delay||0);
+}
+function hostRefresh(){ // al volver a la app: renovar la conexión con el servidor de salas aunque parezca viva
+ if(!NET||NET.role!=='host')return;setSig('reconnecting');hostReconnect(0,true);
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)hostRefresh();});
+addEventListener('pageshow',e=>{if(e.persisted)hostRefresh();});
+addEventListener('online',hostRefresh);
+setInterval(()=>{if(NET&&NET.role==='host'&&NET.peer.disconnected&&!NET.peer.destroyed)hostReconnect(0);},8000);
+function shareLink(){
+ const url=$('llink').value,text='¡Únete a mi partida de Pixel Breach! Sala '+NET.code;
+ if(navigator.share){navigator.share({title:'Pixel Breach',text,url}).catch(()=>{});return;}
+ copyLink();
+}
+function copyLink(){const l=$('llink');try{navigator.clipboard.writeText(l.value).then(()=>{$('lcopy').textContent='¡COPIADO!';setTimeout(()=>$('lcopy').textContent='COPIAR',1500);},()=>{l.select();});}catch(e){l.select();}}
 function lobbyPlayers(){
  const L=[{key:'host',name:displayName(),color:playerColor,host:true}];
  for(const [k,c] of NET.clients)L.push({key:k,name:c.name,color:c.color});
@@ -246,6 +280,8 @@ function renderLobby(){
  if(host){players=lobbyPlayers();clampAIs();ais=NET.ais;}
  else{const L=NET.lobby;players=L?L.players:[];ais=L?L.ais:0;}
  $('lcode').textContent=NET.code;$('llink').value=linkFor(NET.code);
+ {const st=$('lstatus');st.style.display=host?'':'none';const ok=NET.sig!=='reconnecting';st.className=ok?'ok':'rc';st.textContent=ok?'● SALA ACTIVA: ya pueden unirse':'● RECONECTANDO LA SALA…';}
+ $('lshare').style.display=navigator.share?'':'none';
  const box=$('lplayers');box.textContent='';
  players.forEach(p=>{const r=document.createElement('div');const i=document.createElement('i');i.style.background=/^#[0-9a-f]{6}$/i.test(p.color)?p.color:'#94a3b8';
   const n=document.createElement('span');n.textContent=cleanName(p.name);const sm=document.createElement('small');sm.textContent=p.host?'anfitrión':'';
@@ -277,7 +313,8 @@ $('ltPrev').addEventListener('click',()=>{stepTheme(-1);hostLobbyUpdate();});
 $('lpPrev').addEventListener('click',()=>{stepPreset(-1);hostLobbyUpdate();});$('lpNext').addEventListener('click',()=>{stepPreset(1);hostLobbyUpdate();});
 $('lfPrev').addEventListener('click',()=>{NET.fog=!NET.fog;hostLobbyUpdate();});$('lfNext').addEventListener('click',()=>{NET.fog=!NET.fog;hostLobbyUpdate();});$('ltNext').addEventListener('click',()=>{stepTheme(1);hostLobbyUpdate();});
 $('ldNext').addEventListener('click',()=>{diff=Math.min(4,diff+1);hostLobbyUpdate();});
-$('lcopy').addEventListener('click',()=>{const l=$('llink');try{navigator.clipboard.writeText(l.value).then(()=>{$('lcopy').textContent='¡COPIADO!';setTimeout(()=>$('lcopy').textContent='COPIAR ENLACE',1500);},()=>{l.select();});}catch(e){l.select();}});
+$('lcopy').addEventListener('click',copyLink);
+$('lshare').addEventListener('click',shareLink);
 // enlace de invitación: pixel-breach/#K7QF
 const CALLSIGNS=['HALCON','LOBO','COBRA','TITAN','RAYO','SOMBRA','PUMA','JAGUAR','CUERVO','TIGRE','BUHO','FENIX'];
 let inviteCode=null;

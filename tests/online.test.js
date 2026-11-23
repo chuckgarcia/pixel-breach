@@ -57,10 +57,27 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       await A.evaluate("hostBroadcast=window._hb");await B.waitForFunction("NET.hostQuiet<1",null,{timeout:4000});});
     await t('versión incompatible muestra cómo actualizar',async()=>{
       await A.evaluate("sameMinor=()=>false;hostToLobby()");const D=await page('versión vieja');await D.goto(URL+'#'+code);await D.waitForTimeout(300);await D.click('#joinInvite');
-      await D.waitForFunction("!NET",null,{timeout:12000});assert.ok((await D.innerText('#netMsg')).includes('Recarga la página'));assert.ok(await D.isVisible('#netMsg'));});
+      await D.waitForFunction("document.getElementById('netMsg').textContent.includes('Recarga')&&!NET",null,{timeout:12000});assert.ok((await D.innerText('#netMsg')).includes('Recarga la página'));assert.ok(await D.isVisible('#netMsg'));});
+    await t('el anfitrión cambia de app (p. ej. a WhatsApp) y al volver la sala sigue aceptando jugadores',async()=>{
+      const H=await page('anfitrión celular');await H.goto(URL);await H.waitForTimeout(300);await H.evaluate("state==='intro'&&endIntro()");
+      await H.click('#mkRoom');await H.waitForFunction("state==='lobby'");const c2=await H.evaluate('NET.code');
+      // ya hay un invitado en la sala antes de salir
+      const G1=await page('invitado previo');await G1.goto(URL+'#'+c2);await G1.waitForTimeout(300);await G1.click('#joinInvite');await G1.waitForFunction("state==='lobby'",null,{timeout:15000});
+      // el celular suspende la página: el servidor corta la conexión sin que el juego se entere
+      await H.evaluate("(()=>{const ws=NET.peer.socket._socket;ws.onclose=null;ws.onerror=null;ws.onmessage=null;ws.close();})()");
+      await H.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))");
+      await H.waitForTimeout(1500);
+      // vuelve a la app
+      await H.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))");
+      await H.waitForTimeout(2500);
+      const G2=await page('invitado nuevo');await G2.goto(URL+'#'+c2);await G2.waitForTimeout(300);await G2.click('#joinInvite');
+      await G2.waitForFunction("state==='lobby'||!NET",null,{timeout:15000});
+      assert.strictEqual(await G2.evaluate('state'),'lobby','el invitado nuevo no pudo entrar: '+(await G2.innerText('#netMsg')));
+      assert.strictEqual(await H.evaluate('NET.clients.size'),2,'el anfitrión perdió al invitado que ya estaba');
+      await H.evaluate('netLeave()');});
     await t('sala que ya no existe muestra un aviso visible',async()=>{
       const E=await page('sala cerrada');await E.goto(URL+'#ZZZ9');await E.waitForTimeout(300);await E.click('#joinInvite');
-      await E.waitForFunction("!NET",null,{timeout:15000});const msg=await E.innerText('#netMsg');assert.ok(await E.isVisible('#netMsg'));assert.ok(msg.includes('ya no está activa'),'mensaje: '+msg);});
+      await E.waitForFunction("document.getElementById('netMsg').textContent.includes('ya no está activa')&&!NET",null,{timeout:15000});const msg=await E.innerText('#netMsg');assert.ok(await E.isVisible('#netMsg'));assert.ok(msg.includes('ya no está activa'),'mensaje: '+msg);});
     assert.deepStrictEqual(errors,[],'errores en las páginas: '+errors.join(' | '));
     console.log(`${ok} pruebas OK`);
   }catch(e){console.error('✗',e.message);if(errors.length)console.error(errors);process.exitCode=1;}

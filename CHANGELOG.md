@@ -10,6 +10,16 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.10.4] - 2026-11-23
+
+### Corregido
+- Si el anfitrión cambiaba de app en el celular (por ejemplo, a WhatsApp para mandar el enlace), al volver nadie podía unirse: decía que la sala ya no existía. Ahora, al volver, la sala se vuelve a registrar con el mismo código y conserva a los jugadores que ya estaban.
+- Al reconectarse, la sala ya no se reinicia ni pierde a sus jugadores.
+
+### Añadido
+- En la sala, el anfitrión ve si está activa ("● SALA ACTIVA") o reconectándose.
+- Botón COMPARTIR en la sala (celular): abre el menú para compartir del teléfono directamente.
+
 ## [0.10.3] - 2026-11-23
 
 ### Corregido
