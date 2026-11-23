@@ -1,0 +1,16 @@
+{
+  "name": "Pixel Breach",
+  "short_name": "Pixel Breach",
+  "description": "Deathmatch CQB retro en un laberinto. Juega solo contra IAs o en línea con amigos, sin cuentas.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b0d12",
+  "theme_color": "#0b0d12",
+  "icons": [
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

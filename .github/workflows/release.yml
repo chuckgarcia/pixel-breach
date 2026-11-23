@@ -3,7 +3,7 @@ name: Publicar versión
 on:
   push:
     branches: [main]
-    paths: [index.html, CHANGELOG.md, .github/workflows/release.yml]
+    paths: [js/data.js, CHANGELOG.md, .github/workflows/release.yml]
   workflow_dispatch:
 permissions:
   contents: write
@@ -17,7 +17,7 @@ jobs:
       - name: Leer versión
         id: v
         run: |
-          VER=$(grep -oP "const VERSION='\K[0-9]+\.[0-9]+\.[0-9]+" index.html)
+          VER=$(grep -oP "const VERSION='\K[0-9]+\.[0-9]+\.[0-9]+" js/data.js)
           echo "ver=$VER" >> "$GITHUB_OUTPUT"
           if git rev-parse "v$VER" >/dev/null 2>&1; then echo "exists=1" >> "$GITHUB_OUTPUT"; fi
       - name: Notas de la versión (sección del CHANGELOG)

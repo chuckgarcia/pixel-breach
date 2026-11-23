@@ -10,6 +10,25 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.10.0] - 2026-11-22
+
+### Añadido
+- **Ajustes** (botón ⚙ en el menú, en la sala y durante la partida; tecla O): sonido y música con volumen, vibración, niebla (solo un jugador), pantalla completa y "ver guía otra vez". Se guardan en el navegador.
+- **Música chiptune** generada en el navegador: una pista tranquila para menús y otra rápida para la partida.
+- Efectos de sonido más completos (disparos, explosiones, botín, bajas, rachas).
+- **Guía de la primera partida**: 5 avisos paso a paso; mientras dura, las IAs reaccionan más lento.
+- **Instalable en el celular** (pantalla de inicio, pantalla completa) y modo un jugador **sin internet** en la versión publicada.
+- Aviso de "gira tu teléfono" en vertical, con opción de seguir así.
+- **Rachas** anunciadas para todos: primera sangre, doble, triple, imparable, leyenda.
+- **Estadísticas** al final: precisión, arma favorita, mejor racha, granadas y botín.
+- **Tipo de partida** elegible: rápida (2 min, 5 bajas), normal (3 min, 10), larga (5 min, 20) y maratón (10 min, 30); en línea lo elige el anfitrión.
+- Créditos dentro de "¿Cómo se juega?".
+- Código dividido en partes (`css/` y `js/`), pruebas automáticas (`npm test`) y verificación en GitHub en cada cambio.
+
+### Corregido
+- En la sala, la pantalla de los invitados no se actualizaba cuando el anfitrión cambiaba opciones o entraba otro jugador (error introducido en el modo espectador).
+- En la pantalla de invitación, los avisos de conexión no se veían.
+
 ## [0.9.0] - 2026-11-22
 
 Primera versión numerada. Reúne todo el prototipo y las mejoras para estabilizar el modo en línea.
