@@ -1218,7 +1218,7 @@ function loadPeer(){
  peerLib=new Promise((ok,ko)=>{if(window.Peer)return ok();const sc=document.createElement('script');sc.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';sc.onload=()=>window.Peer?ok():ko();sc.onerror=()=>{peerLib=null;ko();};document.head.appendChild(sc);});
  return peerLib;
 }
-function netMsg(t,ok){const m=$('netMsg');if(t&&!ok&&!/github\.io|127\.0\.0\.1|localhost/.test(location.host))t+=' El modo en línea funciona en '+ONLINE_URL.replace('https://','');m.textContent=t||'';m.className=ok?'ok':'';}
+function netMsg(t,ok){const m=$('netMsg');if(t&&!ok&&!/github\.io|127\.0\.0\.1|localhost/.test(location.host))t+=' El modo en línea funciona en '+ONLINE_URL.replace('https://','');m.textContent=t||'';m.classList.toggle('ok',!!ok);} /* classList: no borrar la clase 'inv' que lo mantiene visible en la pantalla de invitación */
 function netLeave(msg){
  if(NET){try{if(NET.role==='host')for(const c of NET.clients.values())try{c.conn.send({t:'closed'});}catch(e){}}catch(e){}
   const pr=NET.peer;setTimeout(()=>{try{pr.destroy();}catch(e){}},200);}
