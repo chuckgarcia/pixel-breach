@@ -10,6 +10,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.10.3] - 2026-11-23
+
+### Corregido
+- En el celular, la vista previa del soldado en la sala se veía enorme y tapaba los controles (se perdió su tamaño en la v0.9.0). Ahora hay una prueba automática que revisa su tamaño.
+
 ## [0.10.2] - 2026-11-22
 
 ### Corregido

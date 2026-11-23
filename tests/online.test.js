@@ -23,6 +23,14 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
     await t('el invitado entra solo con su nombre desde el enlace',async()=>{
       await B.goto(URL+'#'+code);await B.waitForTimeout(300);assert.ok(await B.isVisible('#joinInvite'));
       await B.fill('#pname','LUIS');await B.click('#joinInvite');await B.waitForFunction("state==='lobby'",null,{timeout:15000});});
+    await t('en celular, la vista previa del soldado en la sala es pequeña',async()=>{
+      const M=await page('celular',{viewport:{width:844,height:390},isMobile:true,hasTouch:true});await M.goto(URL+'#'+code);await M.waitForTimeout(300);
+      await M.tap('#joinInvite');await M.waitForFunction("state==='lobby'",null,{timeout:15000});
+      for(const id of ['lpv']){const b=await M.locator('#'+id).boundingBox();assert.ok(b&&b.width<80&&b.height<100,`#${id} mide ${b&&Math.round(b.width)}x${b&&Math.round(b.height)}`);}
+      await M.evaluate('netLeave()');await M.context().close();});
+    await t('en celular, la vista previa del soldado en el menú es pequeña',async()=>{
+      const M=await page('celular menú',{viewport:{width:844,height:390},isMobile:true,hasTouch:true});await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
+      const b=await M.locator('#pv').boundingBox();assert.ok(b&&b.width<80,`#pv mide ${b&&Math.round(b.width)}`);await M.context().close();});
     await t('la sala del invitado se actualiza cuando el anfitrión cambia opciones',async()=>{
       await A.click('#lfNext');await B.waitForFunction("document.getElementById('lsummary').textContent.includes('NIEBLA NO')",null,{timeout:5000});await A.click('#lfNext');});
     await t('el invitado elige un color libre y no uno ocupado',async()=>{
@@ -52,7 +60,7 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       await D.waitForFunction("!NET",null,{timeout:12000});assert.ok((await D.innerText('#netMsg')).includes('Recarga la página'));assert.ok(await D.isVisible('#netMsg'));});
     await t('sala que ya no existe muestra un aviso visible',async()=>{
       const E=await page('sala cerrada');await E.goto(URL+'#ZZZ9');await E.waitForTimeout(300);await E.click('#joinInvite');
-      await E.waitForFunction("!NET",null,{timeout:15000});assert.ok(await E.isVisible('#netMsg'));assert.ok((await E.innerText('#netMsg')).includes('ya no está activa'));});
+      await E.waitForFunction("!NET",null,{timeout:15000});const msg=await E.innerText('#netMsg');assert.ok(await E.isVisible('#netMsg'));assert.ok(msg.includes('ya no está activa'),'mensaje: '+msg);});
     assert.deepStrictEqual(errors,[],'errores en las páginas: '+errors.join(' | '));
     console.log(`${ok} pruebas OK`);
   }catch(e){console.error('✗',e.message);if(errors.length)console.error(errors);process.exitCode=1;}

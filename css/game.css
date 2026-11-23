@@ -91,9 +91,9 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 #menu.invite #netMsg{order:-1;font-size:1.05em}
 #menu.invite h1{order:-3}#menu.invite .sub{order:-2}
 .linkbtn{background:none;border:none;color:#94a3b8;text-decoration:underline;font-size:.9em}
-#lpv,#ver{color:#475569;font-size:.8em}
+#ver{color:#475569;font-size:.8em}
 #menu.invite #ver{display:block;order:9}
-#pv{width:2.6em;height:3.2em;image-rendering:pixelated;background:#0f131b;border:2px solid #334155;border-radius:4px;margin-left:4px}
+#lpv,#pv{width:2.6em!important;height:3.2em!important;flex:none;image-rendering:pixelated;background:#0f131b;border:2px solid #334155;border-radius:4px;margin-left:4px}
 .tn{min-width:9ch;text-align:center;color:#e2e8f0}
 #settings{inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1.4vh,10px);background:#0b0d12;overflow:auto;padding:10px;box-sizing:border-box;font-size:clamp(12px,1.9vw,15px);z-index:5}
 #settings .sub{color:#facc15;font-size:1.3em;font-weight:bold}
