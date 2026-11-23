@@ -3,7 +3,8 @@ name: Publicar versión
 on:
   push:
     branches: [main]
-    paths: [index.html, CHANGELOG.md]
+    paths: [index.html, CHANGELOG.md, .github/workflows/release.yml]
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
