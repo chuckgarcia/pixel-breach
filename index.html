@@ -1302,24 +1302,35 @@ function snapshot(){
  return snap;
 }
 // --- invitado ---
+const JOIN_TIMEOUT=9000; // si en 9 s la sala no responde, se da por cerrada
+function goneMsg(code){return 'La sala '+code+' ya no está activa o no existe. Pide a quien te invitó un enlace nuevo.';}
+function setJoining(on,code){ // el botón muestra que algo está pasando y no se puede presionar dos veces
+ for(const id of ['joinInvite','joinBtn']){const b=$(id);if(!b)continue;b.disabled=on;b.style.opacity=on?.6:1;}
+ $('joinInvite').textContent=on?'CONECTANDO…':(inviteCode?'REINTENTAR':'UNIRSE');
+ $('joinBtn').textContent=on?'…':'UNIRSE';
+}
 async function joinRoom(code){
  if(NET)return;code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
  if(code.length!==4){netMsg('El código de sala tiene 4 letras o números.');return;}
- netMsg('Conectando a la sala '+code+'…',true);
- try{await loadPeer();}catch(e){netMsg('No se pudo cargar el modo en línea. Revisa tu conexión.');return;}
+ setJoining(true,code);netMsg('Buscando la sala '+code+'…',true);
+ try{await loadPeer();}catch(e){setJoining(false);netMsg('No se pudo cargar el modo en línea. Revisa tu conexión a internet.');return;}
  const peer=new Peer(undefined,peerOpts());
  NET={role:'client',peer,code,conn:null,fc:0,gc:0,qc:0,inT:0,welcomed:false,lobby:null,lastIn:''};
  const mine=NET;
- const fail=t=>{if(NET===mine)netLeave(t);};
- const timer=setTimeout(()=>{if(NET===mine&&!mine.welcomed)fail('No se pudo conectar a la sala '+code+'. Revisa el código o intenta de nuevo.');},15000);
+ const fail=t=>{clearTimeout(timer);if(NET===mine){netLeave(t);setJoining(false);}};
+ const timer=setTimeout(()=>{if(NET===mine&&!mine.welcomed)fail(goneMsg(code));},JOIN_TIMEOUT);
  peer.on('open',()=>{
   const conn=peer.connect(peerIdFor(code),{reliable:true,serialization:'json'});mine.conn=conn;
   conn.on('open',()=>conn.send({t:'hello',name:displayName(),color:playerColor,v:PROTO}));
-  conn.on('data',d=>{if(NET===mine)clientOnData(d);});
-  conn.on('close',()=>{clearTimeout(timer);fail(mine.welcomed?'Se cerró la conexión con el anfitrión.':'No se pudo entrar a la sala.');});
-  conn.on('error',()=>fail('Se perdió la conexión con el anfitrión.'));
+  conn.on('data',d=>{if(NET===mine){if(d&&d.t==='welcome'){clearTimeout(timer);setJoining(false);}clientOnData(d);}});
+  conn.on('close',()=>fail(mine.welcomed?'Se cerró la conexión con el anfitrión.':goneMsg(code)));
+  conn.on('error',()=>fail(mine.welcomed?'Se perdió la conexión con el anfitrión.':goneMsg(code)));
  });
- peer.on('error',err=>{clearTimeout(timer);fail(err.type==='peer-unavailable'?'No existe una sala con el código '+code+'.':'No se pudo conectar ('+err.type+').');});
+ peer.on('error',err=>{
+  if(err.type==='peer-unavailable')fail(goneMsg(code));
+  else if(['network','server-error','socket-error','socket-closed'].includes(err.type))fail('No se pudo conectar al servidor de salas. Revisa tu internet e intenta de nuevo.');
+  else fail('No se pudo entrar a la sala '+code+' ('+err.type+').');
+ });
 }
 function clientOnData(d){
  if(!d||typeof d!=='object')return;
