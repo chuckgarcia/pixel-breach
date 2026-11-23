@@ -1,5 +1,7 @@
 # Pixel Breach
 
+**Versión actual: v0.9.0** · [Historial de cambios](CHANGELOG.md)
+
 Deathmatch CQB retro en un laberinto, inspirado en Bomberman y Pac-Man.
 
 **Jugar:** https://chuckgarcia.github.io/pixel-breach/
@@ -28,3 +30,10 @@ Quien crea la sala es el anfitrión: su navegador simula la partida completa (IA
 El anfitrión debe mantener la pestaña del juego abierta y visible mientras juegan.
 
 Todo el juego está en un solo archivo: `index.html`.
+
+## Versiones
+
+El proyecto usa versionado semántico (**vMAYOR.MENOR.PARCHE**). La versión está en la constante `VERSION` de `index.html`
+y cada versión publicada lleva una etiqueta en git (`v0.9.0`, …). Los cambios se describen en [CHANGELOG.md](CHANGELOG.md).
+
+Para jugar en línea juntos, anfitrión e invitados deben coincidir en MAYOR.MENOR; si no, el juego avisa que hay que recargar la página.
