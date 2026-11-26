@@ -49,6 +49,13 @@ gcloud run deploy $SERVICE --source server/creds --region $REGION --quiet --allo
   --service-account "$(sa $RUN_SA)" --set-secrets TURN_SECRET=$SECRET:latest --set-env-vars TURN_HOST="$IP" \
   --memory 256Mi --max-instances 2 --min-instances 0
 URL=$(gcloud run services describe $SERVICE --region $REGION --format='value(status.url)')
+# Cada publicación guarda una imagen; se conservan solo las 2 más recientes para no salir del nivel gratuito
+cat > /tmp/pb-cleanup.json <<'J'
+[{"name":"conservar-2","action":{"type":"Keep"},"mostRecentVersions":{"keepCount":2}},
+ {"name":"borrar-viejas","action":{"type":"Delete"},"condition":{"tagState":"any","olderThan":"1d"}}]
+J
+gcloud artifacts repositories set-cleanup-policies cloud-run-source-deploy --location $REGION \
+  --policy /tmp/pb-cleanup.json --no-dry-run --quiet >/dev/null || echo "   (No se pudo poner la limpieza de imágenes)"
 
 step "Acceso de GitHub Actions (sin llaves)"
 exists gcloud iam workload-identity-pools describe github --location global || \
