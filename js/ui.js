@@ -118,9 +118,9 @@ addEventListener('contextmenu',ev=>{if(isTouch)ev.preventDefault();});
 // ---- fondo ambiental (computadora): una copia diminuta del juego, desenfocada y oscurecida, llena los
 // costados con los colores del escenario y de la acción. En celular el fondo es la carcasa de consola.
 (function ambient(){ if(!document.body||!document.body.prepend)return; /* sin DOM real (pruebas) no hay fondo */
- const a=document.createElement('canvas');a.id='amb';a.width=42;a.height=33;a.setAttribute('aria-hidden','true');
+ const a=document.createElement('canvas');a.id='amb';a.width=24;a.height=19;a.setAttribute('aria-hidden','true');
  document.body.prepend(a);const ac=a.getContext('2d');
- setInterval(()=>{if(document.hidden||isTouch)return;try{ac.drawImage(cv,0,0,a.width,a.height);}catch(e){}},150);
+ setInterval(()=>{if(document.hidden||isTouch)return;try{ac.globalAlpha=1;ac.drawImage(cv,0,0,a.width,a.height);ac.globalAlpha=.42;ac.fillStyle='#000';ac.fillRect(0,0,a.width,a.height);}catch(e){}},400);
 })();
 setTheme(THEME_KEYS[ri(0,THEME_KEYS.length-1)]);genMap();
 state=/^#[A-Za-z0-9]{4}$/.test(location.hash)?'title':'intro'; // con invitación vamos directo al menú
