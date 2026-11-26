@@ -30,7 +30,7 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       await M.evaluate('netLeave()');await M.context().close();});
     await t('en celular, la vista previa del soldado en el menú es pequeña',async()=>{
       const M=await page('celular menú',{viewport:{width:844,height:390},isMobile:true,hasTouch:true});await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
-      const b=await M.locator('#pv').boundingBox();assert.ok(b&&b.width<80,`#pv mide ${b&&Math.round(b.width)}`);await M.context().close();});
+      await M.waitForFunction("getComputedStyle(document.getElementById('menu')).display==='flex'",null,{timeout:5000});const b=await M.locator('#pv').boundingBox();assert.ok(b&&b.width<80,`#pv mide ${b&&Math.round(b.width)}`);await M.context().close();});
     await t('la sala del invitado se actualiza cuando el anfitrión cambia opciones',async()=>{
       await A.click('#lfNext');await B.waitForFunction("document.getElementById('lsummary').textContent.includes('NIEBLA NO')",null,{timeout:5000});await A.click('#lfNext');});
     await t('el invitado elige un color libre y no uno ocupado',async()=>{
