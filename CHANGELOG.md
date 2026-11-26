@@ -10,6 +10,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.10.7] - 2026-11-26
+
+### Añadido
+- En computadora, los costados ya no son negros: un reflejo desenfocado del juego toma los colores del escenario y de la acción, con textura de puntos de pantalla retro y marco tipo monitor de arcade.
+- En celular, el juego se ve como una consola portátil: carcasa verde militar con textura, bisel delgado alrededor de la pantalla, leyenda "PIXEL BREACH · CQB", cruceta en forma de cruz y botones redondos con relieve que se hunden al presionarlos. Funciona en vertical y horizontal.
+
 ## [0.10.6] - 2026-11-26
 
 ### Añadido
