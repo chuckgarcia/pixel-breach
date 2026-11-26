@@ -126,13 +126,13 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 /* ---- celular: carcasa de consola portátil (plástico verde militar, cruceta y botones con relieve) ---- */
 body.touch #amb,body.touch::before{display:none}
 body.touch{--shell:#4a5639;--shell-hi:#5d6b48;--shell-lo:#36402a;--ink:#20261a}
-body.touch #game{padding:18px 16px;
+body.touch #game{padding:10px 8px;
  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
   linear-gradient(160deg,var(--shell-hi),var(--shell) 45%,var(--shell-lo))}
-body.touch #wrap{border-radius:6px;box-shadow:0 0 0 3px #000,0 0 0 12px #1b1f17,0 0 0 13px #0d0f0b,0 2px 0 13px rgba(255,255,255,.12)}
-body.touch canvas{width:min(calc(100vw - 58px),calc((100vh - 300px) * 672 / 524))}
+body.touch #wrap{border-radius:4px;box-shadow:0 0 0 2px #000,0 0 0 5px #1b1f17,0 0 0 6px #0d0f0b,0 1px 0 6px rgba(255,255,255,.12)}
+body.touch canvas{width:min(calc(100vw - 28px),calc((100vh - 285px) * 672 / 524))}
 body.touch #game{grid-template-areas:"screen screen" "brand brand" "pad btns";grid-template-rows:auto auto 1fr}
-body.touch #game::before{content:"PIXEL BREACH \00B7  CQB";grid-area:brand;justify-self:center;margin-top:10px;
+body.touch #game::before{content:"PIXEL BREACH \00B7  CQB";grid-area:brand;justify-self:center;margin-top:4px;
  font:italic bold 15px "Courier New",monospace;letter-spacing:3px;color:var(--shell-lo);text-shadow:0 1px 0 rgba(255,255,255,.18)}
 /* cruceta en forma de cruz dentro de un hueco circular */
 body.touch #pad{border:none;background:radial-gradient(circle,rgba(0,0,0,.22) 0 62%,rgba(255,255,255,.08) 64%,transparent 67%);box-shadow:none}
@@ -155,7 +155,7 @@ body.touch #btns .gran{--b:#2b3124;--b-hi:#4a5340;--b-lo:#12150f;color:#a3e635}
 body.touch #btns .pause{--b:#2b3124;--b-hi:#4a5340;--b-lo:#12150f;width:50px;height:18px;border-radius:10px;font-size:9px;transform:rotate(-22deg)}
 body.touch #btns .pause.on,body.touch #btns .pause:active{transform:rotate(-22deg) translateY(3px)}
 @media (orientation:landscape){
- body.touch #game{grid-template-areas:"pad screen btns";grid-template-rows:1fr;padding:14px 18px}
+ body.touch #game{grid-template-areas:"pad screen btns";grid-template-rows:1fr;padding:8px 12px}
  body.touch #game::before{display:none}
- body.touch canvas{width:min(calc(100vw - 420px),calc((100vh - 50px) * 672 / 524))}
+ body.touch canvas{width:min(calc(100vw - 400px),calc((100vh - 30px) * 672 / 524))}
 }
