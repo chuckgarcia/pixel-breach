@@ -78,11 +78,11 @@ done
 CB_SA="$NUM-compute@developer.gserviceaccount.com"
 gcloud iam service-accounts add-iam-policy-binding "$CB_SA" --member="serviceAccount:$(sa $DEPLOY_SA)" --role=roles/iam.serviceAccountUser >/dev/null 2>&1 || true
 
-step "Alerta de presupuesto (1 USD)"
+step "Alerta de presupuesto"
 BILLING=$(gcloud billing projects describe "$PROJECT" --format='value(billingAccountName)' | sed 's#billingAccounts/##')
 if [ -n "$BILLING" ]; then
   gcloud billing budgets list --billing-account "$BILLING" --format='value(displayName)' 2>/dev/null | grep -qx "Pixel Breach" || \
-  gcloud billing budgets create --billing-account "$BILLING" --display-name "Pixel Breach" --budget-amount 1USD \
+  gcloud billing budgets create --billing-account "$BILLING" --display-name "Pixel Breach" --budget-amount "${BUDGET:-20}${CURRENCY:-$(gcloud billing accounts describe "$BILLING" --format='value(currencyCode)')}" \
     --filter-projects "projects/$PROJECT" --threshold-rule percent=0.01 --threshold-rule percent=0.5 --threshold-rule percent=1.0 \
     || echo "   (No se pudo crear la alerta: créala en Facturación → Presupuestos y alertas)"
 fi

@@ -10,6 +10,14 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.10.6] - 2026-11-26
+
+### Añadido
+- El juego ya usa el backend propio: si la conexión directa falla (por ejemplo, los dos en datos móviles), la partida pasa por el servidor de relevo.
+
+### Corregido
+- La alerta de presupuesto se crea en la moneda de la cuenta de facturación.
+
 ## [0.10.5] - 2026-11-26
 
 ### Añadido

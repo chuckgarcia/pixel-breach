@@ -12,7 +12,7 @@ function sameMinor(v){const a=String(v||'').split('.'),b=VERSION.split('.');retu
 function cleanName(n){return String(n||'').toUpperCase().replace(/[^A-Z0-9ÑÁÉÍÓÚÜ _-]/g,'').trim().slice(0,10)||'JUGADOR';}
 // Servicio propio (Cloud Run) que entrega credenciales TURN temporales. El secreto maestro vive en
 // Secret Manager de Google Cloud y nunca llega al navegador. Vacío = solo conexión directa.
-const TURN_API='';
+const TURN_API='https://pixel-breach-creds-hdi4ocofhq-uc.a.run.app/turn';
 let iceCache=null;
 async function iceServers(){ // se piden antes de crear o unirse a una sala; si el servicio falla, se juega sin relevo
  if(!TURN_API||/[?&]ps=/.test(location.search))return null;

@@ -12,11 +12,14 @@ permissions:
   id-token: write
 concurrency: backend
 env:
+  # Datos de identificación del proyecto (no son secretos: el secreto maestro vive en Secret Manager)
+  GCP_PROJECT_ID: pixel-breach-515922
+  GCP_WIF_PROVIDER: projects/647441134616/locations/global/workloadIdentityPools/github/providers/github
+  GCP_DEPLOY_SA: pb-deployer@pixel-breach-515922.iam.gserviceaccount.com
   REGION: us-central1
   ZONE: us-central1-a
 jobs:
   deploy:
-    if: vars.GCP_PROJECT_ID != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,9 +29,9 @@ jobs:
         run: node --test server/creds/server.test.js
       - uses: google-github-actions/auth@v2
         with:
-          project_id: ${{ vars.GCP_PROJECT_ID }}
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_DEPLOY_SA }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Servicio de credenciales (Cloud Run)
         run: |
