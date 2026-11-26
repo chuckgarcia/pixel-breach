@@ -1,0 +1,41 @@
+name: Backend (Google Cloud)
+# Publica el backend cuando un commit cambia algo en server/: el servicio de credenciales (Cloud Run)
+# y la configuración del servidor TURN (la máquina la aplica sola al ver el metadato pb-rev nuevo).
+# GitHub entra a Google Cloud con federación de identidad: no hay llaves ni contraseñas guardadas.
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', '.github/workflows/deploy-backend.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency: backend
+env:
+  REGION: us-central1
+  ZONE: us-central1-a
+jobs:
+  deploy:
+    if: vars.GCP_PROJECT_ID != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Pruebas del servicio de credenciales
+        run: node --test server/creds/server.test.js
+      - uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Servicio de credenciales (Cloud Run)
+        run: |
+          IP=$(gcloud compute addresses describe pixel-breach-turn-ip --region $REGION --format='value(address)')
+          gcloud run deploy pixel-breach-creds --source server/creds --region $REGION --quiet \
+            --set-env-vars TURN_HOST="$IP" --set-secrets TURN_SECRET=pixel-breach-turn-secret:latest
+      - name: Servidor TURN (coturn)
+        run: |
+          gcloud compute instances add-metadata pixel-breach-turn --zone $ZONE \
+            --metadata-from-file startup-script=server/turn/setup.sh --metadata pb-rev=${{ github.sha }}

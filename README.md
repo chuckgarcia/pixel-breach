@@ -1,6 +1,6 @@
 # Pixel Breach
 
-**Versión actual: v0.10.4** · [Historial de cambios](CHANGELOG.md)
+**Versión actual: v0.10.5** · [Historial de cambios](CHANGELOG.md)
 
 Deathmatch CQB retro en un laberinto, inspirado en Bomberman y Pac-Man.
 
@@ -28,6 +28,22 @@ Deathmatch CQB retro en un laberinto, inspirado en Bomberman y Pac-Man.
 Los navegadores se conectan directamente entre sí con WebRTC usando [PeerJS](https://peerjs.com/) y su servidor público gratuito para encontrarse.
 Quien crea la sala es el anfitrión: su navegador simula la partida completa (IAs incluidas) y envía el estado a los demás 20 veces por segundo.
 El anfitrión debe mantener la pestaña del juego abierta y visible mientras juegan.
+
+## Backend (Google Cloud)
+
+Cuando los dos jugadores están detrás de redes que no permiten conexión directa (por ejemplo, datos
+móviles), la partida pasa por un servidor de relevo propio. Todo vive en `server/`:
+
+- `server/turn/setup.sh`: instala y configura coturn en una máquina e2-micro (nivel gratuito).
+- `server/creds/`: servicio en Cloud Run que entrega credenciales TURN temporales (24 h). El secreto
+  maestro está en Secret Manager; el juego solo recibe credenciales que caducan.
+- `server/bootstrap.sh`: preparación única desde Cloud Shell (máquina, IP fija, firewall, secreto,
+  Cloud Run, federación de identidad para GitHub y alerta de presupuesto).
+- `.github/workflows/deploy-backend.yml`: cada commit que cambia `server/` publica el servicio y
+  actualiza la configuración del TURN; la máquina la aplica sola en segundos.
+
+Ningún secreto se guarda en el repositorio ni en GitHub. Si `TURN_API` está vacío en `js/net.js`,
+el juego funciona igual que antes, solo con conexión directa.
 
 ## Estructura del código
 

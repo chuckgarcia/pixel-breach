@@ -16,6 +16,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Pruebas del backend
+        run: npm run test:server
       - run: npx playwright install --with-deps chromium
       - name: Simulación de partidas
         run: npm run test:sim

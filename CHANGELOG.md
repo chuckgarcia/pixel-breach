@@ -10,6 +10,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.10.5] - 2026-11-26
+
+### Añadido
+- Backend propio en Google Cloud para jugar en línea cuando los dos jugadores están en datos móviles: un servidor de relevo (TURN) y un servicio que entrega credenciales temporales. El secreto maestro vive en Secret Manager y nunca está en el repositorio ni llega al navegador.
+- Publicación automática del backend con cada commit que cambia `server/` (GitHub Actions, sin llaves guardadas).
+
+### Corregido
+- Si la sala existe pero la red no deja conectar con el anfitrión, el mensaje ya no dice que la sala no existe: explica que es un problema de conexión y sugiere reintentar o usar Wi-Fi.
+
 ## [0.10.4] - 2026-11-23
 
 ### Corregido

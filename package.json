@@ -3,9 +3,10 @@
   "private": true,
   "description": "Pruebas automáticas de Pixel Breach",
   "scripts": {
-    "test": "node tests/sim.test.js && node tests/online.test.js",
+    "test": "node --test server/creds/server.test.js && node tests/sim.test.js && node tests/online.test.js",
     "test:sim": "node tests/sim.test.js",
-    "test:online": "node tests/online.test.js"
+    "test:online": "node tests/online.test.js",
+    "test:server": "node --test server/creds/server.test.js"
   },
   "devDependencies": {
     "peer": "^1.0.2",

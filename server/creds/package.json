@@ -1,0 +1,8 @@
+{
+  "name": "pixel-breach-creds",
+  "private": true,
+  "description": "Credenciales TURN temporales para Pixel Breach",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node --test server.test.js" },
+  "engines": { "node": ">=20" }
+}

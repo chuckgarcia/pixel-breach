@@ -10,8 +10,22 @@ const peerIdFor=c=>'pixelbreach-v1-'+c.toLowerCase();
 function genCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let r='';for(let i=0;i<4;i++)r+=A[Math.floor(Math.random()*A.length)];return r;}
 function sameMinor(v){const a=String(v||'').split('.'),b=VERSION.split('.');return a.length===3&&a[0]===b[0]&&a[1]===b[1];}
 function cleanName(n){return String(n||'').toUpperCase().replace(/[^A-Z0-9ÑÁÉÍÓÚÜ _-]/g,'').trim().slice(0,10)||'JUGADOR';}
-function peerOpts(){ // ?ps=host:puerto solo para pruebas con un servidor propio
- const m=location.search.match(/[?&]ps=([^&]+)/);if(!m)return {debug:0};
+// Servicio propio (Cloud Run) que entrega credenciales TURN temporales. El secreto maestro vive en
+// Secret Manager de Google Cloud y nunca llega al navegador. Vacío = solo conexión directa.
+const TURN_API='';
+let iceCache=null;
+async function iceServers(){ // se piden antes de crear o unirse a una sala; si el servicio falla, se juega sin relevo
+ if(!TURN_API||/[?&]ps=/.test(location.search))return null;
+ if(iceCache&&iceCache.exp>Date.now())return iceCache.list;
+ try{
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),4000);
+  const r=await fetch(TURN_API,{signal:ctl.signal,cache:'no-store'});clearTimeout(t);
+  const j=r.ok?await r.json():null;if(!j||!Array.isArray(j.iceServers))return null;
+  iceCache={list:j.iceServers,exp:Date.now()+Math.max(60,(j.ttl|0)-3600)*1000};return j.iceServers;
+ }catch(e){return null;}
+}
+function peerOpts(ice){ // ?ps=host:puerto solo para pruebas con un servidor propio
+ const m=location.search.match(/[?&]ps=([^&]+)/);if(!m)return ice?{debug:0,config:{iceServers:ice}}:{debug:0};
  const [host,port]=decodeURIComponent(m[1]).split(':');return {host,port:+port,path:'/',secure:false,debug:0,config:{iceServers:[]}};
 }
 function loadPeer(){
@@ -30,8 +44,9 @@ function linkFor(code){return location.href.split('#')[0]+'#'+code;}
 async function createRoom(){
  if(NET)return;netMsg('Creando sala…',true);
  try{await loadPeer();}catch(e){netMsg('No se pudo cargar el modo en línea. Revisa tu conexión.');return;}
+ const ice=await iceServers();if(NET)return;
  const attempt=(tries)=>{
-  const code=genCode(),peer=new Peer(peerIdFor(code),peerOpts());let opened=false;
+  const code=genCode(),peer=new Peer(peerIdFor(code),peerOpts(ice));let opened=false;
   peer.on('open',()=>{
    if(opened){if(NET&&NET.peer===peer)setSig('ok');return;} // reconexión: la sala y sus jugadores se conservan
    opened=true;NET={role:'host',peer,code,clients:new Map(),ais:Math.max(1,MAX_PLAYERS-2),sendT:0,fog:true,sig:'ok',rcTries:0};myId=0;state='lobby';netMsg('');renderLobby();
@@ -151,8 +166,9 @@ function snapshot(){
  return snap;
 }
 // --- invitado ---
-const JOIN_TIMEOUT=9000; // si en 9 s la sala no responde, se da por cerrada
+const JOIN_TIMEOUT=12000; // si en 12 s no hay respuesta, se avisa (el relevo puede tardar unos segundos más)
 function goneMsg(code){return 'La sala '+code+' ya no está activa o no existe. Pide a quien te invitó un enlace nuevo.';}
+function noRouteMsg(code){return 'La sala '+code+' existe, pero no se pudo conectar con el anfitrión por la red. Intenta de nuevo; si sigue igual, que alguno de los dos se conecte a Wi-Fi.';}
 function setJoining(on,code){ // el botón muestra que algo está pasando y no se puede presionar dos veces
  for(const id of ['joinInvite','joinBtn']){const b=$(id);if(!b)continue;b.disabled=on;b.style.opacity=on?.6:1;}
  $('joinInvite').textContent=on?'CONECTANDO…':(inviteCode?'REINTENTAR':'UNIRSE');
@@ -163,17 +179,21 @@ async function joinRoom(code){
  if(code.length!==4){netMsg('El código de sala tiene 4 letras o números.');return;}
  setJoining(true,code);netMsg('Buscando la sala '+code+'…',true);
  try{await loadPeer();}catch(e){setJoining(false);netMsg('No se pudo cargar el modo en línea. Revisa tu conexión a internet.');return;}
- const peer=new Peer(undefined,peerOpts());
+ const ice=await iceServers();if(NET){setJoining(false);return;}
+ const peer=new Peer(undefined,peerOpts(ice));
  NET={role:'client',peer,code,conn:null,fc:0,gc:0,qc:0,inT:0,welcomed:false,lobby:null,lastIn:''};
  const mine=NET;
  const fail=t=>{clearTimeout(timer);if(NET===mine){netLeave(t);setJoining(false);}};
- const timer=setTimeout(()=>{if(NET===mine&&!mine.welcomed)fail(goneMsg(code));},JOIN_TIMEOUT);
+ /* el servidor de salas avisa enseguida si el código no existe (peer-unavailable); si eso no pasó y aun así
+    no hay conexión, la sala existe pero la red no deja llegar al anfitrión */
+ const lost=()=>mine.conn&&!mine.connOpen?noRouteMsg(code):goneMsg(code);
+ const timer=setTimeout(()=>{if(NET===mine&&!mine.welcomed)fail(lost());},JOIN_TIMEOUT);
  peer.on('open',()=>{
   const conn=peer.connect(peerIdFor(code),{reliable:true,serialization:'json'});mine.conn=conn;
-  conn.on('open',()=>conn.send({t:'hello',name:displayName(),color:playerColor,v:PROTO,ver:VERSION}));
+  conn.on('open',()=>{mine.connOpen=true;conn.send({t:'hello',name:displayName(),color:playerColor,v:PROTO,ver:VERSION});});
   conn.on('data',d=>{if(NET===mine){if(d&&d.t==='welcome'){clearTimeout(timer);setJoining(false);}clientOnData(d);}});
-  conn.on('close',()=>fail(mine.welcomed?'Se cerró la conexión con el anfitrión.':goneMsg(code)));
-  conn.on('error',()=>fail(mine.welcomed?'Se perdió la conexión con el anfitrión.':goneMsg(code)));
+  conn.on('close',()=>fail(mine.welcomed?'Se cerró la conexión con el anfitrión.':lost()));
+  conn.on('error',()=>fail(mine.welcomed?'Se perdió la conexión con el anfitrión.':lost()));
  });
  peer.on('error',err=>{
   if(err.type==='peer-unavailable')fail(goneMsg(code));
