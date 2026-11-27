@@ -31,7 +31,7 @@ function syncSettingsUI(){
  $('sFogNote').textContent=online?'En línea, la niebla la elige el anfitrión.':'';
  $('sVibRow').style.display=isTouch?'':'none';
  {const can=canVibrate();$('sVib').disabled=!can;$('sVib').style.opacity=can?1:.45;if(!can)$('sVib').textContent='NO DISPONIBLE';
-  const note=can?'':'Tu teléfono no deja que las páginas vibren (pasa en iPhone y iPad: Apple lo bloquea en Safari, también instalado como app).';
+  const note=can?'':'No disponible en iPhone ni iPad.';
   $('sVibNote').textContent=note;$('sVibNote').style.display=note?'':'none';}
  $('sFsRow').style.display=fsOK?'':'none';$('sFs').textContent=document.fullscreenElement?'SALIR':'COMPLETA';
  $('sInstall').style.display=installEvt?'':'none';
