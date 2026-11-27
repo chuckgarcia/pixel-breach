@@ -115,6 +115,7 @@ let last=performance.now();
 function step(dt){
  clock+=dt;
  if(state==='play'&&!paused){if(NET&&NET.role==='client')clientUpdate(dt);else update(dt);}
+ else if(state==='over'&&ARC&&ARC.result==='cont')arcContTick(dt); // CONTINUE? 9… 0
  else{for(const p of parts)p.t-=dt;}
  if(NET)netTick(dt);
 }

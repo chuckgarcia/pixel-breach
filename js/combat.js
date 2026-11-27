@@ -73,7 +73,7 @@ function updPickups(dt){
  for(const p of pickups){
   p.t+=dt;if(p.life!==undefined){p.life-=dt;if(p.life<=0)p.dead=true;}
   for(const e of ents){
-   if(!e.alive||p.dead)continue;
+   if(!e.alive||p.dead||(ARC&&!e.isPlayer))continue; // en Arcade los objetos son solo para ti
    if(Math.abs(e.x-(p.tx*T+T/2))<12&&Math.abs(e.y-(p.ty*T+T/2))<12){
     if(p.type==='medkit'){if(e.hp>=100)continue;e.hp=Math.min(100,e.hp+p.amt);}
     else{if(e.inv[p.type]>=MAXAMMO[p.type])continue;e.inv[p.type]=Math.min(MAXAMMO[p.type],e.inv[p.type]+p.amt);

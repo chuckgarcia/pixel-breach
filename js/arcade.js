@@ -4,6 +4,11 @@
 let ARC=null; // partida de Arcade en curso (null fuera del modo)
 const ARC_MULT={1:.5,2:.75,3:1,4:1.5}; // la dificultad multiplica los puntos
 const ARC_FIRST_LIFE=10000,ARC_NEXT_LIFE=25000;
+// Botiquines según la dificultad: cada cuántos segundos aparece uno, cuántos puede haber a la vez y
+// la probabilidad de que un enemigo suelte uno al caer.
+const ARC_MED={1:{every:12,max:3,drop:.35},2:{every:18,max:2,drop:.25},3:{every:25,max:2,drop:.15},4:{every:40,max:1,drop:.08}};
+const arcMed=()=>ARC_MED[diff]||ARC_MED[3];
+const ARC_CONT=10; // CONTINUE? 9… 8… … 0
 // ---------- AVANCE GUARDADO (en este navegador) ----------
 const arcSave={open:1,stars:[]};
 try{const j=JSON.parse(localStorage.getItem('pb_arc')||'null');if(j&&typeof j==='object'){
@@ -38,7 +43,7 @@ function arcLoad(){
  P.skin=playerSkin;P.tp=0;P.caps=0;P.lives=0;P.out=false;P.st={shots:0,hits:0,kw:{},nades:0,picks:0,best:0};
  ents=[P];myId=0;
  Object.assign(ARC,{t:0,killPts:0,kills:0,combo:0,comboT:0,bestCombo:0,startScore:ARC.score,exitOpen:false,exit:null,bombs:[],spawns:[],
-  waves:(L.waves||[]).slice(),waveI:0,waveT:2,hostage:null,freed:false,trail:[],bombT:L.limit||0,cardT:1,cardAge:0,cardArmed:false,deadT:0,downMsg:'',result:null,tally:null,waitT:0});
+  waves:(L.waves||[]).slice(),waveI:0,waveT:2,hostage:null,freed:false,trail:[],bombT:L.limit||0,cardT:1,cardAge:0,cardArmed:false,deadT:0,downMsg:'',fail:false,result:null,tally:null,waitT:0,contT:0,medT:arcMed().every*.5});
  L.map.forEach((row,y)=>[...row].forEach((c,x)=>{
   const i=idx(x,y);grid[i]=c==='#'?WALL:c==='+'?CRATE:c==='~'?LAVA:FLOOR;if(c==='+')crateHP[i]=3;
   if(c==='P')placeAt(P,[x,y]);
@@ -73,12 +78,14 @@ function arcOnKill(e,src){ // antes de que el soldado quede fuera
    fx.push({kind:'pts',px:e.x,py:e.y-20,t:.9,max:.9,s:'+'+Math.round(pts)});
    if(ARC.combo>=2){announce={text:'COMBO ×'+ARC.combo,c:'#facc15',t:1.4};sfx('streak');}
   }
- }else if(e.isPlayer){e.out=true;arcDown('¡CAÍSTE!');}
- else if(e.hostage){e.out=true;arcDown('¡EL REHÉN CAYÓ!');}
+ }else if(e.isPlayer){e.out=true;arcDown('¡CAÍSTE!',false);} // reapareces donde caíste
+ else if(e.hostage){e.out=true;arcDown('¡EL REHÉN CAYÓ!',true);} // misión fallida: el nivel se reinicia
 }
-function arcDown(msg){ // se pierde una vida; el nivel se reinicia en unos segundos
+// Se pierde una vida. Si caíste, reapareces en el mismo lugar (como Metal Slug) y el nivel sigue como iba;
+// si la misión falló (el rehén cayó, las bombas explotaron), el nivel se reinicia.
+function arcDown(msg,fail){
  if(ARC.deadT>0)return;
- ARC.lives--;ARC.lostHere=true;ARC.deadT=2.4;ARC.downMsg=msg;sfx('die');
+ ARC.lives--;ARC.lostHere=true;ARC.fail=!!fail;ARC.deadT=fail?2.4:1.6;ARC.downMsg=msg;sfx('die');
 }
 function arcMissionDone(){ // la misión está cumplida: se abre la extracción
  if(ARC.exitOpen)return;ARC.exitOpen=true;announce={text:'¡EXTRACCIÓN ABIERTA!',c:'#facc15',t:2};sfx('go');
@@ -96,7 +103,14 @@ function arcGate(dt){
 function arcReady(){if(ARC&&ARC.cardT>0){ARC.cardT=0;sfx('go');}}
 function arcTick(dt){
  const L=ARC_LEVELS[ARC.lv],P=arcPlayer();
- if(ARC.deadT>0){ARC.deadT-=dt;if(ARC.deadT<=0){if(ARC.lives>0){ARC.score=ARC.startScore;ARC.inv=null;arcLoad();ARC.lostHere=true;}else arcGameOver();}return;}
+ if(ARC.deadT>0){ARC.deadT-=dt;if(ARC.deadT<=0){
+   if(ARC.lives<=0)arcGameOver(); // CONTINUE? 9…
+   else if(ARC.fail){ARC.score=ARC.startScore;ARC.inv=null;arcLoad();ARC.lostHere=true;}
+   else arcRespawn();}
+  if(ARC.fail)return;} // al caer, el resto del nivel sigue moviéndose mientras reapareces
+ // botiquines periódicos según la dificultad
+ ARC.medT-=dt;if(ARC.medT<=0){ARC.medT=arcMed().every;if(pickups.filter(p=>p.type==='medkit').length<arcMed().max)arcSpawnMed();}
+ if(ARC.deadT>0)return;
  ARC.t+=dt;if(ARC.comboT>0)ARC.comboT-=dt;
  // rastro de tus pasos (el rehén lo sigue)
  if(P.alive){const k=[wx(Math.floor(P.x/T)),Math.floor(P.y/T)],l=ARC.trail[ARC.trail.length-1];if(!l||l[0]!==k[0]||l[1]!==k[1]){ARC.trail.push(k);if(ARC.trail.length>40)ARC.trail.shift();}}
@@ -113,7 +127,7 @@ function arcTick(dt){
     showToast(`BOMBA DESACTIVADA ${n}/${ARC.bombs.length}`,'#4ade80');}}}
   if(ARC.bombs.every(b=>b.done))arcMissionDone();
   else if(ARC.bombT<=0){for(const b of ARC.bombs)if(!b.done){fx.push({kind:'boom',x:b.x,y:b.y,t:.6,max:.6});sparksLocal(b.x*T+16,b.y*T+16,'#f97316',20,180);}
-   sfx('boom');shake=12;ARC.bombT=0;if(P.alive){P.invulnT=0;P.hp=0;kill(P,null,'frag');}ARC.downMsg='¡LAS BOMBAS EXPLOTARON!';}
+   sfx('boom');shake=12;ARC.bombT=0;arcDown('¡LAS BOMBAS EXPLOTARON!',true);if(P.alive){P.invulnT=0;P.hp=0;kill(P,null,'frag');}}
  }
  // llegar a la extracción
  if(ARC.exitOpen&&P.alive&&ARC.exit&&wx(Math.floor(P.x/T))===ARC.exit[0]&&Math.floor(P.y/T)===ARC.exit[1]){
@@ -132,7 +146,8 @@ function arcWave(){
 function updHostage(h,dt){
  const P=arcPlayer();
  if(!ARC.freed){
-  if(P.alive&&Math.abs(P.x-h.x)<T*1.3&&Math.abs(P.y-h.y)<T*1.3){ARC.freed=true;showToast('¡REHÉN LIBERADO! TE SIGUE','#4ade80');sfx('pick');arcMissionDone();}
+  if(P.alive&&Math.abs(P.x-h.x)<T*1.3&&Math.abs(P.y-h.y)<T*1.3){ARC.freed=true;showToast('¡REHÉN LIBERADO! TE SIGUE','#4ade80');sfx('pick');arcMissionDone();
+   pickups.push({tx:h.tx,ty:h.ty,type:'medkit',amt:PICK.medkit.amt,t:0});} // como los prisioneros de Metal Slug: te da algo
   return;
  }
  const tr=ARC.trail,goal=tr.length>=3?tr[tr.length-3]:null;
@@ -149,12 +164,31 @@ function arcComplete(){
  ARC.inv=Object.assign({},P.inv);ARC.weapon=P.weapon;
  ARC.result='win';state='over';sfx('win');
 }
-function arcGameOver(){ARC.result='lose';state='over';sfx('die');}
+function arcGameOver(){ARC.result='cont';ARC.contT=ARC_CONT-.01;state='over';sfx('die');} // primero CONTINUE? con cuenta regresiva
+function arcContTick(dt){ // corre en la pantalla de CONTINUE?; al llegar a 0 es GAME OVER
+ const before=Math.floor(ARC.contT);ARC.contT-=dt;
+ if(ARC.contT<0){ARC.result='lose';sfx('die');}else if(Math.floor(ARC.contT)!==before)sfx('tick');
+}
+function arcRespawn(){ // reapareces donde caíste, con pistola, 1 granada y 2.5 s de invencibilidad
+ const P=arcPlayer(),s=freeNear(wx(Math.floor(P.x/T)),Math.floor(P.y/T),P);
+ placeAt(P,s);resetInv(P);Object.assign(P,{alive:true,out:false,hp:100,invulnT:2.5,hurtT:0,blindT:0});
+ showToast('¡DE VUELTA!','#4ade80');
+}
+function arcSpawnMed(){ // botiquín en una casilla libre, lejos de ti y de la extracción
+ const P=arcPlayer();
+ for(let k=0;k<60;k++){const x=ri(1,COLS-2),y=ri(1,ROWS-2),d=Math.abs(x-P.tx)+Math.abs(y-P.ty);
+  if(!walkable(x,y)||d<4||d>14||tileTaken(null,x,y)||pickups.some(p=>p.tx===x&&p.ty===y)||(ARC.exit&&ARC.exit[0]===x&&ARC.exit[1]===y))continue;
+  pickups.push({tx:x,ty:y,type:'medkit',amt:PICK.medkit.amt,t:0});return true;}
+ return false;
+}
 const arcHasNext=()=>ARC&&ARC.lv+1<ARC_LEVELS.length;
 function arcAgain(){ // botón principal del fin: siguiente nivel o continuar
  if(!ARC)return;
  if(ARC.result==='win'){if(!arcHasNext())return;ARC.lv++;ARC.lostHere=false;arcSel=ARC.lv;arcLoad();}
- else if(ARC.result==='lose'){ARC.lives=3;ARC.score=0;ARC.nextLife=ARC_FIRST_LIFE;ARC.cont++;ARC.inv=null;ARC.lostHere=false;arcLoad();}
+ else if(ARC.result==='cont'){ // CONTINUAR: 3 vidas y puntos en 0; sigues donde ibas (o se reinicia si la misión falló)
+  Object.assign(ARC,{lives:3,score:0,startScore:0,nextLife:ARC_FIRST_LIFE,result:null});ARC.cont++;
+  if(ARC.fail){ARC.inv=null;arcLoad();ARC.lostHere=true;}else{state='play';arcRespawn();}}
+ else if(ARC.result==='lose'){ARC.lives=3;ARC.score=0;ARC.nextLife=ARC_FIRST_LIFE;ARC.cont++;ARC.inv=null;ARC.lostHere=false;arcLoad();} // REINTENTAR NIVEL
 }
 
 // ---------- DIBUJO ----------
@@ -194,8 +228,8 @@ function drawArcHud(){ // etiqueta arriba: nivel y vidas; tarjeta de misión; ca
  const under=m&&m.alive&&m.y<64&&Math.abs(m.x-W/2)<w/2+20;ctx.globalAlpha=under?.3:1;
  ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(x,HUD+5,w,20);txt(t,x+8,HUD+15,11,bombs&&ARC.bombT<20?'#f87171':'#e2e8f0','left',false);
  drawHearts(x+w-6,HUD+10,Math.min(5,ARC.lives),Math.min(5,ARC.lives),1.5);ctx.globalAlpha=1;
- if(ARC.deadT>0){overlay(Math.min(.55,(2.4-ARC.deadT)*.6));txt(ARC.downMsg,W/2,HUD+H/2-14,26,'#ef4444','center');
-  txt(ARC.lives>0?`Te quedan ${ARC.lives} ${ARC.lives===1?'vida':'vidas'} · el nivel se reinicia`:'Sin vidas',W/2,HUD+H/2+18,13,'#e2e8f0','center');}
+ if(ARC.deadT>0){overlay(Math.min(ARC.fail?.55:.35,(2.4-ARC.deadT)*.6));txt(ARC.downMsg,W/2,HUD+H/2-14,26,'#ef4444','center');
+  txt(ARC.lives>0?`Te quedan ${ARC.lives} ${ARC.lives===1?'vida':'vidas'} · `+(ARC.fail?'el nivel se reinicia':'reapareces aquí'):'Sin vidas',W/2,HUD+H/2+18,13,'#e2e8f0','center');}
 }
 function drawArcCard(){
  const L=ARC_LEVELS[ARC.lv];overlay(.88);
@@ -218,11 +252,18 @@ function drawArcOver(){
   ctx.fillStyle='#334155';ctx.fillRect(150,312,W-300,2);txt('TOTAL',150,334,16,'#e2e8f0');txt(ARC.score.toLocaleString('en-US'),W-150,334,16,'#facc15','right');
   if(!arcHasNext())txt(ARC_LEVELS.length<ARC_TOTAL?`¡Superaste los ${ARC_LEVELS.length} niveles disponibles! Los niveles ${ARC_LEVELS.length+1} a ${ARC_TOTAL} llegan pronto.`:'¡MISIÓN CUMPLIDA!',W/2,374,11,'#4ade80','center');
   else if(!isTouch)txt('ENTER: siguiente nivel   ·   ESC: menú',W/2,374,11,'#94a3b8','center');
+ }else if(ARC.result==='cont'){ // CONTINUE? 9… 8…
+  const n=Math.max(0,Math.floor(ARC.contT)),pulse=1+.12*Math.max(0,(ARC.contT%1)-.6)*5;
+  txt('CONTINUE?',W/2,110,30,'#facc15','center');
+  txt(String(n),W/2,200,Math.round(70*pulse),n<=3?'#ef4444':'#e2e8f0','center');
+  txt(`NIVEL ${ARC.lv+1} · ${L.name}   ·   PUNTOS ${ARC.score.toLocaleString('en-US')}`,W/2,272,13,'#cbd5e1','center');
+  txt(ARC.fail?'Sigues con 3 vidas: el nivel se reinicia y tus puntos vuelven a 0.':'Sigues donde caíste con 3 vidas; tus puntos vuelven a 0.',W/2,298,12,'#94a3b8','center');
+  if(!isTouch)txt('ENTER: continuar   ·   ESC: menú',W/2,330,11,'#94a3b8','center');
  }else{
   txt('GAME OVER',W/2,120,34,'#ef4444','center');txt(`NIVEL ${ARC.lv+1} · ${L.name}`,W/2,170,15,'#e2e8f0','center');
   txt(`PUNTOS ${ARC.score.toLocaleString('en-US')}`,W/2,206,18,'#facc15','center');
-  txt('CONTINUAR: repites este nivel con 3 vidas,',W/2,262,12,'#cbd5e1','center');txt('pero tus puntos vuelven a 0.',W/2,282,12,'#cbd5e1','center');
-  if(!isTouch)txt('ENTER: continuar   ·   ESC: menú',W/2,330,11,'#94a3b8','center');
+  txt('REINTENTAR: empiezas este nivel desde el inicio con 3 vidas.',W/2,262,12,'#cbd5e1','center');
+  if(!isTouch)txt('ENTER: reintentar   ·   ESC: menú',W/2,330,11,'#94a3b8','center');
  }
 }
 function drawArcPause(){txt(`NIVEL ${ARC.lv+1} · ${ARC_LEVELS[ARC.lv].name}`,W/2,176,16,'#e2e8f0','center');

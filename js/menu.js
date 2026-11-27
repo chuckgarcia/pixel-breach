@@ -11,7 +11,7 @@ function syncOverlays(){
   if(state==='lobby')renderLobby();}
  {const show=!!(ARC&&state==='play'&&ARC.cardT>0),el=$('readyBtns');if((el.style.display==='flex')!==show)el.style.display=show?'flex':'none';}
  if(state==='over'&&ARC){ // Arcade: SIGUIENTE NIVEL o CONTINUAR
-  const a=$('again'),t=ARC.result==='win'?(arcHasNext()?'SIGUIENTE NIVEL':''):'CONTINUAR';
+  const a=$('again'),t=ARC.result==='win'?(arcHasNext()?'SIGUIENTE NIVEL':''):ARC.result==='cont'?'CONTINUAR':'REINTENTAR NIVEL';
   if(t&&a.textContent!==t)a.textContent=t;a.style.display=t?'':'none';if($('toMenu').textContent!=='MENÚ')$('toMenu').textContent='MENÚ';}
  if(diff!==shownDiff){shownDiff=diff;dnameEl.textContent=DIFF[diff].name;}
  $('gearMenu').style.display=(state==='title'&&!menuEl.classList.contains('invite'))||state==='lobby'?'block':'none';

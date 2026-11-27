@@ -10,6 +10,16 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.15.3] - 2026-11-27
+
+### Cambiado
+- Arcade, al estilo de Metal Slug:
+  - **Reapareces donde caíste** con 2.5 s de invencibilidad; el nivel sigue como iba (los enemigos derrotados no vuelven). Vuelves con pistola y 1 granada.
+  - Solo si la misión falla (el rehén cae o las bombas explotan) se pierde una vida y el nivel se reinicia.
+  - Sin vidas aparece **CONTINUE? 9… 8… … 0**. CONTINUAR te devuelve donde caíste con 3 vidas y los puntos en 0. Al llegar a 0 es GAME OVER, con REINTENTAR NIVEL o MENÚ.
+  - **Botiquines según la dificultad**: aparecen solos en el mapa (MUY FÁCIL cada 12 s, hasta 3; FÁCIL cada 18 s, hasta 2; NORMAL cada 25 s, hasta 2; DIFÍCIL cada 40 s, hasta 1) y los enemigos sueltan uno al caer con más o menos frecuencia. Solo tú puedes tomarlos.
+  - El rehén, al liberarlo, te da un botiquín.
+
 ## [0.15.2] - 2026-11-27
 
 ### Cambiado

@@ -131,15 +131,32 @@ t('arcade: combo por bajas seguidas, vida extra a los 10,000 y los enemigos no s
   assert.strictEqual(r.l1,r.l0+1,'no dio vida extra');assert.strictEqual(r.nl,35000);
   assert.strictEqual(r.hp2,r.hp,'un enemigo le hizo daño a otro');
 });
-t('arcade: al caer pierdes una vida y el nivel se reinicia; sin vidas, CONTINUAR deja los puntos en 0',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;startArcade(0);tut=null;ARC.cardT=0;ARC.score=1234;ARC.startScore=1234;let P=arcPlayer();
-    P.inv.smg=40;P.invulnT=0;kill(P,ents[1],'pistol');const lives=ARC.lives;for(let i=0;i<100;i++)update(1/30);
-    P=arcPlayer();const o={lives,alive:P.alive,score:ARC.score,smg:P.inv.smg,enemies:ents.filter(e=>e.enemy&&e.alive).length};
-    ARC.lives=1;ARC.cardT=0;P.invulnT=0;kill(P,ents[1],'pistol');for(let i=0;i<100;i++)update(1/30);o.state=state;o.res=ARC.result;
-    arcAgain();o.after=[ARC.lives,ARC.score,ARC.cont,state].join();SETTINGS.mode='dm';return o;})()`);
-  assert.strictEqual(r.lives,2);assert.ok(r.alive,'no reapareció');assert.strictEqual(r.score,1234);assert.strictEqual(r.smg,0,'debe volver con pistola');
-  assert.strictEqual(r.enemies,6,'los enemigos no volvieron');assert.strictEqual(r.state,'over');assert.strictEqual(r.res,'lose');
-  assert.strictEqual(r.after,'3,0,1,play');
+t('arcade: al caer reapareces en el mismo lugar y el nivel sigue; sin vidas, CONTINUE? 9… y luego GAME OVER',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;dirStack=[];for(const k in keys)keys[k]=false;startArcade(0);tut=null;ARC.cardT=0;let P=arcPlayer();
+    const E=ents.filter(e=>e.enemy);E[0].invulnT=0;kill(E[0],P,'pistol');const sc=ARC.score;
+    placeAt(P,[5,9]);P.inv.smg=40;P.invulnT=0;kill(P,E[1],'pistol');const lives=ARC.lives;for(let i=0;i<60;i++)update(1/30);
+    P=arcPlayer();const o={lives,alive:P.alive,at:P.tx+','+P.ty,score:ARC.score===sc,smg:P.inv.smg,frag:P.inv.frag,inv:P.invulnT>0,dead0:!E[0].alive,same:arcPlayer()===P&&ents.length===7};
+    ARC.lives=1;P.invulnT=0;kill(P,E[1],'pistol');for(let i=0;i<60;i++)update(1/30);o.res=ARC.result;o.n=Math.floor(ARC.contT);
+    arcContTick(4);o.n2=Math.floor(ARC.contT);arcAgain();P=arcPlayer();
+    o.cont=[state,ARC.lives,ARC.score,ARC.cont,P.alive,!E[0].alive].join();
+    ARC.lives=1;P.invulnT=0;kill(P,E[1],'pistol');for(let i=0;i<60;i++)update(1/30);arcContTick(11);o.over=ARC.result;
+    arcAgain();o.retry=[state,ARC.lives,ARC.score,ents.filter(e=>e.enemy&&e.alive).length].join();
+    SETTINGS.mode='dm';return o;})()`);
+  assert.strictEqual(r.lives,2);assert.ok(r.alive,'no reapareció');assert.strictEqual(r.at,'5,9','no reapareció donde cayó');
+  assert.ok(r.score,'perdió los puntos al caer');assert.strictEqual(r.smg,0,'debe volver con pistola');assert.strictEqual(r.frag,1);assert.ok(r.inv,'sin invencibilidad al reaparecer');
+  assert.ok(r.dead0&&r.same,'el nivel se reinició al caer');
+  assert.strictEqual(r.res,'cont');assert.strictEqual(r.n,9,'la cuenta debe empezar en 9');assert.strictEqual(r.n2,5);
+  assert.strictEqual(r.cont,'play,3,0,1,true,true','CONTINUAR debe seguir donde ibas con 3 vidas y 0 puntos');
+  assert.strictEqual(r.over,'lose','al llegar a 0 debe ser GAME OVER');assert.strictEqual(r.retry,'play,3,0,6','REINTENTAR debe empezar el nivel de nuevo');
+});
+t('arcade: botiquines según la dificultad y solo para ti',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;const o={};
+    for(const d of [1,3,4]){diff=d;startArcade(0);tut=null;ARC.cardT=0;const P=arcPlayer();P.invulnT=1e9;for(const e of ents.filter(e=>e.enemy)){e.alive=false;e.out=true;}
+      placeAt(P,[1,13]);let n=0;for(let i=0;i<30*60;i++){update(1/30);n=Math.max(n,pickups.filter(p=>p.type==='medkit').length);}o[d]=n;}
+    diff=3;startArcade(0);tut=null;ARC.cardT=0;const e=ents.find(e=>e.enemy);e.hp=20;pickups.push({tx:e.tx,ty:e.ty,type:'medkit',amt:40,t:0});updPickups(1/30);o.enemy=e.hp;
+    SETTINGS.mode='dm';return o;})()`);
+  assert.ok(r[1]>=3,'muy fácil: pocos botiquines '+r[1]);assert.strictEqual(r[3],2);assert.strictEqual(r[4],1,'difícil: máximo 1');
+  assert.strictEqual(r.enemy,20,'un enemigo se curó con un botiquín');
 });
 t('arcade: oleadas, rehén y bombas',()=>{
   const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;const o={};arcSave.open=4;dirStack=[];for(const k in keys)keys[k]=false;

@@ -162,7 +162,8 @@ function kill(e,src,w){
  else{e.frags=Math.max(0,e.frags-1);emitEv({k:'feed',parts:[[e.name,e.color],[' se voló solo','#cbd5e1']]});}
  let drop=e.weapon!=='pistol'&&e.inv[e.weapon]>0?e.weapon:null;
  if(!drop)for(const k of ['rifle','shotgun','smg','frag','flash'])if(e.inv[k]>0){drop=k;break;}
- if(ARC&&e.enemy)drop=drop&&Math.random()<.45?drop:Math.random()<.12?'medkit':null; // en Arcade sueltan su arma a veces, con munición normal
+ if(ARC&&e.enemy)drop=drop&&Math.random()<.45?drop:Math.random()<arcMed().drop?'medkit':null;
+ if(ARC&&!e.enemy)drop=null; // en Arcade, al caer pierdes tus armas (como Metal Slug) // en Arcade sueltan su arma a veces, con munición normal
  if(drop)pickups.push({tx:wx(Math.floor(e.x/T)),ty:Math.floor(e.y/T),type:drop,amt:isFinite(e.inv[drop])?e.inv[drop]:PICK[drop].amt,t:0,life:15});
  sparks(e.x,e.y,e.color,18,160);sparks(e.x,e.y,'#7f1d1d',10,90);
  snd('die',e.x,e.y);
