@@ -29,7 +29,10 @@ t('rachas y estadísticas',()=>{
 });
 t('cada aspecto tiene frente y lado de 16 × 20, mano para el arma y nombre',()=>{
   const r=run(`SKINS.map(s=>({k:s.k,n:s.n,v:['down','right'].map(v=>{const g=SKIN_GRID[s.k][v];return g.length===20&&g.every(x=>x.length===16);}),h:!!(SKIN_HAND[s.k]&&SKIN_HAND[s.k].down&&SKIN_HAND[s.k].right),p:!!SKIN_PAL[s.p]}))`);
-  assert.strictEqual(r.length,7);for(const s of r){assert.ok(s.v.every(Boolean),s.k+': tamaño incorrecto');assert.ok(s.h,s.k+': falta la mano');assert.ok(s.p,s.k+': falta la paleta');}
+  assert.strictEqual(r.length,7);
+  // todos miden lo mismo: 18 renglones del casco (o la boina, o la capucha) a las botas, de frente y de lado
+  const alto=run(`SKINS.flatMap(s=>['down','right'].map(v=>{const g=SKIN_GRID[s.k][v],f=g.map((x,i)=>/[^.]/.test(x)?i:-1).filter(i=>i>=0);return s.k+'/'+v+':'+(f[f.length-1]-f[0]+1);}))`);
+  for(const a of alto)assert.ok(a.endsWith(':18'),'altura distinta: '+a);for(const s of r){assert.ok(s.v.every(Boolean),s.k+': tamaño incorrecto');assert.ok(s.h,s.k+': falta la mano');assert.ok(s.p,s.k+': falta la paleta');}
   // todos los aspectos, en todas las vistas, cuadros y armas, generan su dibujo sin letras desconocidas
   const bad=run(`(()=>{const out=[];for(const s of SKINS)for(const f of ['down','up','right'])for(const fr of [0,1,2])for(const w of ['pistol','smg','shotgun','rifle']){
     const pal=Object.assign({},SKIN_BASE,SKIN_PAL[s.p],GUN_PAL,{T:1,t:1,u:1});const c=skinCells(s.k,f,fr,w);
