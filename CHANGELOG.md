@@ -10,6 +10,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.13.2] - 2026-11-26
+
+### Cambiado
+- En celular horizontal la pantalla del juego es más grande (en un iPhone, cerca de 30 % más ancha): la carcasa ahora llega a las orillas del teléfono, incluida la zona de la muesca, sin franjas negras, y la cruceta y los botones son un poco más compactos.
+- Los controles y el contenido respetan las zonas seguras del teléfono (muesca, esquinas y barra de inicio) en vertical y horizontal.
+
 ## [0.13.1] - 2026-11-26
 
 ### Cambiado

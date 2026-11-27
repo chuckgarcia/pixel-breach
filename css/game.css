@@ -296,3 +296,19 @@ body.touch #guideSkip .dk{display:none}body.touch #guideSkip .tc{display:inline}
 body.touch #guide{grid-area:brand;width:100%;font-size:13px;padding:6px 8px;gap:8px}
 body.touch.guiding #game::before{display:none}
 @media (orientation:landscape){body.touch #guide,body.touch.guiding #guide{display:none}}
+/* ==== pantalla completa del teléfono: la carcasa llega a las orillas (muesca y esquinas) y el contenido
+   respeta las zonas seguras; en horizontal los controles son un poco más compactos para que la pantalla crezca ==== */
+html{background:#0b0d12}
+body.touch #game{padding:max(10px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+@media (orientation:landscape){
+ body.touch #game{padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));gap:10px}
+ body.touch #wrap{min-width:0;max-width:100%}
+ body.touch canvas{width:auto;height:auto;max-width:100%;max-height:calc(100dvh - max(8px,env(safe-area-inset-top)) - max(8px,env(safe-area-inset-bottom)) - 14px)}
+ body.touch #pad{width:124px;height:124px}
+ body.touch #pad::after{inset:12px;background-size:34px 100%,100% 34px}
+ body.touch #pad .u{top:18px}body.touch #pad .d{bottom:16px}body.touch #pad .l{left:19px}body.touch #pad .r{right:19px}
+ body.touch #btns{grid-template-columns:58px 84px;grid-template-rows:58px 84px;gap:6px}
+ body.touch #btns .fire{width:82px;height:82px}
+ body.touch #btns .gran,body.touch #btns .arma{width:56px;height:56px}
+ body.touch.menus canvas,body.touch.sett canvas{max-height:none}
+}
