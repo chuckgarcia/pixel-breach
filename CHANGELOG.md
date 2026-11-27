@@ -10,6 +10,13 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.17.5] - 2026-11-27
+
+### Corregido
+
+- iPhone en vertical: la pantalla del juego baja un poco para que la franja difuminada que iOS pone
+  debajo de la hora y la batería ya no tape la barra de vida ni las armas.
+
 ## [0.17.4] - 2026-11-27
 
 ### Cambiado

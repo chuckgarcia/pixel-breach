@@ -304,6 +304,9 @@ body.touch.guiding #game::before{display:none}
    respeta las zonas seguras; en horizontal los controles son un poco más compactos para que la pantalla crezca ==== */
 html{background:#0b0d12}
 body.touch #game{padding:max(10px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+/* iPhone en vertical difumina una franja debajo de la barra de estado (hora y batería): la pantalla del juego baja
+   un poco para quedar fuera de esa franja; en vertical sobra espacio abajo, así que nada se encoge */
+@media (orientation:portrait){body.touch #game{padding-top:calc(env(safe-area-inset-top) + 28px)}}
 @media (orientation:landscape){
  body.touch #game{padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));gap:10px}
  body.touch #wrap{min-width:0;max-width:100%}
