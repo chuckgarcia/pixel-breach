@@ -10,6 +10,26 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.16.0] - 2026-11-27
+
+### Añadido
+- **Arcade completo: niveles 5 a 10.**
+  - 5 · **El Sargento** (Desierto): mini jefe con escudo, cresta roja, subfusil y 350 de vida, protegido por tiradores. A la mitad de su vida, todos van por ti.
+  - 6 · **Laberinto** (Neón): junta 40 fichas; las cuatro **ALERTA ROJA** dan 6 s en que los enemigos se vuelven azules, huyen sin disparar y tu daño es triple.
+  - 7 · **Huida** (Volcán): la lava avanza una columna cada pocos segundos (más rápido en DIFÍCIL); la extracción está abierta desde el inicio.
+  - 8 · **Apagón** (Búnker): solo ves 3 casillas (ellos, 4). Roba los planos y sal; si nadie te ve, bono de 3,000.
+  - 9 · **Asalto** (Killhouse): al tomar el maletín suena la alarma y llegan refuerzos por las puertas más lejanas.
+  - 10 · **El Comandante** (Búnker): jefe 1.5 veces más grande, con capa e insignias y barra de vida. De frente su armadura recibe ¼ del daño; por la espalda, 1.5×. Fase 2: refuerzos y granadas; fase 3: pierde la capa, la armadura se debilita y se vuelve más rápido.
+- **Enemigos nuevos**: tirador (su mira láser avisa 0.65 s antes del disparo y no deja su puesto hasta verte), granadero (lanza granadas en arco por encima de los muros) y escudo (las balas de frente rebotan; flanquéalo o usa granada).
+- **Prisioneros** en todos los niveles (2 por nivel): al liberarlos te dan un objeto (botiquín, granada o munición) y suman 1,000 puntos cada uno al terminar. Al caer los conservas; solo se pierden si usas CONTINUE.
+- **Récords**: los 10 mejores puntajes con tus iniciales, al terminar el nivel 10 o en GAME OVER; se guardan en el navegador.
+- **Premios**: terminar el nivel 10 desbloquea el aspecto **COMANDANTE**; 30 estrellas desbloquean el color **DORADO**.
+
+### Cambiado
+- Rescate: en DIFÍCIL, los enemigos también le disparan al rehén cuando lo escoltas.
+- Cargas: a 30 s del final llegan 2 refuerzos a la bomba más lejana que quede.
+- Protocolo en línea: el aspecto COMANDANTE y el color DORADO viajan en la sala. **Anfitrión e invitados deben recargar** para tener la v0.16.0.
+
 ## [0.15.6] - 2026-11-27
 
 ### Cambiado

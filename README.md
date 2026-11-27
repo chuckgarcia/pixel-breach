@@ -1,6 +1,6 @@
 # Pixel Breach
 
-**Versión actual: v0.15.6** · [Historial de cambios](CHANGELOG.md)
+**Versión actual: v0.16.0** · [Historial de cambios](CHANGELOG.md)
 
 Deathmatch CQB retro en un laberinto, inspirado en Bomberman y Pac-Man.
 
@@ -9,7 +9,7 @@ Deathmatch CQB retro en un laberinto, inspirado en Bomberman y Pac-Man.
 - Un jugador contra 4 IAs con estilos distintos (asaltante, flanqueador, campero, recolector).
 - En línea sin cuentas: crea una sala, comparte el enlace o el código de 4 letras y juega con hasta 5 combatientes (humanos + IAs).
 - 3 modos: **Deathmatch** (gana quien llegue a las bajas), **Captura la bandera** (lleva la bandera del centro a tu base; hasta 4 combatientes) y **Último en pie** (1, 3 o 5 vidas; gana el último con vidas).
-- Modo **Arcade** para un jugador: misiones nivel por nivel contra el bando de la calavera, con puntos, vidas y avance guardado.
+- Modo **Arcade** para un jugador: 10 misiones contra el bando de la calavera (eliminar, oleadas, rescate, bombas, mini jefe, laberinto con fichas, huida de la lava, apagón, asalto y el jefe final), con puntos, combos, prisioneros, vidas, CONTINUE?, estrellas, récords con iniciales y premios.
 - 7 escenarios: Búnker, Jungla, Ladrillo, Neón (con túneles laterales como Pac-Man), Volcán (con lava), Desierto y Killhouse.
 - Las cajas, arbustos, tambos y llantas se rompen y a veces sueltan armas, granadas o botiquines.
 - Funciona en computadora (teclado) y en celular (controles táctiles).

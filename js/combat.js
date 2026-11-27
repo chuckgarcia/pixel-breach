@@ -14,7 +14,9 @@ function updBullets(dt){
    for(const e of ents){
     if(!e.alive||e===b.owner)continue;
     if(ARC&&b.owner&&((b.owner.enemy&&e.enemy)||(!b.owner.enemy&&e.hostage)))continue; // en Arcade no hay fuego amigo
-    if(Math.abs(e.x-b.x)<11&&Math.abs(e.y-b.y)<11){b.dead=true;const hit=e.alive&&e.invulnT<=0;damage(e,b.dmg,b.owner,b.w);if(hit&&b.owner.st)b.owner.st.hits++;sparks(b.x,b.y,'#f87171',5);break;}
+    const rr=e.rad||11;if(Math.abs(e.x-b.x)<rr&&Math.abs(e.y-b.y)<rr){b.dead=true;
+     if(e.shield&&b.vx*e.dir.dx+b.vy*e.dir.dy<-.5*Math.hypot(b.vx,b.vy)){sparks(b.x,b.y,'#fde047',6);snd('bounce',b.x,b.y);break;} // de frente, el escudo la detiene
+    const hit=e.alive&&e.invulnT<=0;damage(e,b.dmg,b.owner,b.w);if(hit&&b.owner.st)b.owner.st.hits++;sparks(b.x,b.y,'#f87171',5);break;}
    }
    if(b.trav>b.range)b.dead=true;
   }
@@ -24,7 +26,8 @@ function updBullets(dt){
 function updNades(dt){
  for(const g of nades){
   g.fuse-=dt;
-  const sp=Math.hypot(g.vx,g.vy);
+  if(g.lob){g.lob.t+=dt;const k=Math.min(1,g.lob.t/g.lob.d);g.x=g.lob.sx+(g.lob.ex-g.lob.sx)*k;g.y=g.lob.sy+(g.lob.ey-g.lob.sy)*k;} // granada en arco: pasa por encima de los muros
+  const sp=g.lob?0:Math.hypot(g.vx,g.vy);
   if(sp>0){
    const k=Math.max(0,sp-7*T*dt)/sp;g.vx*=k;g.vy*=k;
    const nx=g.x+g.vx*dt,ny=g.y+g.vy*dt;

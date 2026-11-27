@@ -113,7 +113,7 @@ function hostAccept(conn){
    const used=new Set([playerColor,...[...NET.clients.values()].map(x=>x.color)]);
    let color=PALETTE.some(p=>p[1]===d.color)&&!used.has(d.color)?d.color:(PALETTE.find(p=>!used.has(p[1]))||PALETTE[0])[1];
    const name=cleanName(d.name);
-   NET.clients.set(conn.peer,{conn,name,color,seen:performance.now(),skin:SKIN_KEYS.includes(d.skin)?d.skin:'recruitM',ent:null,input:{}});
+   NET.clients.set(conn.peer,{conn,name,color,seen:performance.now(),skin:SKIN_ALL.includes(d.skin)?d.skin:'recruitM',ent:null,input:{}});
    const nc=NET.clients.get(conn.peer);
    if(state==='play'||state==='over'){ // partida en curso: entra como espectador y juega en la siguiente
     nc.spectator=true;
@@ -128,7 +128,7 @@ function hostAccept(conn){
   }else if(d.t==='ready'&&c&&state==='lobby'){ // un invitado avisa que está listo (o ya no)
    c.ready=!!d.r;if(!c.ready&&NET.count)hostCancelCount();hostLobbyUpdate();
   }else if(d.t==='skin'&&c&&state!=='play'){ // un invitado cambia su aspecto en la sala
-   if(SKIN_KEYS.includes(d.k)){c.skin=d.k;hostLobbyUpdate();}
+   if(SKIN_ALL.includes(d.k)){c.skin=d.k;hostLobbyUpdate();}
   }else if(d.t==='color'&&c&&state!=='play'){ // un invitado cambia su color en la sala
    const taken=new Set([playerColor,...[...NET.clients.values()].filter(x=>x!==c).map(x=>x.color)]);
    if(PALETTE.some(p=>p[1]===d.c)&&!taken.has(d.c)){c.color=d.c;hostLobbyUpdate();}else hostLobbyUpdate();
@@ -248,7 +248,7 @@ function clientStart(d){
  if(!Array.isArray(d.roster))return;
  myId=d.myId|0;if(DIFF[d.diff])diff=d.diff;setTheme(d.theme);NET.fog=d.fog!==false;
  grid=new Uint8Array(COLS*ROWS);crateHP=new Uint8Array(COLS*ROWS);vis=new Uint8Array(COLS*ROWS).fill(1);applyGridStr(String(d.g||''));
- ents=d.roster.slice(0,9).map((r,i)=>({id:i,isPlayer:!!r.h,name:cleanName(r.n),style:r.s?String(r.s).slice(0,12):null,color:/^#[0-9a-f]{6}$/i.test(r.c)?r.c:'#94a3b8',skin:SKIN_KEYS.includes(r.k)?r.k:'recruitM',
+ ents=d.roster.slice(0,9).map((r,i)=>({id:i,isPlayer:!!r.h,name:cleanName(r.n),style:r.s?String(r.s).slice(0,12):null,color:/^#[0-9a-f]{6}$/i.test(r.c)?r.c:'#94a3b8',skin:SKIN_ALL.includes(r.k)?r.k:'recruitM',
   x:-99,y:-99,nx:-99,ny:-99,tx:0,ty:0,ntx:0,nty:0,speed:PLAYER_SPEED,tp:-1,dir:RIGHT,moving:false,hp:100,alive:false,invulnT:0,hurtT:0,blindT:0,frags:0,deaths:0,weapon:'pistol',respawnT:0,
   inv:{pistol:Infinity,smg:0,shotgun:0,rifle:0,frag:1,flash:0},aw:{},gone:false}));
  if(myId>=0&&!ents[myId])myId=-1;NET.spectating=myId<0;
@@ -336,7 +336,7 @@ function renderLobby(){
  $('lshare').style.display=navigator.share?'':'none';
  const box=$('lplayers');box.textContent='';
  players.forEach(p=>{const r=document.createElement('div');const i=document.createElement('i');i.style.background=/^#[0-9a-f]{6}$/i.test(p.color)?p.color:'#94a3b8';
-  const n=document.createElement('span');n.textContent=cleanName(p.name);const sm=document.createElement('small');sm.textContent=[p.host?'anfitrión':'',SKIN_KEYS.includes(p.skin)?skinOf(p.skin).n.toLowerCase():''].filter(Boolean).join(' · ');
+  const n=document.createElement('span');n.textContent=cleanName(p.name);const sm=document.createElement('small');sm.textContent=[p.host?'anfitrión':'',SKIN_ALL.includes(p.skin)?skinOf(p.skin).n.toLowerCase():''].filter(Boolean).join(' · ');
   const rd=document.createElement('em');rd.className=p.ready?'rdy on':'rdy';rd.textContent=p.host?'':p.ready?'✓ LISTO':'esperando';
   r.append(i,n,sm,rd);box.appendChild(r);});
  const an=host?NET.aiNames:(NET.lobby&&Array.isArray(NET.lobby.an)?NET.lobby.an:[]);

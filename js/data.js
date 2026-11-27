@@ -2,7 +2,7 @@
 // Pixel Breach — Versión, constantes, escenarios, armas, roles y estado global
 // Versionado semántico vMAYOR.MENOR.PARCHE (ver CHANGELOG.md).
 // Cambios en el protocolo en línea suben MENOR: anfitrión e invitado deben coincidir en MAYOR.MENOR.
-const VERSION='0.15.6';
+const VERSION='0.16.0';
 const cv=document.getElementById('c'), ctx=cv.getContext('2d');
 const T=32,COLS=21,ROWS=15,HUD=44,W=COLS*T,H=ROWS*T;
 const FLOOR=0,WALL=1,CRATE=2,LAVA=3; // LAVA: no se puede pisar, pero las balas, granadas y la vista pasan por encima
@@ -70,7 +70,8 @@ const PERS=[
 ];
 // colores para el jugador: ninguno coincide con los de las IAs (rojo, rosa, cian, naranja)
 const PALETTE=[['VERDE','#4ade80'],['AMARILLO','#facc15'],['MORADO','#a78bfa'],['AZUL','#3b82f6'],['BLANCO','#f1f5f9'],['CAFÉ','#b07d4a'],
- ['LIMA','#bef264'],['ÍNDIGO','#6366f1'],['GRIS','#9ca3af'],['MAGENTA','#c026d3'],['VINO','#9f1239'],['TURQUESA','#0d9488']];
+ ['LIMA','#bef264'],['ÍNDIGO','#6366f1'],['GRIS','#9ca3af'],['MAGENTA','#c026d3'],['VINO','#9f1239'],['TURQUESA','#0d9488'],['DORADO','#d4a017']]; // DORADO se desbloquea con 30 estrellas en el Arcade
+const GOLD='#d4a017';
 const AI_NAMES=['RON','ICE','FRANK','VIPER','DOC','MAX','TANK','RAZOR','GHOST','BLAZE','ZED','HAWK','JACK','NOVA','REX','DUKE','SARGE','KILO'];
 let playerName='',playerColor=PALETTE[0][1];
 try{const n=localStorage.getItem('pb_name'),c=localStorage.getItem('pb_color');if(n)playerName=n.slice(0,10);if(PALETTE.some(p=>p[1]===c))playerColor=c;}catch(e){}

@@ -5,7 +5,7 @@ function computeVis(){
  const p=me();vis.fill(0);
  const pts=[[0,0],[-10,-10],[10,-10],[-10,10],[10,10]];
  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
-  const cx=x*T+T/2,cy=y*T+T/2;if(Math.hypot(cx-p.x,cy-p.y)>10*T)continue;
+  const cx=x*T+T/2,cy=y*T+T/2;if(Math.hypot(cx-p.x,cy-p.y)>(ARC&&ARC.dark?ARC.dark+.5:10)*T)continue; // APAGÓN: solo ves unas casillas
   for(const [ox,oy] of pts)if(losPx(p.x,p.y,cx+ox,cy+oy)){vis[idx(x,y)]=1;break;}
  }
 }
@@ -32,7 +32,7 @@ function tickFx(dt){ // efectos visuales locales (anfitrión, invitado y un juga
  modeTick(dt);
  shake=Math.max(0,shake-dt*30);flashA=Math.max(0,flashA-dt*.55);
  if(theme.lava&&grid&&Math.random()<dt*8){for(let k=0;k<6;k++){const i=ri(0,grid.length-1);if(grid[i]===LAVA){const x=(i%COLS)*T+rnd(6,26),y=((i/COLS)|0)*T+rnd(6,26);parts.push({x,y,vx:rnd(-8,8),vy:rnd(-60,-30),t:rnd(.4,.8),life:.8,col:Math.random()<.5?'#fb923c':'#fde047',s:2});break;}}}
- const m=me();fogOn=(NET?NET.fog!==false:fog)&&m&&m.alive; // en línea manda el anfitrión
+ const m=me();fogOn=((NET?NET.fog!==false:fog)||!!(ARC&&ARC.dark))&&m&&m.alive; // en línea manda el anfitrión
  if(fogOn)computeVis();
 }
 // jugador humano conectado (en el anfitrión): usa lo que manda su dispositivo

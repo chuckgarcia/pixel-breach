@@ -98,10 +98,10 @@ t('bandera: al reaparecer vuelves a tu base y la IA que la lleva corre a la suya
   assert.ok(r.back,'no reapareció en su base');assert.strictEqual(r.g,r.b);
 });
 t('arcade: los mapas miden 21 × 15, tienen borde, tú, extracción y todo es alcanzable',()=>{
-  const r=run(`ARC_LEVELS.map((L,i)=>{const m=L.map;let P=null;const want=[];m.forEach((row,y)=>[...row].forEach((c,x)=>{if(c==='P')P=[x,y];if(/[EHBW]/.test(c)||ENEMY[c])want.push([x,y]);}));
-    const seen=new Set([P+'']),q=[P];while(q.length){const [x,y]=q.shift();for(const d of DIRS){const nx=x+d.dx,ny=y+d.dy,c=(m[ny]||'')[nx];if(!c||c==='#'||c==='~')continue;const k=[nx,ny]+'';if(!seen.has(k)){seen.add(k);q.push([nx,ny]);}}}
-    return {i,size:m.length===15&&m.every(r=>r.length===21),border:m[0]==='#'.repeat(21)&&m[14]==='#'.repeat(21)&&m.every(r=>r[0]==='#'&&r[20]==='#'),
-      P:!!P,E:m.join('').split('E').length===2,lost:want.filter(w=>!seen.has(w+'')).length,goal:['kill','waves','rescue','bombs'].includes(L.goal),txt:L.text.length===2};})`);
+  const r=run(`ARC_LEVELS.map((L,i)=>{const m=L.map;let P=null;const want=[];m.forEach((row,y)=>[...row].forEach((c,x)=>{if(c==='P')P=[x,y];if(/[EHBWXR$]/.test(c)||ENEMY[c])want.push([x,y]);}));
+    const seen=new Set([P+'']),q=[P];while(q.length){const [x,y]=q.shift();for(const d of DIRS){const nx=THEMES[L.theme].wrap?(x+d.dx+21)%21:x+d.dx,ny=y+d.dy,c=(m[ny]||'')[nx];if(!c||c==='#'||c==='~')continue;const k=[nx,ny]+'';if(!seen.has(k)){seen.add(k);q.push([nx,ny]);}}}
+    return {i,size:m.length===15&&m.every(r=>r.length===21),border:m[0]==='#'.repeat(21)&&m[14]==='#'.repeat(21)&&m.every((r,y)=>(r[0]==='#'&&r[20]==='#')||(THEMES[L.theme].wrap&&r[0]!=='#'&&r[20]!=='#')),
+      P:!!P,E:m.join('').split('E').length===2,lost:want.filter(w=>!seen.has(w+'')).length,goal:['kill','waves','rescue','bombs','boss','coins','escape','intel','case'].includes(L.goal),txt:L.text.length===2};})`);
   for(const l of r){assert.ok(l.size&&l.border&&l.P&&l.E&&l.goal&&l.txt,'nivel '+(l.i+1)+': '+JSON.stringify(l));assert.strictEqual(l.lost,0,'nivel '+(l.i+1)+': hay cosas fuera de alcance');}
 });
 t('arcade: los aspectos del bando enemigo se dibujan completos y miden lo mismo',()=>{
@@ -240,5 +240,62 @@ t('arcade: nivel 1 se reagrupan a la mitad; nivel 2 entran por la puerta más le
   assert.ok(r.before&&r.regroup,'no se reagruparon al caer la mitad');
   assert.strictEqual(r.last2,4);assert.strictEqual(r.last3,5);assert.strictEqual(r.last4,6);
   assert.ok(r.far,'la oleada no entró por la puerta más lejana');assert.strictEqual(r.doors,3,'la última oleada no entró por las 3 puertas');
+});
+t('arcade 5–10: escudo, armadura, granada en arco, láser, fichas, ALERTA ROJA, lava, planos, maletín y fases del jefe',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=10;diff=3;const o={};
+    const lv=i=>{startArcade(i);tut=null;ARC.cardT=0;const P=arcPlayer();P.invulnT=1e9;return P;};
+    // escudo: de frente no le pasa nada, por la espalda sí
+    let P=lv(8);const k=ents.find(e=>e.etype==='k');k.invulnT=0;placeAt(k,[10,9]);k.dir=DIRS[3];const h0=k.hp;
+    const shot=(vx)=>{bullets.push({x:k.x+(vx>0?-14:14),y:k.y,vx,vy:0,owner:P,dmg:25,range:300,trav:0,crate:1,color:'#fff',checked:{},w:'pistol'});for(let i=0;i<8;i++)updBullets(1/60);};
+    shot(300);o.front=k.hp===h0;shot(-300);o.back=k.hp<h0; // mira a la izquierda: la bala que viene de la izquierda le pega al escudo
+    // armadura del Comandante: de frente 1/4, por la espalda 1.5×
+    P=lv(9);const C=ARC.boss;C.invulnT=0;C.dir=DIRS[2];placeAt(P,[C.tx,C.ty+3]);const c0=C.hp;damage(C,40,P,'rifle');o.armorF=c0-C.hp;placeAt(P,[C.tx,C.ty-1]);const c1=C.hp;damage(C,40,P,'rifle');o.armorB=c1-C.hp;
+    o.scale=C.scale===1.5&&C.rad>11;
+    // fases
+    C.hp=C.maxHp*.6;update(1/30);o.p2=ARC.phase;C.hp=C.maxHp*.3;update(1/30);o.p3=ARC.phase===3&&C.armorWeak;
+    for(let i=0;i<30*2;i++)update(1/30);o.reinf=arcAlive().filter(e=>e.etype==='r').length;
+    C.hp=1;C.invulnT=0;damage(C,50,P,'rifle');update(1/30);o.bossDown=ARC.exitOpen;
+    // granada en arco: pasa por encima del muro
+    P=lv(6);const g=ents.find(e=>e.etype==='g');for(const e of arcAlive())if(e!==g){e.alive=false;e.out=true;}
+    placeAt(g,[5,5]);placeAt(P,[5,3]);reveal(g.ai,P,true);g.lobT=0;g.blindT=0;arcTickExtra(1/30,ARC_LEVELS[6],P);o.lob=nades.some(n=>n.lob);
+    // lava: avanza, mata y la salida está abierta desde el inicio
+    o.escOpen=ARC.exitOpen;ARC.lavaT=0;arcTickExtra(1/30,ARC_LEVELS[6],P);o.lava=tile(1,1)===LAVA&&ARC.lavaX===1;
+    // fichas y ALERTA ROJA
+    P=lv(5);const L6=ARC_LEVELS[5];const coin=[...ARC.coins][0];placeAt(P,[coin%COLS,(coin/COLS)|0]);arcTickExtra(1/30,L6,P);o.coin=ARC.coinsGot===1;
+    const R=ARC.reds[0];placeAt(P,[R.x,R.y]);arcTickExtra(1/30,L6,P);o.red=ARC.redT>5;const e6=arcAlive()[0];e6.invulnT=0;const h6=e6.hp;damage(e6,10,P,'pistol');o.triple=h6-e6.hp===30;
+    o.flee=JSON.stringify(aiGoal(e6))===JSON.stringify(arcFlee(e6));ARC.coinsGot=39;const c2=[...ARC.coins][0];placeAt(P,[c2%COLS,(c2/COLS)|0]);arcTickExtra(1/30,L6,P);o.coinsOpen=ARC.exitOpen;
+    // planos: bono si no te vieron
+    P=lv(7);for(const e of arcAlive())e.ai.known={};placeAt(P,[ARC.item.x,ARC.item.y]);arcTickExtra(1/30,ARC_LEVELS[7],P);o.intel=ARC.item.taken&&ARC.exitOpen&&!ARC.spotted;
+    placeAt(P,ARC.exit);update(1/30);o.stealth=ARC.tally&&ARC.tally.stealth>0;
+    // maletín: alarma y refuerzos
+    P=lv(8);const n0=ents.length;for(const e of arcAlive())e.ai.known={};placeAt(P,[ARC.item.x,ARC.item.y]);arcTickExtra(1/30,ARC_LEVELS[8],P);
+    o.caseReinf=ents.length-n0;o.caseAlarm=arcAlive().every(e=>!!e.ai.known[0]);
+    // tirador: apunta al menos 0.65 s con el láser
+    P=lv(4);const t=ents.find(e=>e.etype==='t');placeAt(t,[1,12]);placeAt(P,[1,8]);t.dir=DIRS[0];t.ai.seeId=-1;for(const e of arcAlive())if(e!==t){e.alive=false;e.out=true;}
+    P.invulnT=0;updAI(t,1/30);o.laser=t.ai.seeId===0&&t.ai.reaction>=.6;
+    SETTINGS.mode='dm';return o;})()`);
+  assert.ok(r.front,'el escudo no detuvo la bala de frente');assert.ok(r.back,'por la espalda debe recibir daño');
+  assert.strictEqual(r.armorF,10,'de frente debe recibir 1/4');assert.strictEqual(r.armorB,60,'por la espalda debe recibir 1.5×');assert.ok(r.scale);
+  assert.strictEqual(r.p2,2);assert.ok(r.p3,'no llegó a la fase 3');assert.ok(r.reinf>=2,'no llegaron refuerzos en la fase 2');assert.ok(r.bossDown,'vencer al jefe no abrió la extracción');
+  assert.ok(r.lob,'el granadero no lanzó en arco');assert.ok(r.escOpen,'en la huida la salida debe estar abierta');assert.ok(r.lava,'la lava no avanzó');
+  assert.ok(r.coin&&r.red&&r.triple&&r.flee,'fichas o ALERTA ROJA: '+JSON.stringify(r));assert.ok(r.coinsOpen,'40 fichas no abrieron la extracción');
+  assert.ok(r.intel&&r.stealth,'planos o bono sin ser visto');assert.strictEqual(r.caseReinf,3,'el maletín no trajo refuerzos');assert.ok(r.caseAlarm);
+  assert.ok(r.laser,'el tirador disparó sin apuntar');
+});
+t('arcade: prisioneros, rehén en DIFÍCIL, refuerzos de bombas, récords y premios',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=10;diff=3;const o={};
+    startArcade(0);tut=null;ARC.cardT=0;let P=arcPlayer();P.invulnT=1e9;const w=ARC.pows[0];placeAt(P,[w.x,w.y]);arcTickExtra(1/30,ARC_LEVELS[0],P);
+    o.pow=ARC.powsN===1&&pickups.length>=1;P.invulnT=0;kill(P,ents[1],'pistol');for(let i=0;i<60;i++)update(1/30);o.keep=ARC.powsN===1;
+    ARC.lives=1;P=arcPlayer();P.invulnT=0;kill(P,ents[1],'pistol');for(let i=0;i<60;i++)update(1/30);arcAgain();o.lost=ARC.powsN===0;
+    diff=4;startArcade(2);tut=null;ARC.cardT=0;ARC.freed=true;o.hunt=arcHuntHostage();diff=3;startArcade(2);ARC.freed=true;o.noHunt=!arcHuntHostage();
+    startArcade(3);tut=null;ARC.cardT=0;P=arcPlayer();P.invulnT=1e9;const n0=ents.length;ARC.bombT=29;arcTickExtra(1/30,ARC_LEVELS[3],P);o.bombReinf=ents.length-n0;
+    arcSave.best=[];ARC.score=5000;arcAskRecord();o.ask=!!(ARC.hs&&ARC.hs.pending);arcSaveRecord('cgr');o.rec=arcSave.best[0].i+':'+arcSave.best[0].s;
+    arcSave.cmd=false;arcSave.gold=false;arcSave.stars=[3,3,3,3,3,3,3,3,3,2];startArcade(9);tut=null;ARC.cardT=0;P=arcPlayer();ARC.exitOpen=true;placeAt(P,ARC.exit);update(1/30);
+    o.rewards=(ARC.rewards||[]).join('|');o.skins=mySkins().includes('commander');
+    SETTINGS.mode='dm';return o;})()`);
+  assert.ok(r.pow,'el prisionero no dio objeto');assert.ok(r.keep,'al caer no debe perder los prisioneros');assert.ok(r.lost,'al continuar debe perderlos');
+  assert.ok(r.hunt&&r.noHunt,'el rehén solo es blanco en DIFÍCIL');assert.strictEqual(r.bombReinf,2,'no llegaron refuerzos a la bomba');
+  assert.ok(r.ask);assert.strictEqual(r.rec,'CGR:5000');
+  assert.ok(r.rewards.includes('ASPECTO COMANDANTE')&&r.rewards.includes('COLOR DORADO'),'premios: '+r.rewards);assert.ok(r.skins,'COMANDANTE no aparece entre tus aspectos');
 });
 console.log(`${ok} pruebas OK`);

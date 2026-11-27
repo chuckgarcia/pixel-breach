@@ -169,8 +169,10 @@ function drawFog(){
 function drawSoldier(e,x,y){
  const d=e.dir,face=d.dy<0?'up':d.dy>0?'down':d.dx>0?'right':'left';
  const frame=e.moving?(Math.floor((e.x+e.y)/7)%2?1:2):0;
- ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-10,y+11,20,4);
- drawSkin(ctx,e.skin,e.color,face,frame,e.hurtT>0,GUN_OF(e.weapon),x,y+13,2);
+ const sc=2*(e.scale||1),col=ARC&&ARC.redT>0&&e.enemy&&!e.bossK?'#3b82f6':e.color; // en ALERTA ROJA los enemigos se ven azules
+ ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-10*sc/2,y+11,20*sc/2,4);
+ drawSkin(ctx,e.skin,col,face,frame,e.hurtT>0,GUN_OF(e.weapon),x,y+13,sc);
+ if(ARC)arcSoldierExtras(e,x,y+13,face,sc);
 }
 function awareOf(e){ // ¿esta IA sabe dónde estoy?
  if(NET&&NET.role==='client'){const v=e.aw&&e.aw[myId];return v===undefined?null:{seen:!!v};}
@@ -193,8 +195,9 @@ function drawNades(){
  for(const g of nades){
   if(!canSee(g.x,g.y))continue;
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(g.x-5,g.y+4,10,3);
-  ctx.fillStyle=g.type==='frag'?'#4d7c0f':'#cbd5e1';ctx.fillRect(g.x-5,g.y-5,10,10);
-  ctx.fillStyle=g.type==='frag'?'#84cc16':'#f8fafc';ctx.fillRect(g.x-3,g.y-3,4,4);
+  const hy=g.lob&&g.lob.t<g.lob.d?Math.sin(Math.PI*g.lob.t/g.lob.d)*26:0; // altura del arco
+  ctx.fillStyle=g.type==='frag'?'#4d7c0f':'#cbd5e1';ctx.fillRect(g.x-5,g.y-5-hy,10,10);
+  ctx.fillStyle=g.type==='frag'?'#84cc16':'#f8fafc';ctx.fillRect(g.x-3,g.y-3-hy,4,4);
   if(Math.floor(g.fuse*(g.fuse<.6?20:6))%2){ctx.fillStyle='#ef4444';ctx.fillRect(g.x-1,g.y-8,3,3);}
  }
 }

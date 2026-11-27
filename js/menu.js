@@ -10,8 +10,11 @@ function syncOverlays(){
   const host=!NET||NET.role==='host';$('again').style.display=host?'':'none';if(!ARC)$('again').textContent='REVANCHA';$('toMenu').textContent=!NET?'MENÚ':host?'SALA':'SALIR';
   if(state==='lobby')renderLobby();}
  {const show=!!(ARC&&state==='play'&&ARC.cardT>0),el=$('readyBtns');if((el.style.display==='flex')!==show)el.style.display=show?'flex':'none';}
- if(state==='over'&&ARC){ // Arcade: SIGUIENTE NIVEL o CONTINUAR
-  const a=$('again'),t=ARC.result==='win'?(arcHasNext()?'SIGUIENTE NIVEL':''):ARC.result==='cont'?'CONTINUAR':'REINTENTAR NIVEL';
+ {const hs=!!(ARC&&state==='over'&&ARC.hs&&ARC.hs.pending),el=$('hsBox'); // iniciales para el récord
+  if((el.style.display==='flex')!==hs){el.style.display=hs?'flex':'none';$('overBtns').style.visibility=hs?'hidden':'visible';
+   if(hs){const n=$('hsName');n.value=(displayName()||'').toUpperCase().replace(/[^A-ZÑ0-9]/g,'').slice(0,3);setTimeout(()=>{try{n.focus();n.select();}catch(e){}},50);}}}
+ if(state==='over'&&ARC){ // Arcade: SIGUIENTE NIVEL, VER RÉCORDS o CONTINUAR
+  const a=$('again'),t=ARC.result==='win'?(arcHasNext()?'SIGUIENTE NIVEL':ARC.lv===ARC_TOTAL-1?'VER RÉCORDS':''):ARC.result==='cont'?'CONTINUAR':ARC.result==='final'?'':'REINTENTAR NIVEL';
   if(t&&a.textContent!==t)a.textContent=t;a.style.display=t?'':'none';if($('toMenu').textContent!=='MENÚ')$('toMenu').textContent='MENÚ';}
  if(diff!==shownDiff){shownDiff=diff;dnameEl.textContent=DIFF[diff].name;}
  $('gearMenu').style.display=(state==='title'&&!menuEl.classList.contains('invite'))||state==='lobby'?'block':'none';
@@ -27,7 +30,7 @@ function showColor(el,c){if(!el||!el.children||el.children.length<2)return;const
 function buildSwatches(){showColor($('cname'),playerColor);if(typeof NET!=='undefined'&&NET&&state==='lobby')showColor($('lcname'),myLobbyColor());} // nombre histórico: refresca los selectores
 function stepColor(d,taken){ // recorre la paleta dando la vuelta; en la sala salta los colores de otros
  let i=colorIdx(state==='lobby'&&typeof NET!=='undefined'&&NET?myLobbyColor():playerColor);
- for(let k=0;k<PALETTE.length;k++){i=(i+d+PALETTE.length)%PALETTE.length;if(!taken||!taken.has(PALETTE[i][1]))return PALETTE[i][1];}
+ for(let k=0;k<PALETTE.length;k++){i=(i+d+PALETTE.length)%PALETTE.length;if(PALETTE[i][1]===GOLD&&!arcSave.gold)continue; /* DORADO: 30 estrellas en el Arcade */if(!taken||!taken.has(PALETTE[i][1]))return PALETTE[i][1];}
  return null;
 }
 $('cprev').addEventListener('click',()=>{playerColor=stepColor(-1);save();buildSwatches();});
@@ -51,6 +54,7 @@ function showMode(){const m=menuMode(),arc=m==='arcade';$('mname').textContent=M
 function showLevel(){$('lvname').textContent=arcLevelLabel(arcSel);if(menuMode()==='arcade')$('playAI').textContent=`JUGAR NIVEL ${arcSel+1}`;}
 function stepLevel(d){arcSel=Math.max(0,Math.min(arcSave.open-1,arcSel+d));showLevel();} // solo los niveles desbloqueados
 $('arcReady').addEventListener('click',()=>arcReady());
+$('hsSave').addEventListener('click',()=>arcSaveRecord($('hsName').value));
 $('lvprev').addEventListener('click',()=>stepLevel(-1));$('lvnext').addEventListener('click',()=>stepLevel(1));
 function stepMode(d,maxHumans){ // maxHumans: en la sala, los humanos que ya hay (bandera admite hasta 4)
  let i=MODE_KEYS.indexOf(menuMode());
@@ -77,7 +81,8 @@ function drawPreview(pvx,color){
 // ---- aspecto: ◀ RECLUTA ♀ ▶ (solo visual: todos miden y resisten lo mismo) ----
 function showSkin(){const n=skinOf(playerSkin).n;for(const id of ['kname','lkname']){const el=$(id);if(el)el.textContent=n;}
  const p=PALETTE[colorIdx(playerColor)];for(const id of ['pv','lpv']){const el=$(id);if(el&&el.setAttribute)el.setAttribute('aria-label',`Vista previa de tu soldado: ${n.replace('♀','versión femenina').replace('♂','versión masculina')}, ${p[0].toLowerCase()}`);}}
-function stepSkin(d){const i=SKIN_KEYS.indexOf(playerSkin);playerSkin=SKIN_KEYS[(i+d+SKIN_KEYS.length)%SKIN_KEYS.length];try{localStorage.setItem('pb_skin',playerSkin);}catch(e){}showSkin();
+const mySkins=()=>SKIN_KEYS.concat(arcSave.cmd?['commander']:[]); // COMANDANTE se gana terminando el Arcade
+function stepSkin(d){const L=mySkins(),i=L.indexOf(playerSkin);playerSkin=L[(i+d+L.length)%L.length];try{localStorage.setItem('pb_skin',playerSkin);}catch(e){}showSkin();
  if(typeof NET!=='undefined'&&NET&&state==='lobby'){if(NET.role==='host')hostLobbyUpdate();else{try{NET.conn.send({t:'skin',k:playerSkin});}catch(e){}}}}
 $('kprev').addEventListener('click',()=>stepSkin(-1));$('knext').addEventListener('click',()=>stepSkin(1));
 $('lkprev').addEventListener('click',()=>stepSkin(-1));$('lknext').addEventListener('click',()=>stepSkin(1));
@@ -115,7 +120,7 @@ function buildHowto(){
  {const pr=PRESETS[presetIdx('dm')];add('DEATHMATCH',`Gana quien llegue a ${pr.f} bajas o tenga más al acabar el tiempo.`,'#4ade80');}
  {const pr=CTF_PRESETS[presetIdx('ctf')];add('CAPTURA LA BANDERA',`Toma la bandera del centro y llévala a tu base (tu punto de aparición). Si te derriban, cae donde estabas; si nadie la toca en ${FLAG_RETURN} s, vuelve al centro. Quien la lleva va más lento y se ve a través de la niebla. Gana quien haga ${pr.c} captura${pr.c>1?'s':''}. Hasta 4 combatientes.`,'#facc15');}
  {const pr=LMS_PRESETS[presetIdx('lms')];add('ÚLTIMO EN PIE',`Cada quien tiene ${pr.l} vida${pr.l>1?'s':''}; sin vidas ya no reapareces y miras la partida. Gana el último con vidas (o, al acabar el tiempo, quien tenga más).`,'#f87171');}
- add('ARCADE',`Un jugador contra el bando de la calavera, nivel por nivel. Cumple la misión y llega a la extracción amarilla. 3 vidas, vida extra a los 10,000 puntos y luego cada 25,000; las bajas seguidas suben el combo. Niveles disponibles: ${ARC_LEVELS.length} de ${ARC_TOTAL}.`,'#60a5fa');
+ add('ARCADE',`Un jugador contra el bando de la calavera, nivel por nivel. Cumple la misión y llega a la extracción amarilla. 10 niveles, del recluta al Comandante. 3 vidas: al caer reapareces ahí mismo; sin vidas, CONTINUE? 9… Vida extra a los 10,000 puntos y luego cada 25,000; las bajas seguidas suben el combo. Libera a los prisioneros: te dan un objeto y suman al bono. Los 10 mejores puntajes se guardan con tus iniciales; al terminar ganas el aspecto COMANDANTE y con 30 estrellas, el color DORADO.`,'#60a5fa');
  add('La pistola es infinita; recoge armas, granadas y botiquines.',undefined,null,'full');
  add('CRÉDITOS',undefined,null,'h');
  add('Idea y diseño','chuckgarcia');add('Desarrollo','Claude (Anthropic)');add('Conexión en línea','PeerJS (licencia MIT)');add('Versión','v'+VERSION);

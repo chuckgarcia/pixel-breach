@@ -29,7 +29,7 @@ function startMatch(humans,nAI,aiNames){
  genMap();bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];heard=[];toast=null;netEvents=[];gridVer++;
  const names=Array.isArray(aiNames)&&aiNames.length>=nAI?aiNames:AI_NAMES.slice().sort(()=>Math.random()-.5); /* en línea: los mismos nombres que se vieron en la sala */
  const styles=PERS.slice().sort(()=>Math.random()-.5);
- ents=humans.map((h,i)=>{const e=makeEnt(true,null,i,h.name);e.color=h.color;e.skin=SKIN_KEYS.includes(h.skin)?h.skin:playerSkin;e.lfc=e.lgc=e.lqc=0;return e;});
+ ents=humans.map((h,i)=>{const e=makeEnt(true,null,i,h.name);e.color=h.color;e.skin=SKIN_ALL.includes(h.skin)?h.skin:playerSkin;e.lfc=e.lgc=e.lqc=0;return e;});
  for(let i=0;i<nAI;i++){const p=nAI>=PERS.length?PERS[i%PERS.length]:styles[i];ents.push(makeEnt(false,p,ents.length,names[i]));}
  myId=0;
  ents.forEach((e,i)=>{spawn(e,SPAWNS[i]);e.st={shots:0,hits:0,kw:{},nades:0,picks:0,best:0};e.streak=0;});
@@ -37,7 +37,8 @@ function startMatch(humans,nAI,aiNames){
  timeLeft=matchTime;pickupT=6;firstBlood=false;announce=null;for(let i=0;i<3;i++)spawnPickup();
  state='play';paused=false;shake=0;flashA=0;winner=null;showToast('ESCENARIO: '+theme.name,'#facc15');tutStart();
 }
-function toTitle(){state='title';ARC=null;flag=null;goalSign=null;gameMode=menuMode();myId=0;setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);genMap();/* el fondo coincide con el escenario elegido */ents=[];bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];}
+function toTitle(){if(ARC&&ARC.hs&&ARC.hs.pending)arcSaveRecord($('hsName').value); // salir no pierde el récord
+ state='title';ARC=null;flag=null;goalSign=null;gameMode=menuMode();myId=0;setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);genMap();/* el fondo coincide con el escenario elegido */ents=[];bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];}
 function endMatch(){
  if(state!=='play')return;
  state='over';winner=[...ents].filter(e=>!e.gone).sort(byScore)[0]||ents[0];
@@ -108,6 +109,8 @@ function damage(e,d,src,w){
  if(!e.alive||e.invulnT>0)return;
  if(!e.isPlayer&&src&&src!==e&&src.alive)reveal(e.ai,src,false);
  if(e.isPlayer&&src&&src!==e)d*=DIFF[diff].taken;
+ if(ARC)d=arcDamage(e,d,src,w); // escudo, armadura del Comandante, ALERTA ROJA
+ if(d<=0)return;
  e.hp-=d;e.hurtT=.12;
  if(e.isPlayer)emitEv({k:'hurt',to:e.id});
  if(e.hp<=0)kill(e,src,w);

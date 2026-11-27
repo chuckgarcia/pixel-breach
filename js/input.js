@@ -35,7 +35,7 @@ function press(c,repeat){
 }
 function release(c){keys[c]=false;dirStack=dirStack.filter(k=>k!==c);if(NET&&NET.role==='client')sendInput();}
 addEventListener('keydown',ev=>{
- if(ev.target&&ev.target.tagName==='INPUT'){if(ev.code==='Enter'){ev.target.blur();if(ev.target.id==='jcode')joinRoom(ev.target.value);else if(inviteCode&&ev.target.id==='pname')joinRoom(inviteCode);else{press('Enter');release('Enter');}}return;}
+ if(ev.target&&ev.target.tagName==='INPUT'){if(ev.code==='Enter'){ev.target.blur();if(ev.target.id==='hsName')arcSaveRecord(ev.target.value);else if(ev.target.id==='jcode')joinRoom(ev.target.value);else if(inviteCode&&ev.target.id==='pname')joinRoom(inviteCode);else{press('Enter');release('Enter');}}return;}
  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Tab'].includes(ev.code))ev.preventDefault();
  press(ev.code,ev.repeat);
 });

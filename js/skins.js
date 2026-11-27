@@ -4,7 +4,7 @@
 const SKINS=[{k:'recruitF',n:'RECLUTA ♀',p:'recruit'},{k:'recruitM',n:'RECLUTA ♂',p:'recruit'},{k:'commandoF',n:'COMANDO ♀',p:'commando'},{k:'commandoM',n:'COMANDO ♂',p:'commando'},
  {k:'operator',n:'OPERADOR',p:'operator'},{k:'gas',n:'ANTIGÁS',p:'gas'},{k:'ghillie',n:'GHILLIE',p:'ghillie'}];
 const SKIN_KEYS=SKINS.map(s=>s.k);
-const skinOf=k=>SKINS.find(s=>s.k===k)||(typeof VSKINS!=='undefined'&&VSKINS.find(s=>s.k===k))||SKINS[1];
+const skinOf=k=>SKINS.find(s=>s.k===k)||(typeof VSKINS!=='undefined'&&VSKINS.find(s=>s.k===k))||(typeof SKIN_EXTRA!=='undefined'&&SKIN_EXTRA.find(s=>s.k===k))||SKINS[1];
 const SKIN_BASE={S:'#f2c18d',s:'#cf8f5d',E:'#1b1b22',W:'#ffffff',A:'#6b3a1f',a:'#4a2814',P:'#3a4250',p:'#2a303b',K:'#1d2129',L:'#7a5230',l:'#a87443'};
 const SKIN_PAL={
  recruit:{H:'#5b6f3c',h:'#7e9455',d:'#3d4c27'},
@@ -55,6 +55,10 @@ SKIN_GRID.vShield={down:["................",".....HHHHHH.....","....HhhHHHHH....
 SKIN_GRID.vColossusC={down:["................","....HHFFFFHH....","...HhhHHHHHHH...","..HhHHHHHHHHHH..","..HHOOOOOOOOHH..","..HOQQOOOOQQOH..","..HOQROOOORQOH..","..HOOOOQQOOOOH..","..HHOQOQOQOQHH..",".hhHHHHHHHHHHhh.","YYHHhTTTTTThHHYY","YHHHTTtTTtTTHHHY","FHHHVYVYVVVVHHHF","FHHDVvVVVVvVDHHF","FFDDVVVTTVVVDDFF","FFDDVVLLLLVVDDFF","FF.PPPPPPPPPP.FF","FF.PPPp..pPPP.FF","F..KKKK..KKKK..F","................"],
  right:["................","....HHFFFFHH....","...HHhhHHHHHH...","..HHhHHHHHHHHH..","..HHHHOOOOOOOOH.","..HHHOQQOOOQQOH.","..HHHOQROOOQROH.","..HHHOOOOQQOOOH.","..HHHHOQOQOQOHH.",".hhHHHHHHHHHHHh.","YHHHHhTTTTTThHYY","hHHHHTTtTTtTTHHh","hHHHHVVYVYVVVHHh","FHHHDVvVVVVvVDH.","FFFDDVVVTTVVVDD.","FFFDDVVLLLLVVDD.","FFF.PPPPPPPPPP..","FF..PPPp..pPPP..","F...KKKK..KKKK..","................"]};
 SKIN_GRID.vGas=SKIN_GRID.gas; // la careta del antigás, con cristales rojos
+// Premio del Arcade: al terminar el nivel 10 puedes vestirte como El Comandante (con tu color en el uniforme)
+const SKIN_EXTRA=[{k:'commander',n:'COMANDANTE',p:'vcolC'}];
+SKIN_GRID.commander=SKIN_GRID.vColossusC;SKIN_HAND.commander=SKIN_HAND.vColossusC;SKIN_BACK.commander=SKIN_BACK.vColossusC;
+const SKIN_ALL=SKIN_KEYS.concat(SKIN_EXTRA.map(s=>s.k)); // los que viajan en línea
 
 // Armas: de lado apuntan hacia adelante; de frente, hacia abajo (de espaldas, hacia arriba y detrás del cuerpo)
 const GUN_PAL={N:'#3a4352',n:'#9aa6b8',w:'#7a5230',x:'#c08a52'};
@@ -133,5 +137,5 @@ function drawSkin(g,skin,color,face,frame,hurt,weapon,cx,feetY,scale){
 }
 const GUN_OF=w=>GUN_SPR[w]?w:'pistol';
 let playerSkin=null;
-try{const s=localStorage.getItem('pb_skin');if(SKIN_KEYS.includes(s))playerSkin=s;}catch(e){}
+try{const s=localStorage.getItem('pb_skin');if(SKIN_ALL.includes(s))playerSkin=s;}catch(e){}
 if(!playerSkin){playerSkin=Math.random()<.5?'recruitF':'recruitM';try{localStorage.setItem('pb_skin',playerSkin);}catch(e){}} // la primera vez: Recluta ♀ o ♂ al azar

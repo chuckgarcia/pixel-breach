@@ -14,9 +14,10 @@ const ARC_CONT=10; // CONTINUE? 9… 8… … 0
 const DIFF_COL={1:'#4ade80',2:'#a3e635',3:'#facc15',4:'#f87171'};
 const arcDiffLabel=()=>`DIFICULTAD ${DIFF[diff].name} · PUNTOS ×${ARC_MULT[diff]}`;
 // ---------- AVANCE GUARDADO (en este navegador) ----------
-const arcSave={open:1,stars:[]};
+const arcSave={open:1,stars:[],best:[],cmd:false,gold:false};
 try{const j=JSON.parse(localStorage.getItem('pb_arc')||'null');if(j&&typeof j==='object'){
- arcSave.open=Math.max(1,Math.min(ARC_LEVELS.length,j.open|0));arcSave.stars=Array.isArray(j.stars)?j.stars.slice(0,ARC_TOTAL).map(n=>Math.max(0,Math.min(3,n|0))):[];}}catch(e){}
+ arcSave.open=Math.max(1,Math.min(ARC_LEVELS.length,j.open|0));arcSave.cmd=!!j.cmd;arcSave.gold=!!j.gold;
+ arcSave.best=Array.isArray(j.best)?j.best.filter(r=>r&&typeof r.i==='string').slice(0,10).map(r=>({i:r.i.replace(/[^A-ZÑ0-9]/g,'').slice(0,3)||'???',s:Math.max(0,r.s|0),lv:Math.max(1,Math.min(ARC_TOTAL,r.lv|0)),d:DIFF[r.d]?r.d:3})):[];arcSave.stars=Array.isArray(j.stars)?j.stars.slice(0,ARC_TOTAL).map(n=>Math.max(0,Math.min(3,n|0))):[];}}catch(e){}
 function arcStore(){try{localStorage.setItem('pb_arc',JSON.stringify(arcSave));}catch(e){}}
 let arcSel=Math.min(arcSave.open,ARC_LEVELS.length)-1; // nivel elegido en el menú
 const arcStars=i=>arcSave.stars[i]|0;
@@ -33,7 +34,8 @@ function arcEnemy(k,id){
  const p=Object.assign({},base,{react:base.react*(D.react||1)*arcPress(ARC?ARC.lv:0).react,speed:base.speed*(D.speed||1)});
  const e=makeEnt(false,p,id,D.n);
  Object.assign(e,{color:VCOL,skin:D.skin,enemy:true,etype:k,maxHp:D.hp,hp:D.hp,weapon:D.w,caps:0,lives:0,out:false,tp:0,
-  inv:{pistol:Infinity,smg:D.w==='smg'?Infinity:0,shotgun:D.w==='shotgun'?Infinity:0,rifle:D.w==='rifle'?Infinity:0,frag:0,flash:0}});
+  inv:{pistol:Infinity,smg:D.w==='smg'?Infinity:0,shotgun:D.w==='shotgun'?Infinity:0,rifle:D.w==='rifle'?Infinity:0,frag:0,flash:0},
+  scale:D.scale||1,rad:D.scale?16:11,shield:!!D.shield,armor:!!D.armor,laser:!!D.laser,hold:!!D.hold,crest:!!D.crest,bossK:!!D.boss,lobT:D.lob?D.lob*.6:0});
  return e;
 }
 function arcPlace(e,x,y){placeAt(e,[x,y]);e.home=[x,y];e.invulnT=0;e.alive=true;}
@@ -47,17 +49,23 @@ function arcLoad(){
  P.skin=playerSkin;P.tp=0;P.caps=0;P.lives=0;P.out=false;P.st={shots:0,hits:0,kw:{},nades:0,picks:0,best:0};
  ents=[P];myId=0;
  Object.assign(ARC,{t:0,killPts:0,kills:0,combo:0,comboT:0,bestCombo:0,startScore:ARC.score,exitOpen:false,exit:null,bombs:[],spawns:[],
-  waves:(L.waves||[]).slice(),waveI:0,waveT:3,hostage:null,freed:false,trail:[],bombT:L.limit||0,cardT:1,cardAge:0,cardArmed:false,deadT:0,downMsg:'',fail:false,result:null,tally:null,waitT:0,contT:0,medT:arcMed().every*.5});
+  waves:(L.waves||[]).slice(),waveI:0,waveT:3,hostage:null,freed:false,trail:[],bombT:L.limit||0,cardT:1,cardAge:0,cardArmed:false,deadT:0,downMsg:'',fail:false,result:null,tally:null,waitT:0,contT:0,medT:arcMed().every*.5,
+  pows:[],powsN:0,coins:new Set(),coinsGot:0,reds:[],redT:0,item:null,spotted:false,lavaX:0,lavaT:4,boss:null,phase:1,reinfT:0,bombReinf:false,dark:L.dark||0});
  L.map.forEach((row,y)=>[...row].forEach((c,x)=>{
   const i=idx(x,y);grid[i]=c==='#'?WALL:c==='+'?CRATE:c==='~'?LAVA:FLOOR;if(c==='+')crateHP[i]=3;
   if(c==='P')placeAt(P,[x,y]);
   else if(c==='E')ARC.exit=[x,y];
   else if(c==='W')ARC.spawns.push([x,y]);
   else if(c==='B')ARC.bombs.push({x,y,prog:0,done:false});
+  else if(c==='X')ARC.pows.push({x,y,freed:false});
+  else if(c==='o')ARC.coins.add(idx(x,y));
+  else if(c==='R')ARC.reds.push({x,y,got:false});
+  else if(c==='$')ARC.item={x,y,taken:false};
   else if(c==='H'){const h=makeEnt(false,{key:'rehen',name:'REHÉN',color:'#e2e8f0',react:1,dodge:0,speed:PLAYER_SPEED},ents.length,'REHÉN');
    Object.assign(h,{hostage:true,color:'#e2e8f0',skin:'recruitM',speed:PLAYER_SPEED*1.08,caps:0,lives:0,out:false,tp:0});arcPlace(h,x,y);ents.push(h);ARC.hostage=h;}
   else if(ENEMY[c]){const e=arcEnemy(c,ents.length);arcPlace(e,x,y);ents.push(e);}
  }));
+ ARC.boss=ents.find(e=>e.bossK)||null;if(L.goal==='escape')ARC.exitOpen=true; // en la huida la salida está abierta desde el inicio
  ARC.alertT=0;ARC.flank=arcPress(ARC.lv).flank;ARC.regroup=false;ARC.total=ents.filter(e=>e.enemy).length;
  if(ARC.waves.length){const n=ARC.waves.length-1;ARC.waves[n]+=({3:'r',4:'ra'})[diff]||'';} // la última oleada crece con la dificultad: 4, 5 en NORMAL, 6 en DIFÍCIL
  if(L.goal==='bombs')for(const e of ents.filter(e=>e.enemy)){ // cada enemigo custodia la bomba más cercana
@@ -147,6 +155,7 @@ function arcTick(dt){
   else if(ARC.bombT<=0){for(const b of ARC.bombs)if(!b.done){fx.push({kind:'boom',x:b.x,y:b.y,t:.6,max:.6});sparksLocal(b.x*T+16,b.y*T+16,'#f97316',20,180);}
    sfx('boom');shake=12;ARC.bombT=0;arcDown('¡LAS BOMBAS EXPLOTARON!',true);if(P.alive){P.invulnT=0;P.hp=0;kill(P,null,'frag');}}
  }
+ arcTickExtra(dt,L,P);
  // llegar a la extracción
  if(ARC.exitOpen&&P.alive&&ARC.exit&&wx(Math.floor(P.x/T))===ARC.exit[0]&&Math.floor(P.y/T)===ARC.exit[1]){
   const h=ARC.hostage;
@@ -191,17 +200,24 @@ function arcRescueAlarm(){
 function arcComplete(){
  const L=ARC_LEVELS[ARC.lv],m=ARC_MULT[diff],P=arcPlayer();
  const time=Math.max(0,Math.round(L.par-ARC.t))*100*m,mission=1000*m,clean=ARC.lostHere?0:1500*m;
+ const pows=ARC.powsN*1000*m,stealth=L.goal==='intel'&&!ARC.spotted?3000*m:0;
  const stars=1+(ARC.t<=L.par?1:0)+(ARC.lostHere?0:1);
- arcAddScore(time+mission+clean);
- ARC.tally={kills:ARC.killPts,n:ARC.kills,combo:ARC.bestCombo,t:ARC.t,par:L.par,time:Math.round(time),mission:Math.round(mission),clean:Math.round(clean),stars};
- arcSave.stars[ARC.lv]=Math.max(arcStars(ARC.lv),stars);arcSave.open=Math.max(arcSave.open,Math.min(ARC_LEVELS.length,ARC.lv+2));arcStore();
+ arcAddScore(time+mission+clean+pows+stealth);
+ ARC.tally={kills:ARC.killPts,n:ARC.kills,combo:ARC.bestCombo,t:ARC.t,par:L.par,time:Math.round(time),mission:Math.round(mission),clean:Math.round(clean),
+  powsN:ARC.powsN,pows:Math.round(pows),stealth:L.goal==='intel'?Math.round(stealth):null,stars};
+ arcSave.stars[ARC.lv]=Math.max(arcStars(ARC.lv),stars);arcSave.open=Math.max(arcSave.open,Math.min(ARC_LEVELS.length,ARC.lv+2));
+ ARC.rewards=[]; // premios: aspecto COMANDANTE al terminar el nivel 10, color DORADO con 30 estrellas
+ if(ARC.lv===ARC_TOTAL-1&&!arcSave.cmd){arcSave.cmd=true;ARC.rewards.push('ASPECTO COMANDANTE');}
+ if(!arcSave.gold&&arcStarsTotal()>=30){arcSave.gold=true;ARC.rewards.push('COLOR DORADO');}
+ arcStore();
  ARC.inv=Object.assign({},P.inv);ARC.weapon=P.weapon;
  ARC.result='win';state='over';sfx('win');
 }
+const arcStarsTotal=()=>arcSave.stars.reduce((a,b)=>a+(b|0),0);
 function arcGameOver(){ARC.result='cont';ARC.contT=ARC_CONT-.01;state='over';sfx('die');} // primero CONTINUE? con cuenta regresiva
 function arcContTick(dt){ // corre en la pantalla de CONTINUE?; al llegar a 0 es GAME OVER
  const before=Math.floor(ARC.contT);ARC.contT-=dt;
- if(ARC.contT<0){ARC.result='lose';sfx('die');}else if(Math.floor(ARC.contT)!==before)sfx('tick');
+ if(ARC.contT<0){ARC.result='lose';sfx('die');arcAskRecord();}else if(Math.floor(ARC.contT)!==before)sfx('tick');
 }
 function arcRespawn(){ // reapareces donde caíste, con pistola, 1 granada y 2.5 s de invencibilidad
  const P=arcPlayer(),s=freeNear(wx(Math.floor(P.x/T)),Math.floor(P.y/T),P);
@@ -217,10 +233,10 @@ function arcSpawnMed(){ // botiquín en una casilla libre, lejos de ti y de la e
 }
 const arcHasNext=()=>ARC&&ARC.lv+1<ARC_LEVELS.length;
 function arcAgain(){ // botón principal del fin: siguiente nivel o continuar
- if(!ARC)return;
- if(ARC.result==='win'){if(!arcHasNext())return;ARC.lv++;ARC.lostHere=false;arcSel=ARC.lv;arcLoad();}
+ if(!ARC||(ARC.hs&&ARC.hs.pending))return; // primero las iniciales del récord
+ if(ARC.result==='win'){if(!arcHasNext()){if(ARC.lv===ARC_TOTAL-1){ARC.result='final';arcAskRecord();}return;}ARC.lv++;ARC.lostHere=false;arcSel=ARC.lv;arcLoad();}
  else if(ARC.result==='cont'){ // CONTINUAR: 3 vidas y puntos en 0; sigues donde ibas (o se reinicia si la misión falló)
-  Object.assign(ARC,{lives:3,score:0,startScore:0,nextLife:ARC_FIRST_LIFE,result:null});ARC.cont++;
+  Object.assign(ARC,{lives:3,score:0,startScore:0,nextLife:ARC_FIRST_LIFE,result:null,powsN:0});ARC.cont++; // al continuar se pierden los prisioneros del nivel
   if(ARC.fail){ARC.inv=null;arcLoad();ARC.lostHere=true;}else{state='play';arcRespawn();}}
  else if(ARC.result==='lose'){ARC.lives=3;ARC.score=0;ARC.nextLife=ARC_FIRST_LIFE;ARC.cont++;ARC.inv=null;ARC.lostHere=false;arcLoad();} // REINTENTAR NIVEL
 }
@@ -230,11 +246,15 @@ const fmtPts=n=>String(Math.max(0,Math.round(n))).padStart(6,'0');
 const fmtT=s=>{s=Math.max(0,Math.ceil(s));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
 function arcObjective(){
  const L=ARC_LEVELS[ARC.lv];
- if(ARC.exitOpen)return ['EXTRACCIÓN ▸','#facc15'];
+ if(ARC.exitOpen)return [L.goal==='escape'?'¡CORRE! ▸':'EXTRACCIÓN ▸',L.goal==='escape'?'#fb923c':'#facc15'];
  if(L.goal==='kill'){const n=ents.filter(e=>e.enemy).length;return [`ENEMIGOS ${n-arcAlive().length}/${n}`,'#f87171'];}
  if(L.goal==='waves')return [`OLEADA ${Math.max(1,ARC.waveI)}/${ARC.waves.length}`,'#f87171'];
  if(L.goal==='rescue')return ['BUSCA AL REHÉN','#e2e8f0'];
  if(L.goal==='bombs')return [`BOMBAS ${ARC.bombs.filter(b=>b.done).length}/${ARC.bombs.length}`,ARC.bombT<20?'#f87171':'#facc15']; // la cuenta va en la etiqueta de arriba
+ if(L.goal==='boss')return [ARC.boss&&ARC.boss.etype==='C'?'VENCE AL JEFE':'VENCE AL SARGENTO','#f87171'];
+ if(L.goal==='coins')return [`FICHAS ${ARC.coinsGot}/${L.need}`,'#fde68a'];
+ if(L.goal==='intel')return [ARC.spotted?'¡TE VIERON!':'BUSCA LOS PLANOS',ARC.spotted?'#f87171':'#93c5fd'];
+ if(L.goal==='case')return ['TOMA EL MALETÍN','#facc15'];
  return ['',''];
 }
 function arcHud(){ // derecha del marcador: puntos y misión
@@ -252,12 +272,15 @@ function drawArcMap(){ // extracción, bombas y la etiqueta del rehén (dentro d
   ctx.fillStyle='#facc15';ctx.fillRect(x-1,y-13,2,6);
   if(b.prog>0&&!b.done){ctx.strokeStyle='#4ade80';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,19,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.min(1,b.prog/2));ctx.stroke();}
   txt(b.done?'✓':fmtT(ARC.bombT),x,y-19,9,b.done?'#4ade80':'#f87171','center',false);}
+ drawArcExtras();
  const h=ARC.hostage;if(h&&h.alive&&canSee(h.x,h.y))txt(ARC.freed?'REHÉN':'¡AYUDA!',h.x,h.y-38,9,ARC.freed?'#e2e8f0':'#facc15','center');
  const P=arcPlayer();
  if(state==='play')for(const f of fx)if(f.kind==='pts'){ctx.globalAlpha=Math.min(1,f.t/f.max*1.5);txt(f.s,f.px,f.py-(1-f.t/f.max)*16,11,'#facc15','center');ctx.globalAlpha=1;}
 }
 function drawArcHud(){ // etiqueta arriba: nivel y vidas; tarjeta de misión; caída
  if(state!=='play')return;
+ if(ARC.redT>0){ctx.fillStyle=`rgba(239,68,68,${.07+.05*Math.sin(clock*12)})`;ctx.fillRect(0,HUD,W,H);txt(`ALERTA ROJA ${Math.ceil(ARC.redT)}`,W/2,HUD+38,12,'#fca5a5','center');}
+ drawArcBoss();
  const bombs=ARC_LEVELS[ARC.lv].goal==='bombs'&&!ARC.exitOpen,t=`NIVEL ${ARC.lv+1}`+(bombs?` · ${fmtT(ARC.bombT)}`:'');ctx.font=`bold ${fsz(11)}px "Courier New",monospace`;const tw=ctx.measureText(t).width,hw=Math.min(5,ARC.lives)*13,w=tw+hw+24,x=W/2-w/2,m=arcPlayer();
  const under=m&&m.alive&&m.y<64&&Math.abs(m.x-W/2)<w/2+20;ctx.globalAlpha=under?.3:1;
  ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(x,HUD+5,w,20);txt(t,x+8,HUD+15,11,bombs&&ARC.bombT<20?'#f87171':'#e2e8f0','left',false);
@@ -274,35 +297,185 @@ function drawArcCard(){
  ctx.strokeStyle='#facc15';ctx.lineWidth=2;ctx.strokeRect(96,HUD+186,W-192,78);
  txt(L.text[0],W/2,HUD+212,14,'#facc15','center');txt(L.text[1],W/2,HUD+238,14,'#facc15','center');
  if(L.nw){const D=ENEMY[L.nw];drawSkin(ctx,D.skin,VCOL,'down',0,false,D.w,W/2-130,HUD+318,2);txt('NUEVO: '+D.n,W/2-100,HUD+296,12,'#cbd5e1','left');
-  txt({r:'pistola · poca vida',a:'subfusil · va directo por ti',s:'escopeta · espera en las esquinas'}[L.nw]||'',W/2-100,HUD+314,11,'#64748b','left',false);}
+  txt({r:'pistola · poca vida',a:'subfusil · va directo por ti',s:'escopeta · espera en las esquinas',t:'rifle · su láser avisa antes del disparo',g:'lanza granadas por encima de los muros',k:'escudo al frente · flanquéalo o usa granada',C:'1.5× más grande · tres fases · rodéalo'}[L.nw]||'',W/2-100,HUD+314,11,'#64748b','left',false);}
  txt(`VIDAS ${ARC.lives}   ·   ${fmtPts(ARC.score)}`,W/2,HUD+350,14,'#f87171','center');
  if(!isTouch)txt('Cuando estés listo: ESPACIO o ENTER',W/2,HUD+376,11,'#94a3b8','center',false);
 }
 function drawArcOver(){
+ if(ARC.result==='final'){drawArcFinal();return;}
  overlay(.86);const L=ARC_LEVELS[ARC.lv];
  if(ARC.result==='win'){
-  const T_=ARC.tally;txt(`¡NIVEL ${ARC.lv+1} COMPLETO!`,W/2,92,26,'#facc15','center');
+  const T_=ARC.tally;txt(`¡NIVEL ${ARC.lv+1} COMPLETO!`,W/2,82,26,'#facc15','center');
   ctx.font=`bold ${fsz(30)}px "Courier New",monospace`;const sw=ctx.measureText('★★★').width;let sx=W/2-sw/2;
-  for(let i=0;i<3;i++){txt('★',sx,136,30,i<T_.stars?'#facc15':'#475569','left');sx+=sw/3;}
-  txt(arcDiffLabel(),W/2,166,12,DIFF_COL[diff]||'#cbd5e1','center'); // con qué dificultad se ganaron las estrellas
-  const rows=[[`BAJAS ${T_.n}`,T_.kills],[`MEJOR COMBO ×${Math.max(1,T_.combo)}`,null],[`TIEMPO ${fmtT(T_.t)} (meta ${fmtT(T_.par)})`,T_.time],['MISIÓN CUMPLIDA',T_.mission],['SIN PERDER VIDA',T_.clean]];
-  rows.forEach(([a,b],i)=>{const y=194+i*26;txt(a,150,y,13,'#e2e8f0');if(b!==null)txt(b?b.toLocaleString('en-US'):'—',W-150,y,13,b?'#4ade80':'#64748b','right');});
-  ctx.fillStyle='#334155';ctx.fillRect(150,326,W-300,2);txt('TOTAL',150,348,16,'#e2e8f0');txt(ARC.score.toLocaleString('en-US'),W-150,348,16,'#facc15','right');
-  if(!arcHasNext())txt(ARC_LEVELS.length<ARC_TOTAL?`¡Superaste los ${ARC_LEVELS.length} niveles disponibles! Los niveles ${ARC_LEVELS.length+1} a ${ARC_TOTAL} llegan pronto.`:'¡MISIÓN CUMPLIDA!',W/2,386,11,'#4ade80','center');
-  else if(!isTouch)txt('ENTER: siguiente nivel   ·   ESC: menú',W/2,386,11,'#94a3b8','center');
+  for(let i=0;i<3;i++){txt('★',sx,122,30,i<T_.stars?'#facc15':'#475569','left');sx+=sw/3;}
+  txt(arcDiffLabel(),W/2,150,12,DIFF_COL[diff]||'#cbd5e1','center'); // con qué dificultad se ganaron las estrellas
+  const rows=[[`BAJAS ${T_.n}`,T_.kills],[`MEJOR COMBO ×${Math.max(1,T_.combo)}`,null],[`TIEMPO ${fmtT(T_.t)} (meta ${fmtT(T_.par)})`,T_.time],['MISIÓN CUMPLIDA',T_.mission],
+   [`PRISIONEROS ${T_.powsN|0} × 1,000`,T_.pows|0]];
+  if(T_.stealth!==null&&T_.stealth!==undefined)rows.push(['SIN QUE TE VIERAN',T_.stealth]);
+  rows.push(['SIN PERDER VIDA',T_.clean]);
+  rows.forEach(([a,b],i)=>{const y=176+i*22;txt(a,150,y,13,'#e2e8f0');if(b!==null)txt(b?b.toLocaleString('en-US'):'—',W-150,y,13,b?'#4ade80':'#64748b','right');});
+  const ly=176+rows.length*22-4;ctx.fillStyle='#334155';ctx.fillRect(150,ly,W-300,2);txt('TOTAL',150,ly+22,16,'#e2e8f0');txt(ARC.score.toLocaleString('en-US'),W-150,ly+22,16,'#facc15','right');
+  const my=ly+54;
+  if(ARC.rewards&&ARC.rewards.length)txt('¡DESBLOQUEASTE: '+ARC.rewards.join(' Y ')+'!',W/2,my,12,'#4ade80','center');
+  else if(!arcHasNext())txt(ARC.lv===ARC_TOTAL-1?'¡VENCISTE AL COMANDANTE!':`¡Superaste los ${ARC_LEVELS.length} niveles disponibles!`,W/2,my,12,'#4ade80','center');
+  else if(!isTouch)txt('ENTER: siguiente nivel   ·   ESC: menú',W/2,my,11,'#94a3b8','center');
  }else if(ARC.result==='cont'){ // CONTINUE? 9… 8…
   const n=Math.max(0,Math.floor(ARC.contT)),pulse=1+.12*Math.max(0,(ARC.contT%1)-.6)*5;
   txt('CONTINUE?',W/2,110,30,'#facc15','center');
   txt(String(n),W/2,200,Math.round(70*pulse),n<=3?'#ef4444':'#e2e8f0','center');
   txt(`NIVEL ${ARC.lv+1} · ${L.name}   ·   PUNTOS ${ARC.score.toLocaleString('en-US')}`,W/2,272,13,'#cbd5e1','center');
-  txt(ARC.fail?'Sigues con 3 vidas: el nivel se reinicia y tus puntos vuelven a 0.':'Sigues donde caíste con 3 vidas; tus puntos vuelven a 0.',W/2,298,12,'#94a3b8','center');
+  txt(ARC.fail?'Sigues con 3 vidas: el nivel se reinicia y tus puntos vuelven a 0.':'Sigues donde caíste con 3 vidas; tus puntos y prisioneros vuelven a 0.',W/2,298,12,'#94a3b8','center');
   if(!isTouch)txt('ENTER: continuar   ·   ESC: menú',W/2,330,11,'#94a3b8','center');
  }else{
-  txt('GAME OVER',W/2,120,34,'#ef4444','center');txt(`NIVEL ${ARC.lv+1} · ${L.name}`,W/2,162,15,'#e2e8f0','center');txt(arcDiffLabel(),W/2,184,11,DIFF_COL[diff]||'#cbd5e1','center');
-  txt(`PUNTOS ${ARC.score.toLocaleString('en-US')}`,W/2,206,18,'#facc15','center');
-  txt('REINTENTAR: empiezas este nivel desde el inicio con 3 vidas.',W/2,262,12,'#cbd5e1','center');
-  if(!isTouch)txt('ENTER: reintentar   ·   ESC: menú',W/2,330,11,'#94a3b8','center');
+  txt('GAME OVER',W/2,84,34,'#ef4444','center');txt(`NIVEL ${ARC.lv+1} · ${L.name}`,W/2,122,15,'#e2e8f0','center');txt(arcDiffLabel(),W/2,142,11,DIFF_COL[diff]||'#cbd5e1','center');
+  txt(`PUNTOS ${ARC.score.toLocaleString('en-US')}`,W/2,168,18,'#facc15','center');
+  drawRecords(204,5);
+  if(!isTouch&&!(ARC.hs&&ARC.hs.pending))txt('ENTER: reintentar nivel   ·   ESC: menú',W/2,330,11,'#94a3b8','center');
  }
 }
 function drawArcPause(){txt(`NIVEL ${ARC.lv+1} · ${ARC_LEVELS[ARC.lv].name}`,W/2,176,16,'#e2e8f0','center');
  const [o,c]=arcObjective();txt(o,W/2,206,13,c,'center');txt(`PUNTOS ${ARC.score.toLocaleString('en-US')}   ·   VIDAS ${ARC.lives}`,W/2,236,13,'#cbd5e1','center');}
+
+// =====================================================================
+// MISIONES DE LOS NIVELES 5 A 10, PRISIONEROS Y ENEMIGOS ESPECIALES
+// =====================================================================
+const POW_ITEMS=[['medkit',45],['frag',20],['smg',20],['shotgun',15]]; // lo que te da un prisionero al liberarlo
+const LAVA_EVERY={1:3.4,2:3,3:2.6,4:2.2}; // segundos que tarda la lava en avanzar una columna
+const arcHuntHostage=()=>!!(ARC&&diff===4&&ARC.freed); // en DIFÍCIL también le disparan al rehén
+function arcFlee(e){ // ALERTA ROJA: van a la esquina más lejana de ti
+ const P=arcPlayer(),C=[[1,1],[COLS-2,1],[1,ROWS-2],[COLS-2,ROWS-2]];
+ C.sort((a,b)=>(Math.abs(b[0]-P.tx)+Math.abs(b[1]-P.ty))-(Math.abs(a[0]-P.tx)+Math.abs(a[1]-P.ty)));
+ return nearestFloor(C[0][0],C[0][1])||C[0];
+}
+function arcDamage(e,d,src,w){
+ if(ARC.redT>0&&src&&src.id===0&&e.enemy)d*=3; // ALERTA ROJA: tu daño es triple
+ if(e.armor&&src&&src!==e&&w!=='frag'){ // armadura del Comandante: de frente aguanta, por la espalda es débil
+  const dx=src.x-e.x,dy=src.y-e.y,l=Math.hypot(dx,dy)||1,dot=(dx*e.dir.dx+dy*e.dir.dy)/l;
+  if(dot>.3)d*=e.armorWeak?.5:.25;else if(dot<-.3)d*=e.armorWeak?2:1.5;
+  if(dot>.3)sparks(e.x+e.dir.dx*10,e.y+e.dir.dy*10,'#fde047',3);
+ }
+ return d;
+}
+function arcSpawnAt(k,near,minP){ // un enemigo en una casilla libre cerca de 'near' y lejos de ti
+ const P=arcPlayer();let s=null;
+ for(let t=0;t<120&&!s;t++){const x=near[0]+ri(-4,4),y=near[1]+ri(-4,4);
+  if(x<1||y<1||x>COLS-2||y>ROWS-2||!walkable(x,y)||tileTaken(null,x,y))continue;if(Math.abs(x-P.tx)+Math.abs(y-P.ty)<(minP||5))continue;s=[x,y];}
+ if(!s)return null;const e=arcEnemy(k,ents.length);arcPlace(e,s[0],s[1]);e.invulnT=.8;ents.push(e);return e;
+}
+function arcFarDoors(){const P=arcPlayer();return ARC.spawns.slice().sort((a,b)=>(Math.abs(b[0]-P.tx)+Math.abs(b[1]-P.ty))-(Math.abs(a[0]-P.tx)+Math.abs(a[1]-P.ty)));}
+function arcAlarm(text){const P=arcPlayer();for(const e of arcAlive())reveal(e.ai,P,false);announce={text,c:'#f87171',t:2};sfx('streak');}
+function arcTickExtra(dt,L,P){
+ const ptx=wx(Math.floor(P.x/T)),pty=Math.floor(P.y/T),m=ARC_MULT[diff];
+ // prisioneros: al tocarlos te dan un objeto y suman al bono del nivel (solo se pierden si usas CONTINUE)
+ if(P.alive)for(const w of ARC.pows)if(!w.freed&&Math.abs(w.x-ptx)+Math.abs(w.y-pty)<=1){
+  w.freed=true;ARC.powsN++;let r=Math.random()*100,type='medkit';for(const [k,p] of POW_ITEMS){r-=p;if(r<=0){type=k;break;}}
+  pickups.push({tx:w.x,ty:w.y,type,amt:PICK[type].amt,t:0});showToast(`¡PRISIONERO LIBERADO! (${ARC.powsN})`,'#4ade80');sfx('pick');
+  fx.push({kind:'pts',px:w.x*T+16,py:w.y*T,t:1,max:1,s:'¡GRACIAS!'});
+ }
+ // granadas en arco (granadero y Comandante desde la fase 2)
+ for(const e of arcAlive()){if(!(ENEMY[e.etype].lob))continue;if(e.etype==='C'&&ARC.phase<2)continue;
+  e.lobT-=dt;const k=e.ai.known[0];
+  if(k&&e.lobT<=0&&e.blindT<=0){const d=Math.abs(k.tx-e.tx)+Math.abs(k.ty-e.ty);
+   if(d>=2&&d<=6){e.lobT=ENEMY[e.etype].lob*rnd(.8,1.2)*(diff>=4?.75:diff<=2?1.4:1);
+    nades.push({x:e.x,y:e.y,vx:0,vy:0,owner:e,type:'frag',fuse:1.6,lob:{sx:e.x,sy:e.y,ex:k.tx*T+16,ey:k.ty*T+16,t:0,d:.9}});snd('throw',e.x,e.y);}}}
+ if(ARC.redT>0)ARC.redT-=dt;
+ if(L.goal==='coins'){ // LABERINTO: fichas y ALERTA ROJA
+  const i=idx(ptx,pty);if(P.alive&&ARC.coins.has(i)){ARC.coins.delete(i);ARC.coinsGot++;arcAddScore(10*m);if(ARC.coinsGot%10===0)sfx('tick');if(ARC.coinsGot>=L.need)arcMissionDone();}
+  for(const r of ARC.reds)if(!r.got&&P.alive&&r.x===ptx&&r.y===pty){r.got=true;ARC.redT=6;arcAddScore(50*m);announce={text:'¡ALERTA ROJA!',c:'#ef4444',t:1.6};sfx('streak');
+   for(const e of arcAlive())e.ai.patrol=null;}
+ }else if(L.goal==='escape'){ // HUIDA: la lava avanza una columna a la vez
+  ARC.lavaT-=dt;if(ARC.lavaT<=0&&ARC.lavaX<COLS-3){ARC.lavaT=LAVA_EVERY[diff]||2.6;ARC.lavaX++;const x=ARC.lavaX;
+   for(let y=1;y<ROWS-1;y++){const j=idx(x,y);if(grid[j]!==WALL){grid[j]=LAVA;crateHP[j]=0;}}gridVer++;pickups=pickups.filter(p=>p.tx!==x);sfx('boom');shake=Math.max(shake,3);
+   for(const e of ents)if(e.alive&&(wx(Math.floor(e.x/T))<=x||e.tx<=x)){e.invulnT=0;if(e.isPlayer){kill(e,null,'frag');ARC.downMsg='¡TE ALCANZÓ LA LAVA!';}else kill(e,null,'frag');}}
+ }else if(L.goal==='intel'||L.goal==='case'){ // APAGÓN y ASALTO: tomar los planos o el maletín
+  const it=ARC.item;
+  if(L.goal==='intel'&&!ARC.spotted&&arcAlive().some(e=>e.ai.known[0]&&e.ai.known[0].seen)){ARC.spotted=true;arcAlarm('¡TE VIERON!');}
+  if(it&&!it.taken&&P.alive&&it.x===ptx&&it.y===pty){it.taken=true;arcMissionDone();sfx('pick');
+   if(L.goal==='case'){arcAlarm('¡TODOS VAN POR TI!');const D=arcFarDoors();[...(L.reinf||'')].forEach((k,n)=>{const e=arcSpawnAt(k,D[n%D.length],6);if(e)reveal(e.ai,P,false);});}
+   else showToast('¡TIENES LOS PLANOS! A LA EXTRACCIÓN','#4ade80');}
+ }else if(L.goal==='boss'){
+  const B=ARC.boss;
+  if(B&&!B.alive){arcMissionDone();}
+  else if(B){const f=B.hp/B.maxHp;
+   if(B.etype==='K'&&ARC.phase<2&&f<=.5){ARC.phase=2;arcAlarm('¡CUBRAN AL SARGENTO!');}
+   if(B.etype==='C'){
+    if(ARC.phase<2&&f<=.66){ARC.phase=2;ARC.reinfT=1;announce={text:'FASE 2: ¡REFUERZOS!',c:'#f87171',t:2};sfx('streak');}
+    if(ARC.phase<3&&f<=.33){ARC.phase=3;B.armorWeak=true;B.speed*=1.3;announce={text:'FASE 3: ¡SIN ARMADURA!',c:'#facc15',t:2};sfx('streak');}
+    if(ARC.phase>=2){ARC.reinfT-=dt;if(ARC.reinfT<=0){ARC.reinfT=diff>=4?10:diff<=2?16:12;const D=arcFarDoors();
+     for(let n=0;n<2&&arcAlive().length<7;n++){const e=arcSpawnAt('r',D[n%D.length],6);if(e)reveal(e.ai,P,false);}}}
+   }}
+ }else if(L.goal==='bombs'&&!ARC.exitOpen&&!ARC.bombReinf&&ARC.bombT<=30){ // CARGAS: a 30 s llegan refuerzos a la última bomba
+  const left=ARC.bombs.filter(b=>!b.done);
+  if(left.length){ARC.bombReinf=true;left.sort((a,b)=>(Math.abs(b.x-ptx)+Math.abs(b.y-pty))-(Math.abs(a.x-ptx)+Math.abs(a.y-pty)));const b=left[0];
+   for(const k of ['a','s']){const e=arcSpawnAt(k,[b.x,b.y],4);if(e)e.home=[b.x,b.y];}showToast('¡REFUERZOS A LA BOMBA MÁS LEJANA!','#f87171');sfx('streak');}
+ }
+}
+// ---------- DIBUJO DE LO NUEVO ----------
+function shieldOverlay(g,x,y,face,sc){ // escudo balístico al frente (no se ve de espaldas)
+ const r=(c,a,b,w,h)=>{g.fillStyle=c;g.fillRect(Math.round(x+a*sc),Math.round(y+b*sc),Math.round(w*sc),Math.round(h*sc));};
+ if(face==='down'){r('#0b0e14',-8,-9,16,15);r('#52525b',-7,-8,14,13);r('#71717a',-7,-8,14,2);r('#0a0a0a',-4,-6,8,2);r('#ef4444',-3,-2,2,2);r('#ef4444',1,-2,2,2);}
+ else if(face==='right'||face==='left'){const d=face==='right'?1:-1,bx=d>0?5:-8;r('#0b0e14',bx,-12,3,18);r('#52525b',bx+(d>0?0:1),-11,2,16);r('#71717a',bx+(d>0?0:1),-11,1,16);}
+}
+function capeOverlay(g,x,feet,sc){ // capa del Comandante, de espaldas
+ const R=[[-5,5],[-5,5],[-6,6],[-6,6],[-7,7],[-7,7],[-7,7],[-8,8],[-8,8],[-8,8]],top=feet-12*sc;
+ R.forEach(([l,r],i)=>{g.fillStyle='#0b0e14';g.fillRect(x+(l-1)*sc,top+i*sc,(r-l+2)*sc,sc);});
+ R.forEach(([l,r],i)=>{g.fillStyle='#7f1d1d';g.fillRect(x+l*sc,top+i*sc,(r-l)*sc,sc);g.fillStyle='#5f1515';for(const k of [-4,0,4])g.fillRect(x+k*sc,top+i*sc,sc,sc);});
+ g.fillStyle='#facc15';g.fillRect(x-5*sc,top,10*sc,sc);
+}
+function arcSoldierExtras(e,x,feet,face,sc){
+ if(e.shield&&face!=='up')shieldOverlay(ctx,x,feet-6*sc,face,sc);
+ if(e.crest){ctx.fillStyle='#0b0e14';ctx.fillRect(x-4*sc,feet-22*sc,8*sc,2*sc);ctx.fillStyle='#ef4444';ctx.fillRect(x-3*sc,feet-21.5*sc,6*sc,1.2*sc);} // cresta roja del Sargento
+ if(e.armor&&face==='up'&&!e.armorWeak)capeOverlay(ctx,x,feet,sc);
+}
+function drawArcExtras(){
+ const L=ARC_LEVELS[ARC.lv];
+ // lava a punto de avanzar
+ if(L.goal==='escape'&&ARC.lavaX<COLS-3){const x=(ARC.lavaX+1)*T,a=.12+.12*Math.sin(clock*10)*(ARC.lavaT<1?1:.3);ctx.fillStyle=`rgba(249,115,22,${a})`;ctx.fillRect(x,T,T,(ROWS-2)*T);}
+ // fichas y ALERTA ROJA
+ if(L.goal==='coins'){ctx.fillStyle='#fde68a';for(const i of ARC.coins){const x=(i%COLS)*T+14,y=((i/COLS)|0)*T+14;if(canSee(x,y))ctx.fillRect(x,y,4,4);}
+  for(const r of ARC.reds)if(!r.got&&canSee(r.x*T+16,r.y*T+16)){const p=5+Math.sin(clock*8)*2;ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(r.x*T+16,r.y*T+16,p+2,0,7);ctx.fill();ctx.fillStyle='#fecaca';ctx.fillRect(r.x*T+14,r.y*T+14,3,3);}}
+ // planos o maletín
+ const it=ARC.item;if(it&&!it.taken&&canSee(it.x*T+16,it.y*T+16)){const x=it.x*T+16,y=it.y*T+16+Math.round(Math.sin(clock*4)*1.5);
+  if(L.goal==='case'){ctx.fillStyle='#0b0e14';ctx.fillRect(x-10,y-6,20,14);ctx.fillStyle='#7a5230';ctx.fillRect(x-9,y-5,18,12);ctx.fillStyle='#facc15';ctx.fillRect(x-3,y-9,6,3);ctx.fillRect(x-1,y,2,3);}
+  else{ctx.fillStyle='#0b0e14';ctx.fillRect(x-9,y-8,18,16);ctx.fillStyle='#60a5fa';ctx.fillRect(x-8,y-7,16,14);ctx.fillStyle='#dbeafe';for(let k=0;k<3;k++)ctx.fillRect(x-6,y-4+k*4,12,1);}
+  txt(L.goal==='case'?'MALETÍN':'PLANOS',x,y-16,9,'#facc15','center',false);}
+ // prisioneros amarrados
+ for(const w of ARC.pows){if(w.freed)continue;const x=w.x*T+16,y=w.y*T+16;if(!canSee(x,y))continue;
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-10,y+11,20,4);drawSkin(ctx,'recruitM','#cbd5e1','down',0,false,'none',x,y+13,2);
+  ctx.fillStyle='#a16207';ctx.fillRect(x-11,y-2,22,3);ctx.fillRect(x-11,y+5,22,2);
+  if(Math.floor(clock*2)%2)txt('¡AYUDA!',x,y-36,9,'#4ade80','center');}
+ // mira láser del tirador
+ for(const e of arcAlive()){if(!e.laser||!(e.ai.seeId>=0)||!(e.ai.reaction>0))continue;
+  const tp=gunTip(e.skin,e.dir.dy<0?'up':e.dir.dy>0?'down':e.dir.dx>0?'right':'left','rifle'),x0=e.x+tp.dx,y0=e.y+tp.dy;let x1=x0,y1=y0;
+  for(let k=0;k<13*T;k+=4){const nx=x0+e.dir.dx*k,ny=y0+e.dir.dy*k;if(blocks(tile(Math.floor(nx/T),Math.floor(ny/T))))break;x1=nx;y1=ny;}
+  ctx.strokeStyle=`rgba(239,68,68,${.45+.4*Math.sin(clock*30)})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();}
+}
+function drawArcBoss(){ // barra de vida del jefe
+ const B=ARC.boss;if(!B||!B.alive||state!=='play')return;
+ const w=300,x=W/2-w/2,y=HUD+H-26,f=Math.max(0,B.hp/B.maxHp),m=arcPlayer(); // abajo, sobre el muro del borde
+ ctx.globalAlpha=m&&m.alive&&m.y>H-70&&Math.abs(m.x-W/2)<w/2+20?.35:1;
+ ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(x-6,y,w+12,22);txt(B.name+(B.etype==='C'?` · FASE ${ARC.phase}`:''),W/2,y+7,9,'#f87171','center',false);
+ ctx.fillStyle='#3f1d1d';ctx.fillRect(x,y+13,w,6);ctx.fillStyle=B.armorWeak?'#facc15':'#ef4444';ctx.fillRect(x,y+13,w*f,6);ctx.globalAlpha=1;
+}
+
+// ---------- RÉCORDS (10 mejores, con iniciales; se guardan en este navegador) ----------
+const arcQualifies=s=>s>0&&(arcSave.best.length<10||s>arcSave.best[arcSave.best.length-1].s);
+function arcAskRecord(){if(ARC&&arcQualifies(ARC.score))ARC.hs={pending:true,rank:-1};}
+function arcSaveRecord(ini){
+ if(!ARC||!ARC.hs||!ARC.hs.pending)return;
+ ini=String(ini||'').toUpperCase().replace(/[^A-ZÑ0-9]/g,'').slice(0,3)||'???';
+ const r={i:ini,s:ARC.score,lv:ARC.lv+1,d:diff};arcSave.best.push(r);arcSave.best.sort((a,b)=>b.s-a.s);arcSave.best=arcSave.best.slice(0,10);
+ ARC.hs={pending:false,rank:arcSave.best.indexOf(r)};arcStore();sfx('win');
+}
+function drawRecords(y0,n){
+ txt('RÉCORDS',W/2,y0,13,'#facc15','center');
+ const L=arcSave.best.slice(0,n);if(!L.length){txt('Todavía no hay récords',W/2,y0+24,11,'#64748b','center');return;}
+ L.forEach((r,i)=>{const y=y0+22+i*18,me=ARC&&ARC.hs&&ARC.hs.rank===i,c=me?'#4ade80':'#cbd5e1';
+  txt(`${i+1}.`,190,y,12,c,'right');txt(r.i,206,y,12,c);txt(r.s.toLocaleString('en-US'),360,y,12,c,'right');txt(`NIV ${r.lv} · ${DIFF[r.d].name}`,380,y,11,me?c:'#64748b');});
+}
+function drawArcFinal(){
+ overlay(.9);txt('¡MISIÓN CUMPLIDA!',W/2,70,28,'#facc15','center');
+ txt(`PUNTOS ${ARC.score.toLocaleString('en-US')}   ·   ${arcDiffLabel()}`,W/2,104,12,'#e2e8f0','center');
+ txt(ARC.cont?`Usaste ${ARC.cont} ${ARC.cont===1?'continue':'continues'}`:'¡Sin usar continues!',W/2,124,11,ARC.cont?'#94a3b8':'#4ade80','center');
+ drawRecords(158,10);
+}

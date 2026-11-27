@@ -8,8 +8,8 @@ function perceive(e,dt){
  const a=e.ai;
  for(const k in a.known){a.known[k].t+=dt;a.known[k].seen=false;}
  for(const o of ents){
-  if(o===e||!o.alive||(ARC&&(o.enemy||o.hostage)))continue; // en Arcade los enemigos solo te buscan a ti
-  if(Math.hypot(e.x-o.x,e.y-o.y)<=SIGHT*T&&losPx(e.x,e.y,o.x,o.y))reveal(a,o,true);
+  if(o===e||!o.alive||(ARC&&(o.enemy||(o.hostage&&!arcHuntHostage()))))continue; // en Arcade te buscan a ti (y en DIFÍCIL, también al rehén)
+  if(Math.hypot(e.x-o.x,e.y-o.y)<=(ARC&&ARC.dark?4:SIGHT)*T&&losPx(e.x,e.y,o.x,o.y))reveal(a,o,true); // en el apagón ellos tampoco ven lejos
  }
  {const c=carrierOf();if(c&&c!==e&&c.alive&&!(a.known[c.id]&&a.known[c.id].seen))reveal(a,c,false);} // a quien lleva la bandera lo ven todos
  for(const k in a.known){const o=ents[k];if(!o||!o.alive||a.known[k].t>MEMORY)delete a.known[k];}
@@ -35,6 +35,7 @@ function nearestEnemy(e){
  return b;
 }
 function patrolGoal(e){
+ if(ARC&&e.hold&&e.home)return e.home; // el tirador no se mueve de su puesto hasta verte
  const a=e.ai;
  if(!a.patrol||a.patrolT<=0||(a.patrol[0]===e.tx&&a.patrol[1]===e.ty)){
   a.patrolT=rnd(6,10);a.patrol=null;
@@ -101,6 +102,7 @@ function aiStep(e,g){
 }
 function aiGoal(e){
  const a=e.ai,P=e.p;
+ if(ARC&&ARC.redT>0&&e.enemy&&!e.bossK)return arcFlee(e); // ALERTA ROJA: huyen de ti
  if(hasFlag(e))return ctfGoal(e); // con la bandera: directo a su base
  const careful=gameMode==='lms'&&(e.lives|0)===1; // con la última vida se cuida más
  if(!ARC&&e.hp<(careful?70:45)){const m=nearestPickup(e,p=>p.type==='medkit');if(m)return [m.p.tx,m.p.ty];}
@@ -152,9 +154,9 @@ function updAI(e,dt){
  }
  // objetivo en línea de tiro
  let best=null;
- for(const o of ents){if(o===e||!o.alive||o.invulnT>0||(ARC&&(o.enemy||o.hostage)))continue;const al=aligned(e,o,13);if(al&&(!best||al.dist<best.al.dist))best={o,al};}
+ for(const o of ents){if(o===e||!o.alive||o.invulnT>0||(ARC&&(o.enemy||(o.hostage&&!arcHuntHostage()))))continue;const al=aligned(e,o,13);if(al&&(!best||al.dist<best.al.dist))best={o,al};}
  if(best){
-  if(a.seeId!==best.o.id){a.seeId=best.o.id;const r=(P.closeReact&&best.al.dist<=3)?P.closeReact:P.react;a.reaction=r*D.react*rnd(.8,1.3)*(tut?1.8:1);/* en la guía las IAs reaccionan más lento */}
+  if(a.seeId!==best.o.id){a.seeId=best.o.id;const r=(P.closeReact&&best.al.dist<=3)?P.closeReact:P.react;a.reaction=r*D.react*rnd(.8,1.3)*(tut?1.8:1);/* en la guía las IAs reaccionan más lento */if(e.laser)a.reaction=Math.max(a.reaction,.65); /* el tirador apunta con láser antes de disparar */}
   a.reaction-=dt;chooseWeapon(e,best.al.dist);
  }else a.seeId=-1;
  // decisión de movimiento (solo en el centro de una casilla)
@@ -188,7 +190,7 @@ function updAI(e,dt){
  }
  stepMove(e,want,dt,false);
  if(a.backing){if(best)e.dir=best.al.dir;if(!e.moving)a.backing=false;} // retrocede de frente a ti
- if(best&&a.reaction<=0&&e.dir===best.al.dir&&a.dodgeT<.35){
+ if(best&&a.reaction<=0&&e.dir===best.al.dir&&a.dodgeT<.35&&!(ARC&&ARC.redT>0&&e.enemy&&!e.bossK)){ // en ALERTA ROJA huyen sin disparar
   const dd=best.al.dist,I=e.inv;
   if(!(I.frag>0&&dd>=2&&dd<=4&&Math.random()<.02&&throwNade(e,'frag'))&&!(I.flash>0&&dd>=2&&dd<=5&&Math.random()<.01&&throwNade(e,'flash')))fire(e);
  }
