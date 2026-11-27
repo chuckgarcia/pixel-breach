@@ -1,6 +1,6 @@
 # Pixel Breach
 
-**Versión actual: v0.13.4** · [Historial de cambios](CHANGELOG.md)
+**Versión actual: v0.14.0** · [Historial de cambios](CHANGELOG.md)
 
 Deathmatch CQB retro en un laberinto, inspirado en Bomberman y Pac-Man.
 
@@ -8,6 +8,7 @@ Deathmatch CQB retro en un laberinto, inspirado en Bomberman y Pac-Man.
 
 - Un jugador contra 4 IAs con estilos distintos (asaltante, flanqueador, campero, recolector).
 - En línea sin cuentas: crea una sala, comparte el enlace o el código de 4 letras y juega con hasta 5 combatientes (humanos + IAs).
+- 3 modos: **Deathmatch** (gana quien llegue a las bajas), **Captura la bandera** (lleva la bandera del centro a tu base; hasta 4 combatientes) y **Último en pie** (1, 3 o 5 vidas; gana el último con vidas).
 - 7 escenarios: Búnker, Jungla, Ladrillo, Arcade (con túneles laterales como Pac-Man), Volcán (con lava), Desierto y Killhouse.
 - Las cajas, arbustos, tambos y llantas se rompen y a veces sueltan armas, granadas o botiquines.
 - Funciona en computadora (teclado) y en celular (controles táctiles).
@@ -49,7 +50,7 @@ el juego funciona igual que antes, solo con conexión directa.
 
 - `index.html`: la página.
 - `css/game.css`: estilos.
-- `js/`: el juego, en el orden en que se carga: `data` (versión y datos), `map`, `entities`, `ai`, `combat`, `audio`, `loop`, `render`, `intro`, `input`, `menu`, `net` (modo en línea) y `ui` (ajustes y controles táctiles).
+- `js/`: el juego, en el orden en que se carga: `data` (versión y datos), `map`, `entities`, `ai`, `combat`, `modes` (captura la bandera y último en pie), `audio`, `loop`, `render`, `intro`, `input`, `menu`, `net` (modo en línea) y `ui` (ajustes y controles táctiles).
 - `sw.js` y `manifest.json`: para instalarlo en el celular y jugar solo sin internet.
 
 ## Soldados y aspectos

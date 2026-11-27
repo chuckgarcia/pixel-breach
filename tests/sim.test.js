@@ -52,4 +52,49 @@ t('las IAs y el jugador llevan un aspecto válido',()=>{
   const r=run(`(()=>{themeChoice='bunker';startMatch();return ents.map(e=>SKIN_KEYS.includes(e.skin));})()`);
   assert.ok(r.every(Boolean));
 });
+t('MODO: PARTIDA tiene opciones propias por modo y se recuerdan',()=>{
+  const r=run(`(()=>{SETTINGS.mode='ctf';SETTINGS.pctf=2;const a=presetLabel(presetIdx());SETTINGS.mode='lms';SETTINGS.plms=0;const b=presetLabel(presetIdx());SETTINGS.mode='dm';const c=presetLabel(presetIdx());SETTINGS.mode='ctf';const d=presetIdx();SETTINGS.mode='dm';return {a,b,c,d};})()`);
+  assert.strictEqual(r.a,'5 CAPTURAS · 8 MIN');assert.strictEqual(r.b,'1 VIDA · 4 MIN');assert.strictEqual(r.c,'NORMAL · 3 MIN · 10 BAJAS');assert.strictEqual(r.d,2);
+});
+for(const k of run('THEME_KEYS')){
+  t(`último en pie (${k}): termina con un solo sobreviviente o por tiempo, y los eliminados no reaparecen`,()=>{
+    const r=run(`(()=>{themeChoice='${k}';diff=3;SETTINGS.mode='lms';SETTINGS.plms=0;startMatch();let back=0;
+      for(let i=0;i<30*260&&state==='play';i++){
+        if(i%15===0){dirStack=[['KeyW','KeyA','KeyS','KeyD'][Math.floor(Math.random()*4)]];keys.Space=Math.random()<.5;}
+        update(1/30);if(i%30===0)render();if(ents.some(e=>e.out&&e.alive))back++;
+      }
+      const r={state,left:playersLeft(),tl:timeLeft,back,lives:ents.map(e=>e.lives),w:winner&&winner.id,top:[...ents].sort(byScore)[0].id};SETTINGS.mode='dm';return r;})()`);
+    assert.strictEqual(r.state,'over');assert.strictEqual(r.back,0,'un eliminado reapareció');
+    assert.ok(r.left<=1||r.tl<=0,`terminó con ${r.left} vivos y ${r.tl}s`);assert.strictEqual(r.w,r.top,'el ganador no es el primero del tablero');
+    assert.ok(r.lives.every(l=>l>=0&&l<=1));
+  });
+}
+t('bandera: se toma al pasar, cae donde muere el portador, vuelve sola a los 20 s y al capturar vuelve al centro',()=>{
+  const r=run(`(()=>{themeChoice='bunker';SETTINGS.mode='ctf';SETTINGS.pctf=1;startMatch();tut=null;const out={};
+    out.n=ents.length;out.bases=ents.every((e,i)=>e.tx===SPAWNS[i][0]&&e.ty===SPAWNS[i][1]);
+    for(const e of ents.slice(1)){e.alive=false;e.respawnT=1e9;}
+    const m=ents[0];placeAt(m,FLAG_HOME);updFlag(.016);out.took=flag.carrier===0;
+    out.slow=(()=>{const s=m.x;placeAt(m,[9,7]);m.x=9*T+T/2;const x0=m.x;stepMove(m,DIRS[1],.1,true);return Math.round((m.x-x0)/(PLAYER_SPEED*T*.1)*100);})();
+    placeAt(m,[3,1]);updFlag(.016);m.invulnT=0;kill(m,null);out.drop=[flag.carrier,flagTile()[0],flagTile()[1],flag.dropT];
+    updFlag(FLAG_RETURN-1);out.still=flagTile().join(',');updFlag(1.1);out.ret=flagTile().join(',');
+    spawn(m,SPAWNS[0]);placeAt(m,FLAG_HOME);updFlag(.016);placeAt(m,SPAWNS[0]);updFlag(.016);out.cap=[m.caps,flag.carrier,flagTile().join(',')];
+    SETTINGS.mode='dm';return out;})()`);
+  assert.strictEqual(r.n,4,'bandera es de hasta 4 combatientes');assert.ok(r.bases,'cada quien nace en su esquina');
+  assert.ok(r.took,'no tomó la bandera');assert.strictEqual(r.slow,85,'el portador debe ir al 85 %');
+  assert.strictEqual(r.drop.slice(0,3).join(','),'-1,3,1','la bandera debe quedar donde cayó');assert.strictEqual(r.drop[3],20);
+  assert.strictEqual(r.still,'3,1','volvió antes de tiempo');assert.strictEqual(r.ret,'10,7','no volvió al centro a los 20 s');
+  assert.strictEqual(r.cap.join('|'),'1|-1|10,7');
+});
+t('bandera: las IAs anotan en partidas simuladas y quien llega a las capturas gana',()=>{
+  const r=run(`(()=>{const res=[];for(const k of ['bunker','jungle','arcade']){themeChoice=k;SETTINGS.mode='ctf';SETTINGS.pctf=1;startMatch();tut=null;
+    for(let i=0;i<30*300&&state==='play';i++)update(1/30);
+    res.push({caps:ents.reduce((a,e)=>a+e.caps,0),w:winner.caps,st:state});}SETTINGS.mode='dm';return res;})()`);
+  assert.ok(r.every(x=>x.st==='over'));assert.ok(r.some(x=>x.w===3),'nadie llegó a 3 capturas: '+JSON.stringify(r));
+});
+t('bandera: al reaparecer vuelves a tu base y la IA que la lleva corre a la suya',()=>{
+  const r=run(`(()=>{themeChoice='bunker';SETTINGS.mode='ctf';startMatch();tut=null;const a=ents[2];
+    a.invulnT=0;kill(a,null);for(let i=0;i<200&&!a.alive;i++)update(1/30);const back=[a.tx,a.ty].join(',')===SPAWNS[2].join(',');
+    placeAt(a,FLAG_HOME);updFlag(.016);const g=aiGoal(a);SETTINGS.mode='dm';return {back,g:g.join(','),b:SPAWNS[2].join(',')};})()`);
+  assert.ok(r.back,'no reapareció en su base');assert.strictEqual(r.g,r.b);
+});
 console.log(`${ok} pruebas OK`);

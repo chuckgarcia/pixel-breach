@@ -111,6 +111,32 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
     await t('si el anfitrión deja de responder, el invitado ve el aviso',async()=>{
       await A.evaluate("window._hb=hostBroadcast;hostBroadcast=()=>{}");await B.waitForFunction("NET&&NET.hostQuiet>2.5",null,{timeout:6000});
       await A.evaluate("hostBroadcast=window._hb");await B.waitForFunction("NET.hostQuiet<1",null,{timeout:4000});});
+    const readyAll=async()=>{for(const P of [B,C]){await P.waitForFunction("state==='lobby'&&!document.getElementById('lready').disabled",null,{timeout:5000});if(!(await P.evaluate('NET.ready')))await P.click('#lready');}
+      await A.waitForFunction("!document.getElementById('lstart').disabled",null,{timeout:5000});await A.click('#lstart');
+      for(const P of [B,C])await P.waitForFunction("state==='play'&&myId>=0",null,{timeout:9000});};
+    await t('captura la bandera en línea: el invitado ve el modo, toma la bandera y anota',async()=>{
+      await A.evaluate("hostToLobby();themeChoice='bunker';SETTINGS.pctf=1");await A.click('#lmNext');
+      assert.strictEqual(await A.evaluate('menuMode()'),'ctf');assert.ok(await A.evaluate('NET.clients.size+1+NET.ais<=4'),'bandera admite hasta 4');
+      await B.waitForFunction("document.getElementById('lsummary').textContent.includes('CAPTURA LA BANDERA · 3 CAPTURAS')",null,{timeout:5000});
+      await readyAll();
+      assert.strictEqual(await B.evaluate('gameMode'),'ctf');assert.ok(await B.evaluate('!!flag'),'el invitado no tiene bandera');
+      // el invitado nace en su base: primero se le mueve fuera para que tomar la bandera no cuente como captura
+      await A.evaluate("for(const e of ents)if(!e.isPlayer){e.alive=false;e.respawnT=1e9;}placeAt(ents[1],nearestFloor(15,11));ents[1].tp++");
+      await B.waitForFunction("me().tx!==baseOf(me())[0]||me().ty!==baseOf(me())[1]",null,{timeout:4000});await B.waitForTimeout(200);
+      await A.evaluate("flag.carrier=1");
+      await B.waitForFunction('hasFlag(me())',null,{timeout:4000});
+      await A.evaluate("placeAt(ents[1],baseOf(ents[1]));ents[1].tp++");
+      await B.waitForFunction('me().caps===1&&!carrierOf()',null,{timeout:5000});
+      assert.strictEqual(await B.evaluate('flagTile().join()'),'10,7','la bandera no volvió al centro');});
+    await t('último en pie en línea: el invitado sin vidas mira la partida y entra en la revancha',async()=>{
+      await A.evaluate("hostToLobby();SETTINGS.plms=1");await A.click('#lmNext');assert.strictEqual(await A.evaluate('menuMode()'),'lms');
+      await readyAll();assert.strictEqual(await B.evaluate('lifeCount'),3);
+      await A.evaluate("ents[1].lives=1;ents[1].invulnT=0;kill(ents[1],ents[0])");
+      await B.waitForFunction('me().out&&!me().alive',null,{timeout:4000});await B.waitForTimeout(3000);
+      assert.ok(await B.evaluate('!me().alive&&state==="play"'),'el eliminado reapareció');
+      await A.evaluate('timeLeft=0.05');await B.waitForFunction("state==='over'",null,{timeout:5000});
+      await A.click('#again');await B.waitForFunction("state==='play'&&me().alive&&me().lives===3",null,{timeout:9000});
+      await A.evaluate("hostToLobby();SETTINGS.mode='dm'");});
     await t('versión incompatible muestra cómo actualizar',async()=>{
       await A.evaluate("sameMinor=()=>false;hostToLobby()");const D=await page('versión vieja');await D.goto(URL+'#'+code);await D.waitForTimeout(300);await D.click('#joinInvite');
       await D.waitForFunction("document.getElementById('netMsg').textContent.includes('Recarga')&&!NET",null,{timeout:12000});assert.ok((await D.innerText('#netMsg')).includes('Recarga la página'));assert.ok(await D.isVisible('#netMsg'));});

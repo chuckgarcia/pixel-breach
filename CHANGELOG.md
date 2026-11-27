@@ -10,6 +10,20 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.14.0] - 2026-11-27
+
+### Añadido
+- Nueva línea **MODO** en el menú y en la sala (arriba de DIFICULTAD); PARTIDA ofrece opciones propias de cada modo y recuerda la última elegida en cada uno.
+- **Captura la bandera**: una bandera neutral en el centro; quien la lleve a su base (su punto de aparición, en una esquina) anota. Si derriban al portador, la bandera cae en su casilla y cualquiera la puede tomar; si nadie la toca en 20 s vuelve al centro. Quien la lleva va un 15 % más lento y se ve a través de la niebla. A 1, 3 o 5 capturas; hasta 4 combatientes.
+  - Bases marcadas con el color de cada jugador, ruta iluminada hacia tu base cuando la llevas y flecha amarilla en la orilla cuando la bandera no está a la vista.
+  - Las IAs juegan según su estilo: el recolector va por la bandera, el asaltante persigue al portador, el flanqueador se adelanta a su ruta y el campero embosca cerca del centro.
+- **Último en pie**: cada quien tiene 1, 3 o 5 vidas; sin vidas ya no reapareces y miras la partida. Gana el último con vidas (al acabar el tiempo, quien tenga más). Con la última vida, las IAs se cuidan más.
+- Al empezar, un letrero explica la meta («LLEVA LA BANDERA A TU BASE · 3 CAPTURAS»). El marcador muestra BANDERA 1/3 o tus vidas en corazones, y el tablero suma la columna CAPTURAS o VIDAS.
+- «¿Cómo se juega?» explica los tres modos.
+
+### Cambiado
+- Protocolo en línea nuevo: el modo, la bandera, las capturas y las vidas viajan en la sala y en cada foto de la partida. **Anfitrión e invitados deben recargar** para tener la v0.14.0.
+
 ## [0.13.4] - 2026-11-26
 
 ### Añadido

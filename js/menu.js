@@ -38,9 +38,17 @@ $('dprev').addEventListener('click',()=>{diff=Math.max(1,diff-1);});
 function stepTheme(d){const i=THEME_OPTS.indexOf(themeChoice);themeChoice=THEME_OPTS[(i+d+THEME_OPTS.length)%THEME_OPTS.length];
  if(themeChoice!=='random'&&(state==='title'||state==='lobby')){setTheme(themeChoice);genMap();} // el fondo muestra el escenario elegido
  $('tname').textContent=themeLabel(themeChoice);$('ltName').textContent=themeLabel(themeChoice);}
-function stepPreset(d){SETTINGS.preset=Math.max(0,Math.min(PRESETS.length-1,(SETTINGS.preset|0)+d));saveSettings();$('pname2').textContent=presetLabel(SETTINGS.preset);$('lpName').textContent=presetLabel(SETTINGS.preset);shownState=null;}
+// PARTIDA ofrece opciones propias de cada modo y recuerda la última elegida en cada uno
+function stepPreset(d){const m=menuMode(),k=MODES[m].key;SETTINGS[k]=Math.max(0,Math.min(MODES[m].p.length-1,presetIdx(m)+d));saveSettings();showMode();shownState=null;}
+function showMode(){const m=menuMode();$('mname').textContent=MODES[m].n;$('lmName').textContent=MODES[m].n;$('pname2').textContent=presetLabel(presetIdx(m));$('lpName').textContent=presetLabel(presetIdx(m));}
+function stepMode(d,maxHumans){ // maxHumans: en la sala, los humanos que ya hay (bandera admite hasta 4)
+ let i=MODE_KEYS.indexOf(menuMode());
+ for(let k=0;k<MODE_KEYS.length;k++){i=(i+d+MODE_KEYS.length)%MODE_KEYS.length;if(!maxHumans||MODES[MODE_KEYS[i]].max>=maxHumans)break;}
+ SETTINGS.mode=MODE_KEYS[i];gameMode=SETTINGS.mode;saveSettings();showMode();shownState=null;
+}
+$('mprev').addEventListener('click',()=>stepMode(-1));$('mnext').addEventListener('click',()=>stepMode(1));
 $('pprev').addEventListener('click',()=>stepPreset(-1));$('pnext').addEventListener('click',()=>stepPreset(1));
-$('pname2').textContent=presetLabel(SETTINGS.preset);
+showMode();
 $('tprev').addEventListener('click',()=>stepTheme(-1));$('tnext').addEventListener('click',()=>stepTheme(1));
 $('tname').textContent=themeLabel(themeChoice);
 {const lb=$('logoBox');if(lb&&lb.appendChild){const c=logoCanvas(4,false);c.id='logo';lb.appendChild(c);}} // logotipo en pixel art
@@ -92,8 +100,11 @@ function buildHowto(){
  const C=isTouch?[['CRUCETA','desliza el dedo para moverte'],['FUEGO','disparar (mantén presionado)'],['GRAN','lanzar granada'],['ARMA','cambiar arma'],['II','pausa']]
   :[['WASD / FLECHAS','moverte'],['ESPACIO / J','disparar'],['G / K','lanzar granada'],['Q / L','cambiar arma'],['F','niebla de guerra (en línea la elige el anfitrión)'],['P / ESC','pausa · M sonido · O ajustes']];
  for(const [a,b] of C)add(a,b,'#facc15');
- add('REGLAS',undefined,null,'h');
- {const pr=PRESETS[SETTINGS.preset]||PRESETS[1];add(`Gana quien llegue a ${pr.f} bajas o tenga más al acabar los ${pr.t/60} minutos (cámbialo en PARTIDA). La pistola es infinita; recoge armas, granadas y botiquines.`,undefined,null,'full');}
+ add('MODOS (elige en MODO; la duración en PARTIDA)',undefined,null,'h');
+ {const pr=PRESETS[presetIdx('dm')];add('DEATHMATCH',`Gana quien llegue a ${pr.f} bajas o tenga más al acabar el tiempo.`,'#4ade80');}
+ {const pr=CTF_PRESETS[presetIdx('ctf')];add('CAPTURA LA BANDERA',`Toma la bandera del centro y llévala a tu base (tu punto de aparición). Si te derriban, cae donde estabas; si nadie la toca en ${FLAG_RETURN} s, vuelve al centro. Quien la lleva va más lento y se ve a través de la niebla. Gana quien haga ${pr.c} captura${pr.c>1?'s':''}. Hasta 4 combatientes.`,'#facc15');}
+ {const pr=LMS_PRESETS[presetIdx('lms')];add('ÚLTIMO EN PIE',`Cada quien tiene ${pr.l} vida${pr.l>1?'s':''}; sin vidas ya no reapareces y miras la partida. Gana el último con vidas (o, al acabar el tiempo, quien tenga más).`,'#f87171');}
+ add('La pistola es infinita; recoge armas, granadas y botiquines.',undefined,null,'full');
  add('CRÉDITOS',undefined,null,'h');
  add('Idea y diseño','chuckgarcia');add('Desarrollo','Claude (Anthropic)');add('Conexión en línea','PeerJS (licencia MIT)');add('Versión','v'+VERSION);
 }

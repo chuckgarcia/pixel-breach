@@ -70,21 +70,22 @@ function render(){
  if(state!=='play')fogOn=false;
  const sx=shake>0?Math.round(rnd(-shake,shake)):0,sy=shake>0?Math.round(rnd(-shake,shake)):0;
  ctx.save();ctx.translate(sx,HUD+sy);
- drawMap();drawPickups();drawFx();
+ drawMap();drawModeMap();drawPickups();drawFx();
  if(fogOn){drawFog();drawHeard();}
  drawNades();drawBullets();for(const e of ents)drawEnt(e);drawParts();
+ if(state==='play')drawFlagArrow();
  ctx.restore();
  if(flashA>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(1,flashA)})`;ctx.fillRect(0,HUD,W,H);}
  syncOverlays();
  if(state==='intro'){drawIntro();return;}
  if(state==='title'||state==='lobby'){drawTitle();if(state==='title')drawPreview();else if(NET&&lpvx)drawPreview(lpvx,myLobbyColor());return;}
- drawHUD();drawFeed();
+ drawHUD();drawModeHud();drawFeed();
  if(announce&&state==='play'){const a=Math.min(1,announce.t*2),k=1+Math.max(0,announce.t-1.6)*1.5;ctx.globalAlpha=a;txt(announce.text,W/2,HUD+78,Math.round(22*k),announce.c||'#facc15','center');ctx.globalAlpha=1;}
  if(tut&&state==='play')drawTut();
  const p=me();
  if(state==='over'){
   overlay(.82);txt('FIN DE LA PARTIDA',W/2,100,30,'#facc15','center');
-  txt(winner.id===myId?'¡GANASTE!':`GANÓ ${winner.name}`,W/2,142,18,winner.color,'center');
+  txt(winTitle(winner),W/2,142,18,winner.color,'center');
   if(!winner.isPlayer)txt(winner.style,W/2,166,10,'#94a3b8','center');
   if(!me()&&NET)txt('Entras en la siguiente partida cuando el anfitrión dé REVANCHA',W/2,428,11,'#facc15','center');
   scoreboard(196);
@@ -99,6 +100,9 @@ function render(){
   txt(`Si no vuelve en ${Math.max(0,Math.ceil(15-NET.hostQuiet))} s, regresarás al menú`,W/2,HUD+H/2+18,12,'#cbd5e1','center');
  }else if(!p){ // espectador
   if(Math.floor(clock*1.5)%3!==0)txt('ESPECTADOR · ENTRAS EN LA SIGUIENTE PARTIDA',W/2,HUD+H-22,13,'#facc15','center');
+ }else if(!p.alive&&p.out){ // último en pie: sin vidas, miras hasta el final
+  txt('SIN VIDAS',W/2,HUD+H/2-14,28,'#ef4444','center');
+  if(Math.floor(clock*1.5)%3!==0)txt('Miras la partida hasta que termine',W/2,HUD+H/2+18,13,'#e2e8f0','center');
  }else if(!p.alive){
   txt('ELIMINADO',W/2,HUD+H/2-14,28,'#ef4444','center');
   txt(`Reapareces en ${Math.max(0,p.respawnT).toFixed(1)}`,W/2,HUD+H/2+18,13,'#e2e8f0','center');

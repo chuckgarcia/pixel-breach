@@ -21,7 +21,8 @@ function spawn(e,fixed){
 }
 function startMatch(humans,nAI,aiNames){
  // humans: [{name,color}] — el primero eres tú (anfitrión). Sin argumentos: partida de un jugador.
- humans=humans||[{name:displayName(),color:playerColor,skin:playerSkin}];nAI=nAI===undefined?PERS.length:nAI;
+ humans=humans||[{name:displayName(),color:playerColor,skin:playerSkin}];applyModePreset(menuMode());
+ nAI=nAI===undefined?Math.min(PERS.length,MODES[gameMode].max-humans.length):Math.min(nAI,Math.max(0,MODES[gameMode].max-humans.length)); /* bandera: hasta 4, una base por esquina */
  setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);
  genMap();bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];heard=[];toast=null;netEvents=[];gridVer++;
  const names=Array.isArray(aiNames)&&aiNames.length>=nAI?aiNames:AI_NAMES.slice().sort(()=>Math.random()-.5); /* en línea: los mismos nombres que se vieron en la sala */
@@ -30,14 +31,14 @@ function startMatch(humans,nAI,aiNames){
  for(let i=0;i<nAI;i++){const p=nAI>=PERS.length?PERS[i%PERS.length]:styles[i];ents.push(makeEnt(false,p,ents.length,names[i]));}
  myId=0;
  ents.forEach((e,i)=>{spawn(e,SPAWNS[i]);e.st={shots:0,hits:0,kw:{},nades:0,picks:0,best:0};e.streak=0;});
- {const pr=PRESETS[SETTINGS.preset]||PRESETS[1];matchTime=pr.t;fragLimit=pr.f;}
+ modeStart();
  timeLeft=matchTime;pickupT=6;firstBlood=false;announce=null;for(let i=0;i<3;i++)spawnPickup();
  state='play';paused=false;shake=0;flashA=0;winner=null;showToast('ESCENARIO: '+theme.name,'#facc15');tutStart();
 }
-function toTitle(){state='title';myId=0;setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);genMap();/* el fondo coincide con el escenario elegido */ents=[];bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];}
+function toTitle(){state='title';flag=null;goalSign=null;gameMode=menuMode();myId=0;setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);genMap();/* el fondo coincide con el escenario elegido */ents=[];bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];}
 function endMatch(){
  if(state!=='play')return;
- state='over';winner=[...ents].filter(e=>!e.gone).sort((a,b)=>b.frags-a.frags||a.deaths-b.deaths)[0];
+ state='over';winner=[...ents].filter(e=>!e.gone).sort(byScore)[0]||ents[0];
  onMatchEnd();
 }
 function onMatchEnd(){sfx(winner&&winner.id===myId?'win':'die');
@@ -45,7 +46,7 @@ function onMatchEnd(){sfx(winner&&winner.id===myId?'win':'die');
 
 // movimiento por cuadrícula con deslizamiento suave (estilo Bomberman / Pac-Man)
 function stepMove(e,want,dt,cont){
- let dist=e.speed*T*dt,guard=0;
+ let dist=e.speed*(hasFlag(e)?FLAG_SLOW:1)*T*dt,guard=0; // quien lleva la bandera va más lento
  while(dist>0&&guard++<4){
   if(!e.moving){
    if(!want)return;
@@ -114,7 +115,7 @@ const TUT=[
  {m:()=>`Dispara con ${isTouch?'FUEGO':'ESPACIO'}. Los muros te cubren de las balas`,ok:t=>t.shots>=3},
  {m:()=>'Rompe cajas: a veces sueltan armas, granadas o botiquines',ok:t=>t.picks>=1||t.t>10},
  {m:()=>`Lanza una granada con ${isTouch?'GRAN':'G'}: explota en cruz`,ok:t=>t.nades>=1||t.t>10},
- {m:()=>`Gana quien llegue a ${fragLimit} bajas. ¡Suerte, soldado!`,ok:t=>t.t>5},
+ {m:()=>(gameMode==='ctf'?'Toma la bandera del centro y llévala a tu base':gameMode==='lms'?`Tienes ${lifeCount} vida${lifeCount>1?'s':''}: gana el último en pie`:`Gana quien llegue a ${fragLimit} bajas`)+'. ¡Suerte, soldado!',ok:t=>t.t>5},
 ];
 function tutStart(){tut=null;if(NET)return;try{if(localStorage.getItem('pb_tut'))return;}catch(e){return;}tut={i:0,t:0,moves:0,last:null,shots:0,nades:0,picks:0};}
 function tutTick(dt){
@@ -145,14 +146,14 @@ function drawTut(){
 }
 const STREAKS={2:'¡DOBLE!',3:'¡TRIPLE!',5:'¡IMPARABLE!',7:'¡LEYENDA!'};
 function kill(e,src,w){
- e.streak=0;
+ e.streak=0;dropFlag(e);
  if(src&&src!==e){
   src.streak=(src.streak|0)+1;
   if(src.st){src.st.best=Math.max(src.st.best,src.streak);const k=w||'pistol';src.st.kw[k]=(src.st.kw[k]|0)+1;}
   if(!firstBlood){firstBlood=true;emitEv({k:'ann',t:'PRIMERA SANGRE',n:src.name,c:src.color});}
   else if(STREAKS[src.streak])emitEv({k:'ann',t:STREAKS[src.streak],n:src.name,c:src.color});
  }
- e.alive=false;e.hp=0;e.respawnT=2.2;e.deaths++;
+ e.alive=false;e.hp=0;e.respawnT=2.2;e.deaths++;loseLife(e);
  if(src&&src!==e){src.frags++;if(src.p&&src.p.key==='campero'){src.ai.campT=0;src.ai.relocate=true;}emitEv({k:'feed',parts:[[src.name,src.color],[' ▸ ','#cbd5e1'],[e.name,e.color]]});}
  else{e.frags=Math.max(0,e.frags-1);emitEv({k:'feed',parts:[[e.name,e.color],[' se voló solo','#cbd5e1']]});}
  let drop=e.weapon!=='pistol'&&e.inv[e.weapon]>0?e.weapon:null;

@@ -13,11 +13,11 @@ function update(dt){
  timeLeft-=dt;if(timeLeft<=0){timeLeft=0;endMatch();return;}
  tutTick(dt);
  for(const e of ents){
-  if(!e.alive){e.respawnT-=dt;if(e.respawnT<=0)spawn(e);continue;}
+  if(!e.alive){if(e.out||e.gone)continue;e.respawnT-=dt;if(e.respawnT<=0)spawn(e,gameMode==='ctf'?baseOf(e):null);continue;} // en bandera se reaparece en tu base
   e.cd-=dt;e.gcd-=dt;e.invulnT-=dt;e.hurtT-=dt;
   if(e.isPlayer)(e.id===myId?updPlayer(e,dt):updRemote(e,dt));else if(!(tut&&tut.i===0&&tut.moves===0))updAI(e,dt); /* con la guía, las IAs esperan tu primer paso */
  }
- updBullets(dt);updNades(dt);updPickups(dt);
+ updBullets(dt);updNades(dt);updPickups(dt);updFlag(dt);lmsCheck();
  tickFx(dt);
 }
 function tickFx(dt){ // efectos visuales locales (anfitrión, invitado y un jugador)
@@ -28,6 +28,7 @@ function tickFx(dt){ // efectos visuales locales (anfitrión, invitado y un juga
  for(const h of heard)h.t-=dt;heard=heard.filter(h=>h.t>0);
  if(toast){toast.t-=dt;if(toast.t<=0)toast=null;}
  if(announce){announce.t-=dt;if(announce.t<=0)announce=null;}
+ modeTick(dt);
  shake=Math.max(0,shake-dt*30);flashA=Math.max(0,flashA-dt*.55);
  if(theme.lava&&grid&&Math.random()<dt*8){for(let k=0;k<6;k++){const i=ri(0,grid.length-1);if(grid[i]===LAVA){const x=(i%COLS)*T+rnd(6,26),y=((i/COLS)|0)*T+rnd(6,26);parts.push({x,y,vx:rnd(-8,8),vy:rnd(-60,-30),t:rnd(.4,.8),life:.8,col:Math.random()<.5?'#fb923c':'#fde047',s:2});break;}}}
  const m=me();fogOn=(NET?NET.fog!==false:fog)&&m&&m.alive; // en línea manda el anfitrión

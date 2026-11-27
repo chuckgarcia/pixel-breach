@@ -2,7 +2,7 @@
 // Pixel Breach — Versión, constantes, escenarios, armas, roles y estado global
 // Versionado semántico vMAYOR.MENOR.PARCHE (ver CHANGELOG.md).
 // Cambios en el protocolo en línea suben MENOR: anfitrión e invitado deben coincidir en MAYOR.MENOR.
-const VERSION='0.13.4';
+const VERSION='0.14.0';
 const cv=document.getElementById('c'), ctx=cv.getContext('2d');
 const T=32,COLS=21,ROWS=15,HUD=44,W=COLS*T,H=ROWS*T;
 const FLOOR=0,WALL=1,CRATE=2,LAVA=3; // LAVA: no se puede pisar, pero las balas, granadas y la vista pasan por encima
@@ -25,7 +25,20 @@ const blocks=t=>t===WALL||t===CRATE;
 const SIGHT=9,HEARING=11,MEMORY=6; // casillas de vista, de oído y segundos de memoria de la IA
 const PRESETS=[{n:'RÁPIDA',t:120,f:5},{n:'NORMAL',t:180,f:10},{n:'LARGA',t:300,f:20},{n:'MARATÓN',t:600,f:30}];
 let fragLimit=10,matchTime=180;
-const presetLabel=i=>{const p=PRESETS[i]||PRESETS[1];return `${p.n} · ${p.t/60} MIN · ${p.f} BAJAS`;};
+// ---------- MODOS ----------
+// dm: deathmatch · ctf: captura la bandera (bandera neutral al centro, se lleva a tu base) · lms: último en pie (N vidas)
+const CTF_PRESETS=[{c:1,t:180},{c:3,t:300},{c:5,t:480}],LMS_PRESETS=[{l:1,t:240},{l:3,t:360},{l:5,t:480}];
+const MODES={dm:{n:'DEATHMATCH',p:PRESETS,key:'preset',max:5},ctf:{n:'CAPTURA LA BANDERA',p:CTF_PRESETS,key:'pctf',max:4},lms:{n:'ÚLTIMO EN PIE',p:LMS_PRESETS,key:'plms',max:5}};
+const MODE_KEYS=['dm','ctf','lms'];
+const FLAG_HOME=[10,7],FLAG_RETURN=20,FLAG_SLOW=.85; // la bandera vuelve sola a los 20 s; quien la lleva va 15 % más lento
+let gameMode='dm',capLimit=3,lifeCount=3,flag=null,goalSign=null;
+const menuMode=()=>MODES[SETTINGS.mode]?SETTINGS.mode:'dm';
+function presetIdx(m){m=m||menuMode();const v=SETTINGS[MODES[m].key];return MODES[m].p[v]?v|0:1;}
+function presetLabel(i,m){m=MODES[m]?m:menuMode();const L=MODES[m].p,p=L[i]||L[1];
+ if(m==='ctf')return `${p.c} CAPTURA${p.c>1?'S':''} · ${p.t/60} MIN`;
+ if(m==='lms')return `${p.l} VIDA${p.l>1?'S':''} · ${p.t/60} MIN`;
+ return `${p.n} · ${p.t/60} MIN · ${p.f} BAJAS`;}
+function modeGoal(m){m=m||gameMode;return m==='ctf'?`LLEVA LA BANDERA A TU BASE · ${capLimit} CAPTURA${capLimit>1?'S':''}`:m==='lms'?`ÚLTIMO EN PIE · ${lifeCount} VIDA${lifeCount>1?'S':''}`:`GANA CON ${fragLimit} BAJAS`;}
 const PLAYER_SPEED=4,MOVE_SPREAD=.14; // dispersión extra al disparar caminando
 const rnd=(a,b)=>a+Math.random()*(b-a), ri=(a,b)=>Math.floor(rnd(a,b+1));
 const DIRS=[{dx:0,dy:-1},{dx:1,dy:0},{dx:0,dy:1},{dx:-1,dy:0}];
@@ -66,7 +79,7 @@ const SPAWNS=[[1,1],[19,13],[19,1],[1,13],[10,7],[10,1],[10,13],[1,7],[19,7]];
 // ---------- ESTADO ----------
 let grid=null,crateHP=null,vis=null;
 let ents=[],bullets=[],nades=[],pickups=[],parts=[],fx=[],feed=[],heard=[],toast=null;
-const SETTINGS={sfx:true,sfxVol:.8,music:true,musicVol:.5,vibrate:true,fog:true,preset:1};
+const SETTINGS={sfx:true,sfxVol:.8,music:true,musicVol:.5,vibrate:true,fog:true,preset:1,mode:'dm',pctf:1,plms:1};
 try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem('pb_settings')||'{}'));}catch(e){}
 function saveSettings(){try{localStorage.setItem('pb_settings',JSON.stringify(SETTINGS));}catch(e){}}
 let state='title',diff=3,fog=SETTINGS.fog,muted=!SETTINGS.sfx,paused=false;

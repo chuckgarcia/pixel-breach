@@ -11,6 +11,7 @@ function perceive(e,dt){
   if(o===e||!o.alive)continue;
   if(Math.hypot(e.x-o.x,e.y-o.y)<=SIGHT*T&&losPx(e.x,e.y,o.x,o.y))reveal(a,o,true);
  }
+ {const c=carrierOf();if(c&&c!==e&&c.alive&&!(a.known[c.id]&&a.known[c.id].seen))reveal(a,c,false);} // a quien lleva la bandera lo ven todos
  for(const k in a.known){const o=ents[k];if(!o||!o.alive||a.known[k].t>MEMORY)delete a.known[k];}
 }
 function aligned(e,o,maxT){
@@ -47,6 +48,7 @@ function pickCamp(e,far){
  for(let k=0;k<40;k++){
   const x=ri(1,COLS-2),y=ri(1,ROWS-2);if(!walkable(x,y))continue;
   if(far&&Math.abs(x-e.tx)+Math.abs(y-e.ty)<6)continue; // tras una baja: posición nueva y lejana
+  if(gameMode==='ctf'&&Math.abs(x-FLAG_HOME[0])+Math.abs(y-FLAG_HOME[1])>6)continue; // en bandera, emboscada cerca del centro
   let s=0,bl=-1,bd=null;
   for(const d of DIRS){let l=0;while(l<12&&!blocks(tile(x+d.dx*(l+1),y+d.dy*(l+1))))l++;s+=Math.min(l,8);if(l>bl){bl=l;bd=d;}}
   s-=(Math.abs(x-e.tx)+Math.abs(y-e.ty))*.25;
@@ -57,7 +59,10 @@ function pickCamp(e,far){
 }
 function aiGoal(e){
  const a=e.ai,P=e.p;
- if(e.hp<45){const m=nearestPickup(e,p=>p.type==='medkit');if(m)return [m.p.tx,m.p.ty];}
+ if(hasFlag(e))return ctfGoal(e); // con la bandera: directo a su base
+ const careful=gameMode==='lms'&&(e.lives|0)===1; // con la última vida se cuida más
+ if(e.hp<(careful?70:45)){const m=nearestPickup(e,p=>p.type==='medkit');if(m)return [m.p.tx,m.p.ty];}
+ if(gameMode==='ctf'){const g=ctfGoal(e);if(g&&!(g[0]===e.tx&&g[1]===e.ty))return g;}
  const onlyPistol=!['smg','shotgun','rifle'].some(k=>e.inv[k]>0);
  if(P.key==='recolector'||onlyPistol){
   const pk=nearestPickup(e,p=>p.type!=='medkit'&&e.inv[p.type]<MAXAMMO[p.type]);
@@ -116,10 +121,10 @@ function updAI(e,dt){
    a.dodgeAxisH=null;if(perp.length)want=perp[ri(0,perp.length-1)];
   }
   const relocating=P.key==='campero'&&a.relocate;
-  if(!want&&best&&a.dodgeT<=0&&!relocating){
+  if(!want&&best&&a.dodgeT<=0&&!relocating&&!hasFlag(e)){ /* con la bandera no se detiene a pelear */
    e.dir=best.al.dir;
    const hold={asaltante:1,flanqueador:2,campero:99,recolector:3}[P.key];
-   if(best.al.dist>hold)want=best.al.dir;
+   if(best.al.dist>hold+(gameMode==='lms'&&(e.lives|0)===1?2:0))want=best.al.dir;
   }else if(!want){
    if(P.key!=='campero'&&Math.random()<.05){
     const o=DIRS.filter(d=>walkable(e.tx+d.dx,e.ty+d.dy)&&!(d.dx===-e.dir.dx&&d.dy===-e.dir.dy));

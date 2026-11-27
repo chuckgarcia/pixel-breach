@@ -4,7 +4,7 @@
 // El anfitrión simula la partida completa (IAs incluidas) y manda "fotos" del estado 20 veces por segundo.
 // Los invitados solo mandan lo que presionan y dibujan lo que reciben.
 const ONLINE_URL='https://chuckgarcia.github.io/pixel-breach/';
-const MAX_PLAYERS=5,PROTO=2,WIDX=['pistol','smg','shotgun','rifle','frag','flash'];
+const MAX_PLAYERS=5,PROTO=3,WIDX=['pistol','smg','shotgun','rifle','frag','flash'];
 let NET=null,peerLib=null;
 const peerIdFor=c=>'pixelbreach-v1-'+c.toLowerCase();
 function genCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let r='';for(let i=0;i<4;i++)r+=A[Math.floor(Math.random()*A.length)];return r;}
@@ -96,9 +96,11 @@ function lobbyPlayers(){
  for(const [k,c] of NET.clients)L.push({key:k,name:c.name,color:c.color,skin:c.skin,ready:!!c.ready});
  return L;
 }
-function clampAIs(){const n=NET.role==='host'?NET.clients.size+1:(NET.lobby?NET.lobby.players.length:1);NET.ais=Math.max(n<2?1:0,Math.min(MAX_PLAYERS-n,NET.ais));}
+const roomMode=()=>NET&&NET.role==='client'?(MODES[NET.mode]?NET.mode:'dm'):menuMode();
+const roomMax=()=>MODES[roomMode()].max; // bandera: hasta 4 (una base por esquina)
+function clampAIs(){const n=NET.role==='host'?NET.clients.size+1:(NET.lobby?NET.lobby.players.length:1);NET.ais=Math.max(n<2?1:0,Math.min(roomMax()-n,NET.ais));}
 function hostBroadcast(msg){for(const c of NET.clients.values())if(c.conn.open)try{c.conn.send(msg);}catch(e){}}
-function hostLobbyUpdate(go){clampAIs();hostBroadcast({t:'lobby',go:!!go,players:lobbyPlayers().map(p=>({key:p.key,name:p.name,color:p.color,skin:p.skin,host:!!p.host,ready:!!p.ready})),ais:NET.ais,an:(NET.aiNames||[]).slice(0,MAX_PLAYERS),diff,theme:themeChoice,fog:NET.fog,preset:SETTINGS.preset,code:NET.code});if(state==='lobby')renderLobby();}
+function hostLobbyUpdate(go){clampAIs();hostBroadcast({t:'lobby',go:!!go,players:lobbyPlayers().map(p=>({key:p.key,name:p.name,color:p.color,skin:p.skin,host:!!p.host,ready:!!p.ready})),ais:NET.ais,an:(NET.aiNames||[]).slice(0,MAX_PLAYERS),diff,theme:themeChoice,fog:NET.fog,mode:menuMode(),preset:presetIdx(),code:NET.code});if(state==='lobby')renderLobby();}
 function hostAccept(conn){
  conn.on('data',d=>{
   if(!d||typeof d!=='object')return;
@@ -106,7 +108,7 @@ function hostAccept(conn){
   if(d.t==='bye'){drop();try{conn.close();}catch(e){}return;} // el invitado salió de la sala
   if(d.t==='hello'&&!c){
    if(!sameMinor(d.ver)){conn.send({t:'version',host:VERSION});setTimeout(()=>conn.close(),600);showToast('ALGUIEN INTENTÓ ENTRAR CON OTRA VERSIÓN','#f87171');return;}
-   if(NET.clients.size+1>=MAX_PLAYERS){conn.send({t:'full'});setTimeout(()=>conn.close(),400);return;}
+   if(NET.clients.size+1>=roomMax()){conn.send({t:'full',n:roomMax()});setTimeout(()=>conn.close(),400);return;}
    const used=new Set([playerColor,...[...NET.clients.values()].map(x=>x.color)]);
    let color=PALETTE.some(p=>p[1]===d.color)&&!used.has(d.color)?d.color:(PALETTE.find(p=>!used.has(p[1]))||PALETTE[0])[1];
    const name=cleanName(d.name);
@@ -153,7 +155,7 @@ function hostStart(){
 }
 function sendStart(c,id){ // id -1 = espectador
  const roster=ents.map(e=>({n:e.name,c:e.color,s:e.style,k:e.skin,h:e.isPlayer?1:0}));
- try{c.conn.send({t:'start',myId:id,roster,diff,theme:themeKey,fog:NET.fog,mt:matchTime,fl:fragLimit,g:gridStr()});}catch(e){}
+ try{c.conn.send({t:'start',myId:id,roster,diff,theme:themeKey,fog:NET.fog,mt:matchTime,fl:isFinite(fragLimit)?fragLimit:0,mode:gameMode,cl:capLimit,lv:lifeCount,g:gridStr()});}catch(e){}
 }
 function hostToLobby(){hostCancelCount(true);state='lobby';for(const c of NET.clients.values()){c.ready=false;c.spectator=false;}hostLobbyUpdate(true);}
 // ---- listos y cuenta regresiva: EMPEZAR solo cuando todos los invitados están listos; luego 3… 2… 1… para todos ----
@@ -181,11 +183,12 @@ function snapshot(){
  const snap={t:'s',st:state,tl:r(timeLeft),w:winner?winner.id:-1,
   e:ents.map(e=>[Math.round(e.x),Math.round(e.y),DIRS.indexOf(e.dir),e.moving?1:0,Math.ceil(Math.max(0,e.hp)),e.alive?1:0,r(e.invulnT),r(e.hurtT),r(e.blindT),e.frags,e.deaths,WIDX.indexOf(e.weapon),r(Math.min(99,e.respawnT)),
    e.isPlayer?[e.inv.smg,e.inv.shotgun,e.inv.rifle,e.inv.frag,e.inv.flash]:0,
-   e.isPlayer?0:(()=>{const o={};for(const k in e.ai.known)if(ents[k]&&ents[k].isPlayer)o[k]=e.ai.known[k].seen?1:0;return o;})(),e.gone?1:0,e.tp|0,state==='over'&&e.isPlayer?statRow(e):0]),
+   e.isPlayer?0:(()=>{const o={};for(const k in e.ai.known)if(ents[k]&&ents[k].isPlayer)o[k]=e.ai.known[k].seen?1:0;return o;})(),e.gone?1:0,e.tp|0,state==='over'&&e.isPlayer?statRow(e):0,e.caps|0,e.lives|0,e.out?1:0]),
   b:bullets.map(b=>[Math.round(b.x),Math.round(b.y),Math.round(b.vx),Math.round(b.vy),b.color,Math.max(0,Math.round((b.vis||0)-b.trav))]),
   n:nades.map(g=>[Math.round(g.x),Math.round(g.y),g.type==='frag'?0:1,r(g.fuse)]),
   p:pickups.map(p=>[p.tx,p.ty,p.type,p.life===undefined?-1:r(p.life)]),
   ev:netEvents};
+ if(flag)snap.fl=[Math.round(flag.x),Math.round(flag.y),flag.carrier,r(flag.dropT)];
  if(NET.sentGrid!==gridVer){snap.g=gridStr();NET.sentGrid=gridVer;}
  return snap;
 }
@@ -230,11 +233,11 @@ function clientOnData(d){
  switch(d.t){
   case 'welcome':NET.welcomed=true;NET.spectating=!!d.spectate;if(inviteCode)clearInvite();if(PALETTE.some(p=>p[1]===d.color))NET.color=d.color;if(!d.spectate)state='lobby';netMsg('');break;
   case 'version':netLeave(`La sala usa la versión v${String(d.host).replace(/[^0-9.]/g,'').slice(0,12)} y tú tienes la v${VERSION}. Recarga la página (Ctrl+Shift+R) para actualizar; si sigue igual, pide a quien te invitó que también recargue.`);break;
-  case 'full':netLeave('La sala está llena (máximo '+MAX_PLAYERS+' combatientes).');break;
+  case 'full':netLeave('La sala está llena (máximo '+((d.n|0)>0&&(d.n|0)<=MAX_PLAYERS?d.n|0:MAX_PLAYERS)+' combatientes).');break;
   case 'busy':netLeave('La partida ya empezó. Intenta de nuevo cuando termine.');break;
   case 'closed':netLeave('El anfitrión cerró la sala.');break;
   case 'lobby':NET.lobby=d;{const me=Array.isArray(d.players)&&d.players.find(p=>p.key===NET.peer.id);if(me)NET.ready=!!me.ready;}if(d.go||state==='lobby')state='lobby';/* solo cambia de pantalla si el anfitrión regresa a la sala */if(Number.isInteger(d.diff)&&DIFF[d.diff])diff=d.diff;{const mine=Array.isArray(d.players)&&d.players.find(p=>p.key===NET.peer.id);if(mine&&PALETTE.some(p=>p[1]===mine.color)){NET.color=mine.color;if(playerColor!==mine.color){playerColor=mine.color;save();buildSwatches();}}}
-  NET.fog=d.fog!==false;if(PRESETS[d.preset])NET.preset=d.preset;if(THEME_OPTS.includes(d.theme))themeChoice=d.theme;$('tname').textContent=themeLabel(themeChoice);renderLobby();break;
+  NET.fog=d.fog!==false;NET.mode=MODES[d.mode]?d.mode:'dm';if(MODES[NET.mode].p[d.preset])NET.preset=d.preset;if(THEME_OPTS.includes(d.theme))themeChoice=d.theme;$('tname').textContent=themeLabel(themeChoice);renderLobby();break;
   case 'count':{const n=d.n|0;NET.counting=n>0;showCount(n);if(state==='lobby')renderLobby();}break;
   case 'start':showCount(-1);NET.counting=false;clientStart(d);break;
   case 's':if(state==='play'||state==='over')applySnapshot(d);break;
@@ -248,7 +251,9 @@ function clientStart(d){
   x:-99,y:-99,nx:-99,ny:-99,tx:0,ty:0,ntx:0,nty:0,speed:PLAYER_SPEED,tp:-1,dir:RIGHT,moving:false,hp:100,alive:false,invulnT:0,hurtT:0,blindT:0,frags:0,deaths:0,weapon:'pistol',respawnT:0,
   inv:{pistol:Infinity,smg:0,shotgun:0,rifle:0,frag:1,flash:0},aw:{},gone:false}));
  if(myId>=0&&!ents[myId])myId=-1;NET.spectating=myId<0;
- if(d.mt>0&&d.mt<=3600)matchTime=d.mt;if(d.fl>0&&d.fl<=99)fragLimit=d.fl;
+ if(d.mt>0&&d.mt<=3600)matchTime=d.mt;gameMode=MODES[d.mode]?d.mode:'dm';fragLimit=gameMode==='dm'?(d.fl>0&&d.fl<=99?d.fl:fragLimit):Infinity;
+ if(d.cl>0&&d.cl<=9)capLimit=d.cl|0;if(d.lv>0&&d.lv<=9)lifeCount=d.lv|0;
+ ents.forEach((e,i)=>{e.caps=0;e.lives=lifeCount;e.out=false;e.base=i%4;});flag=gameMode==='ctf'?{x:FLAG_HOME[0]*T+T/2,y:FLAG_HOME[1]*T+T/2,carrier:-1,dropT:0}:null;goalSign=myId>=0?{text:modeGoal(),t:3.2}:null;
  bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];heard=[];toast=null;timeLeft=matchTime;announce=null;winner=null;shake=0;flashA=0;paused=false;
  NET.fc=NET.gc=NET.qc=0;NET.lastSnap=performance.now();state='play';sendInput();
  if(NET.spectating)showToast('ESTÁS VIENDO LA PARTIDA','#facc15');else showToast('ESCENARIO: '+theme.name,'#facc15');
@@ -260,7 +265,7 @@ function applySnapshot(s){
   const wasAlive=e.alive,mine=i===myId;
   e.nx=a[0];e.ny=a[1];if(!mine){e.dir=DIRS[a[2]]||e.dir;e.moving=!!a[3];}e.hp=a[4];e.alive=!!a[5];e.invulnT=a[6];e.hurtT=a[7];e.blindT=a[8];e.frags=a[9];e.deaths=a[10];e.weapon=WIDX[a[11]]||'pistol';e.respawnT=a[12];
   if(Array.isArray(a[13]))e.inv={pistol:Infinity,smg:a[13][0],shotgun:a[13][1],rifle:a[13][2],frag:a[13][3],flash:a[13][4]};
-  e.aw=a[14]||{};e.gone=!!a[15];if(Array.isArray(a[17]))e.stc=a[17];
+  e.aw=a[14]||{};e.gone=!!a[15];if(Array.isArray(a[17]))e.stc=a[17];e.caps=a[18]|0;e.lives=a[19]|0;e.out=!!a[20];
   if(mine){ // mi soldado: se mueve en mi pantalla; solo me ajusto al reaparecer o si el anfitrión me corrige
    const tp=a[16]|0;
    if(!e.alive||tp!==e.tp){e.tp=tp;e.x=e.nx;e.y=e.ny;e.tx=e.ntx=wx(Math.floor(e.x/T));e.ty=e.nty=Math.floor(e.y/T);e.x=e.tx*T+T/2;e.y=e.ty*T+T/2;e.moving=false;if(DIRS[a[2]])e.dir=DIRS[a[2]];}
@@ -269,6 +274,7 @@ function applySnapshot(s){
  if(Array.isArray(s.b))bullets=s.b.map(a=>({x:a[0],y:a[1],vx:a[2],vy:a[3],color:String(a[4]).slice(0,7),vis:+a[5]||0,trav:0}));
  if(Array.isArray(s.n))nades=s.n.map(a=>({x:a[0],y:a[1],vx:0,vy:0,type:a[2]?'flash':'frag',fuse:a[3]}));
  if(Array.isArray(s.p))pickups=s.p.filter(a=>PICK[a[2]]).map(a=>({tx:a[0],ty:a[1],type:a[2],t:clock+a[0],life:a[3]<0?undefined:a[3]}));
+ if(flag&&Array.isArray(s.fl)){flag.x=+s.fl[0]||0;flag.y=+s.fl[1]||0;flag.carrier=Number.isInteger(s.fl[2])&&ents[s.fl[2]]?s.fl[2]:-1;flag.dropT=+s.fl[3]||0;}
  if(Array.isArray(s.ev))for(const ev of s.ev)if(ev&&typeof ev==='object')try{applyEv(ev);}catch(e){}
  timeLeft=+s.tl||0;
  if(s.st==='over'&&state!=='over'){state='over';winner=ents[s.w]||null;if(winner)onMatchEnd();}
@@ -344,8 +350,9 @@ function renderLobby(){
   $('lwait').textContent=NET.counting?'¡La partida está por empezar!':NET.ready?'Esperando a que el anfitrión empiece…':'Toca ESTOY LISTO cuando estés preparado.';}
  document.querySelectorAll('#lobby .clientonly').forEach(b=>b.style.display=host?'none':'');
  $('lsummary').style.display=host?'none':'';
- $('lpName').textContent=presetLabel(host?SETTINGS.preset:(NET.preset|0)||1);
- $('lsummary').textContent=`${presetLabel(host?SETTINGS.preset:(NET.preset??1))} · ${ais} IA${ais===1?'':'s'} · ${themeLabel(themeChoice)} · NIEBLA ${NET.fog!==false?'SÍ':'NO'} · ${DIFF[diff].name}`;
+ {const m=roomMode();$('lmName').textContent=MODES[m].n;$('lpName').textContent=presetLabel(host?presetIdx(m):(NET.preset??1),m);
+  $('lnote').textContent=NET.note||(m==='ctf'?'Captura la bandera: máximo 4 combatientes, una base por esquina. Comparte el enlace o el código.':'Máximo 5 combatientes por partida (humanos + IAs). Comparte el enlace o el código.');}
+ $('lsummary').textContent=`${MODES[roomMode()].n} · ${presetLabel(host?presetIdx():(NET.preset??1),roomMode())} · ${ais} IA${ais===1?'':'s'} · ${themeLabel(themeChoice)} · NIEBLA ${NET.fog!==false?'SÍ':'NO'} · ${DIFF[diff].name}`;
  // color: el selector salta los colores que ya tomó otro jugador
  NET.taken=new Set(players.filter(p=>(host?p.key!=='host':p.key!==NET.peer.id)).map(p=>p.color));
  showColor($('lcname'),myLobbyColor());showSkin();
@@ -364,7 +371,10 @@ $('aiMinus').addEventListener('click',()=>{NET.ais--;hostLobbyUpdate();});
 $('aiPlus').addEventListener('click',()=>{NET.ais++;hostLobbyUpdate();});
 $('ldPrev').addEventListener('click',()=>{diff=Math.max(1,diff-1);hostLobbyUpdate();});
 $('ltPrev').addEventListener('click',()=>{stepTheme(-1);hostLobbyUpdate();});
-$('lpPrev').addEventListener('click',()=>{stepPreset(-1);hostLobbyUpdate();});$('lpNext').addEventListener('click',()=>{stepPreset(1);hostLobbyUpdate();});
+$('lpPrev').addEventListener('click',()=>{stepPreset(-1);hostLobbyUpdate();});
+function lobbyStepMode(d){if(!NET||NET.role!=='host')return;const n=NET.clients.size+1,before=n+NET.ais;stepMode(d,n);clampAIs();
+ const cut=before-(n+NET.ais);NET.note=cut>0?`Este modo es de hasta ${roomMax()}: ${cut===1?'hay una IA de más y se quitó':`se quitaron ${cut} IAs`}.`:'';clearTimeout(NET.noteT);NET.noteT=setTimeout(()=>{if(NET){NET.note='';if(state==='lobby')renderLobby();}},4000);hostLobbyUpdate();}
+$('lmPrev').addEventListener('click',()=>lobbyStepMode(-1));$('lmNext').addEventListener('click',()=>lobbyStepMode(1));$('lpNext').addEventListener('click',()=>{stepPreset(1);hostLobbyUpdate();});
 $('lfPrev').addEventListener('click',()=>{NET.fog=!NET.fog;hostLobbyUpdate();});$('lfNext').addEventListener('click',()=>{NET.fog=!NET.fog;hostLobbyUpdate();});$('ltNext').addEventListener('click',()=>{stepTheme(1);hostLobbyUpdate();});
 $('ldNext').addEventListener('click',()=>{diff=Math.min(4,diff+1);hostLobbyUpdate();});
 $('lcopy').addEventListener('click',copyLink);

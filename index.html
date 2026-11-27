@@ -36,6 +36,7 @@
   <div class="row sel" id="colorRow"><span class="lbl">COLOR</span><button class="mbtn" id="cprev" aria-label="Color anterior">◀</button><b id="cname" class="cname"><i></i><span></span></b><button class="mbtn" id="cnext" aria-label="Color siguiente">▶</button></div>
   <div class="row sel" id="skinRow"><span class="lbl">ASPECTO</span><button class="mbtn" id="kprev" aria-label="Aspecto anterior">◀</button><b id="kname"></b><button class="mbtn" id="knext" aria-label="Aspecto siguiente">▶</button></div>
   </div><div class="colB">
+  <div class="row sel" id="modeRow"><span class="lbl">MODO</span><button class="mbtn" id="mprev" aria-label="Modo anterior">◀</button><b id="mname" class="tn"></b><button class="mbtn" id="mnext" aria-label="Modo siguiente">▶</button></div>
   <div class="row sel"><span class="lbl">DIFICULTAD</span><button class="mbtn" id="dprev" aria-label="Menos difícil">◀</button><b id="dname"></b><button class="mbtn" id="dnext" aria-label="Más difícil">▶</button></div>
   <div class="row sel"><span class="lbl">ESCENARIO</span><button class="mbtn" id="tprev" aria-label="Escenario anterior">◀</button><b id="tname" class="tn"></b><button class="mbtn" id="tnext" aria-label="Escenario siguiente">▶</button></div>
   <div class="row sel"><span class="lbl">PARTIDA</span><button class="mbtn" id="pprev" aria-label="Partida más corta">◀</button><b id="pname2" class="tn"></b><button class="mbtn" id="pnext" aria-label="Partida más larga">▶</button></div>
@@ -59,6 +60,7 @@
   <div class="row sel"><span class="lbl">TU COLOR</span><button class="mbtn" id="lcprev" aria-label="Color anterior">◀</button><b id="lcname" class="cname"><i></i><span></span></b><button class="mbtn" id="lcnext" aria-label="Color siguiente">▶</button><canvas id="lpv" width="52" height="64" aria-label="Vista previa de tu soldado"></canvas></div>
   <div class="row sel"><span class="lbl">ASPECTO</span><button class="mbtn" id="lkprev" aria-label="Aspecto anterior">◀</button><b id="lkname"></b><button class="mbtn" id="lknext" aria-label="Aspecto siguiente">▶</button></div>
   <div id="lsummary"></div>
+  <div class="row sel hostrow"><span class="lbl">MODO</span><button class="mbtn hostonly" id="lmPrev" aria-label="Modo anterior">◀</button><b id="lmName" class="tn"></b><button class="mbtn hostonly" id="lmNext" aria-label="Modo siguiente">▶</button></div>
   <div class="row sel hostrow" id="laiRow"><span class="lbl">IAs</span><button class="mbtn hostonly" id="aiMinus">◀</button><b id="aiCount"></b><button class="mbtn hostonly" id="aiPlus">▶</button></div>
   <div class="row sel hostrow"><span class="lbl">ESCENARIO</span><button class="mbtn hostonly" id="ltPrev">◀</button><b id="ltName" class="tn"></b><button class="mbtn hostonly" id="ltNext">▶</button></div>
   <div class="row sel hostrow"><span class="lbl">PARTIDA</span><button class="mbtn hostonly" id="lpPrev">◀</button><b id="lpName" class="tn"></b><button class="mbtn hostonly" id="lpNext">▶</button></div>
@@ -67,7 +69,7 @@
   <div id="lwait"></div>
   <div class="dock"><div class="row ldock"><button class="mbtn big hostonly" id="lstart">EMPEZAR</button><button class="mbtn big clientonly" id="lready">ESTOY LISTO</button><button class="mbtn" id="lleave">SALIR</button></div></div>
   </div>
-  <div class="note">Máximo 5 combatientes por partida (humanos + IAs). Comparte el enlace o el código.</div>
+  <div class="note" id="lnote">Máximo 5 combatientes por partida (humanos + IAs). Comparte el enlace o el código.</div>
  </div>
  <div id="settings" class="ovl" role="dialog" aria-label="Ajustes">
   <div class="sub">AJUSTES</div>
@@ -104,6 +106,7 @@
 <script src="js/entities.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/combat.js"></script>
+<script src="js/modes.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/loop.js"></script>
 <script src="js/render.js"></script>

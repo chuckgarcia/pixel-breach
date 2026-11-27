@@ -103,6 +103,7 @@ function applyEv(ev){
   case 'shake':shake=Math.max(shake,ev.a);break;
   case 'fx':fx.push(ev.f.kind==='boom'?{kind:'boom',x:ev.f.x,y:ev.f.y,t:.45,max:.45}:{kind:'flash',px:ev.f.px,py:ev.f.py,t:.35,max:.35});break;
   case 'feed':feed.push({t:4,parts:ev.parts});break;
+  case 'flag':case 'out':modeEv(ev);break;
   case 'ann':announce={text:String(ev.n||'').slice(0,10)+' · '+String(ev.t||'').slice(0,16),c:ev.c,t:1.9};sfx('streak');break;
  }
 }

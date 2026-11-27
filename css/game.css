@@ -318,3 +318,12 @@ body.touch #game{padding:max(10px,env(safe-area-inset-top)) max(8px,env(safe-are
 body.touch #pauseBtns{left:4%;right:4%;bottom:6%;gap:10px;font-size:15px}
 body.touch #pauseBtns .mbtn{flex:1;max-width:240px;padding:12px 8px}
 .mbtn.warn{border-color:#f87171!important;color:#f87171!important;background:#2a1215!important}
+/* celulares bajos en vertical (p. ej. 375 × 667): con la línea MODO, todo debe caber sin desplazarse */
+@media (orientation:portrait) and (max-height:740px){
+ body.touch.menus #menu,body.touch.menus #lobby{gap:7px}
+ body.touch.menus #menu .hero #pv{width:64px!important;height:79px!important}
+ body.touch.menus .row.sel .mbtn{height:34px}
+ body.touch.menus #menu .dock #playAI{padding:11px 6px}
+ body.touch.menus #lcode{font-size:34px}
+ body.touch.menus #lplayers{padding:5px 10px}
+}
