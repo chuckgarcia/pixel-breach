@@ -10,6 +10,14 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.12.1] - 2026-11-26
+
+### Cambiado
+- La vista de lado de cada soldado ahora es su mismo diseño de frente girado unos 45°: se ven los dos ojos, el casco, la boina, los goggles o la máscara de siempre, y el arma hacia adelante.
+
+### Corregido
+- Todos los soldados miden lo mismo (18 píxeles del casco a las botas), de frente y de lado. El Comando de lado se veía más chico y el Operador y el Antigás, un poco más altos. Una prueba automática lo revisa.
+
 ## [0.12.0] - 2026-11-26
 
 ### Añadido
