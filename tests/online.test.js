@@ -55,6 +55,13 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       assert.ok(await M.evaluate("JSON.stringify(ents.slice(1).map(e=>[e.x,e.y]))")===await (async()=>{await M.waitForTimeout(500);return M.evaluate("JSON.stringify(ents.slice(1).map(e=>[e.x,e.y]))");})(),'las IAs deben esperar tu primer paso');
       if(outside)await M.click('#guideSkip');else await M.keyboard.press('Escape');
       assert.ok(await M.evaluate('tut===null'),'no se saltó la guía');await M.context().close();});
+    await t('en pausa se puede continuar o salir al menú (con confirmación)',async()=>{
+      const M=await page('pausa');await M.goto(URL.replace(/\?ps=[^#]*/,''));await M.waitForTimeout(300);
+      await M.evaluate("localStorage.setItem('pb_tut','1');state==='intro'&&endIntro();startMatch()");await M.waitForTimeout(200);
+      await M.keyboard.press('KeyP');await M.waitForFunction("getComputedStyle(document.getElementById('pauseBtns')).display==='flex'");
+      await M.click('#pResume');assert.strictEqual(await M.evaluate('paused'),false);
+      await M.keyboard.press('KeyP');await M.click('#pQuit');assert.strictEqual(await M.evaluate('state'),'play','debe pedir confirmación');
+      await M.click('#pQuit');assert.strictEqual(await M.evaluate('state'),'title');await M.context().close();});
     await t('el color se cambia con ◀ ▶ y el soldado lo usa',async()=>{
       const M=await page('color');await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
       const c0=await M.evaluate('playerColor');await M.click('#cnext');const c1=await M.evaluate('playerColor');assert.notStrictEqual(c0,c1);

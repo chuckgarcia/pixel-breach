@@ -46,6 +46,5 @@ cv.addEventListener('pointerdown',ev=>{
  if(state==='intro'){endIntro();return;}
  if(ev.pointerType==='touch'||isTouch){ // tocar la pantalla: empezar / revancha / continuar
   if(state==='over'&&(!NET||NET.role==='host')){press('Enter');release('Enter');}
-  else if(paused){press('KeyP');release('KeyP');}
  }
 });

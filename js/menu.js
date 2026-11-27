@@ -12,6 +12,7 @@ function syncOverlays(){
  if(diff!==shownDiff){shownDiff=diff;dnameEl.textContent=DIFF[diff].name;}
  $('gearMenu').style.display=(state==='title'&&!menuEl.classList.contains('invite'))||state==='lobby'?'block':'none';
  $('gearGame').style.display=state==='play'?'block':'none';
+ $('pauseBtns').style.display=state==='play'&&paused&&!NET&&!settingsOpen?'flex':'none';
 }
 function save(){try{localStorage.setItem('pb_name',playerName);localStorage.setItem('pb_color',playerColor);}catch(e){}}
 nameEl.value=playerName;
@@ -67,6 +68,18 @@ $('playAI').addEventListener('click',()=>{audio();startMatch();});
 $('again').addEventListener('click',()=>{audio();overAgain();});
 $('toMenu').addEventListener('click',()=>overMenu());
 function overAgain(){if(!NET)startMatch();else if(NET.role==='host')hostCountdown();} // en línea, la revancha también cuenta 3… 2… 1…
+// ---- salir de la partida: desde la pausa (un jugador) o desde Ajustes (también en línea) ----
+let quitArmed=-1e9;
+function quitMatch(btn){
+ if(performance.now()-quitArmed>2500){quitArmed=performance.now();btn.dataset.label=btn.dataset.label||btn.textContent;btn.textContent='¿SALIR? TOCA DE NUEVO';btn.classList.add('warn');
+  setTimeout(()=>{if(btn.dataset.label){btn.textContent=btn.dataset.label;btn.classList.remove('warn');}},2500);return;}
+ quitArmed=-1e9;if(btn.dataset.label){btn.textContent=btn.dataset.label;btn.classList.remove('warn');}
+ if(settingsOpen)closeSettings();paused=false;
+ if(!NET)toTitle();else if(NET.role==='host')hostToLobby();else netLeave();
+}
+$('pResume').addEventListener('click',()=>{paused=false;});
+$('pQuit').addEventListener('click',e=>quitMatch(e.currentTarget));
+$('sQuit').addEventListener('click',e=>quitMatch(e.currentTarget));
 function overMenu(){if(!NET)toTitle();else if(NET.role==='host')hostToLobby();else netLeave();}
 function buildHowto(){
  const h=$('howto');h.textContent='';

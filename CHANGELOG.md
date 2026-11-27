@@ -10,6 +10,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.13.4] - 2026-11-26
+
+### Añadido
+- En pausa hay dos botones: CONTINUAR y SALIR AL MENÚ (pide tocar dos veces para no salir por accidente).
+- En Ajustes, durante una partida, también se puede salir: «SALIR AL MENÚ» contra IAs, «SALIR DE LA SALA» como invitado y «TERMINAR Y VOLVER A LA SALA» como anfitrión.
+
+### Cambiado
+- Tocar la pantalla en pausa ya no reanuda el juego (evita continuar sin querer); se usa CONTINUAR o, en computadora, P o ESC.
+
 ## [0.13.3] - 2026-11-26
 
 ### Cambiado

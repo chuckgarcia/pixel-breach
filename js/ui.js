@@ -30,6 +30,7 @@ function syncSettingsUI(){
  const online=!!NET;tog('sFog',online?NET.fog!==false:fog);$('sFog').disabled=online;
  $('sFogNote').textContent=online?'En línea, la niebla la elige el anfitrión.':'';
  $('sVibRow').style.display=isTouch?'':'none';
+ {const inGame=state==='play';$('sQuitRow').style.display=inGame?'':'none';$('sQuit').textContent=!NET?'SALIR AL MENÚ':NET.role==='host'?'TERMINAR Y VOLVER A LA SALA':'SALIR DE LA SALA';}
  {const can=canVibrate();$('sVib').disabled=!can;$('sVib').style.opacity=can?1:.45;if(!can)$('sVib').textContent='NO DISPONIBLE';
   const note=can?'':'No disponible en iPhone ni iPad.';
   $('sVibNote').textContent=note;$('sVibNote').style.display=note?'':'none';}

@@ -93,7 +93,7 @@ function render(){
    txt(`MEJOR RACHA ${r[5]}   ·   GRANADAS ${r[3]}   ·   BOTÍN ${r[4]}`,W/2,370,11,'#cbd5e1','center');}}if(!isTouch&&(!NET||NET.role==='host'))txt('ENTER: revancha (mapa nuevo)   ·   ESC: menú',W/2,402,11,'#94a3b8','center');
   else if(NET&&NET.role==='client'&&me())txt('Esperando a que el anfitrión elija revancha o sala…',W/2,402,11,'#94a3b8','center');
  }else if(paused){
-  overlay(.8);txt('PAUSA',W/2,120,30,'#facc15','center');scoreboard(176);txt(isTouch?'Toca la pantalla para continuar':'P para continuar',W/2,440,12,'#cbd5e1','center');
+  overlay(.8);txt('PAUSA',W/2,120,30,'#facc15','center');scoreboard(176);if(!isTouch)txt('P o ESC: continuar',W/2,500,11,'#94a3b8','center');
  }else if(NET&&NET.role==='client'&&NET.hostQuiet>2.5){ // el anfitrión no responde
   overlay(.55);txt('ESPERANDO AL ANFITRIÓN…',W/2,HUD+H/2-12,22,'#facc15','center');
   txt(`Si no vuelve en ${Math.max(0,Math.ceil(15-NET.hostQuiet))} s, regresarás al menú`,W/2,HUD+H/2+18,12,'#cbd5e1','center');
