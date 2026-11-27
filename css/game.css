@@ -115,7 +115,8 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 #menu .dock #playAI{grid-column:1/-1;justify-self:center}
 #menu .dock .row{display:flex;gap:8px;align-items:center}
 #joinOpen{display:none}
-#menu .mfoot{display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap}
+#menu .mfoot{display:flex;flex-direction:column;align-items:center;gap:4px}
+#menu summary{white-space:nowrap}
 #lobby .dock .row{display:flex;gap:10px;justify-content:center}
 .tn{min-width:9ch;text-align:center;color:#e2e8f0}
 #settings{inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1.4vh,10px);background:#0b0d12;overflow:auto;padding:10px;box-sizing:border-box;font-size:clamp(12px,1.9vw,15px);z-index:5}
@@ -203,7 +204,6 @@ body.touch.menus #joinRow{display:none;justify-content:center}
 body.touch.menus #joinRow.open{display:flex}
 body.touch.menus #joinRow .or{display:none}
 body.touch.menus #menu .mfoot{flex-direction:row;justify-content:space-between;width:100%;max-width:430px;font-size:.8em}
-body.touch.menus #menu details[open]{position:fixed;inset:auto 10px 10px 10px;max-height:70vh;overflow:auto;background:#0b0d12;border:2px solid #334155;border-radius:6px;padding:10px;z-index:4;max-width:none}
 body.touch.menus #lobby .dock .row{display:grid;grid-template-columns:2fr 1fr;gap:8px}
 body.touch.menus #lobby .dock .mbtn{width:100%}
 body.touch.canshare #llink,body.touch.canshare #lcopy{display:none}
@@ -244,7 +244,22 @@ body.touch.sett #settings input[type=range]{width:min(40vw,200px)}
 /* fin de partida en celular: botones grandes, como el resto del menú */
 body.touch #overBtns{left:4%;right:4%;bottom:4%;gap:10px;font-size:15px}
 body.touch #overBtns .mbtn{flex:1;max-width:240px;padding:12px 8px}
-body.touch.sett #settings .row{display:grid;grid-template-columns:6.4em auto minmax(0,1fr);align-items:center;gap:10px;width:100%;max-width:430px}
-body.touch.sett #settings .row .lbl{min-width:0}
-body.touch.sett #settings .row:not(:has(.lbl)){display:flex;justify-content:center}
-body.touch.sett #sInstallNote{grid-column:2/-1;margin:0;max-width:none}
+#settings .row{display:grid;grid-template-columns:6.4em auto minmax(0,1fr);align-items:center;gap:10px;width:100%;max-width:430px}
+#settings .row .lbl{min-width:0}
+#settings .row:not(:has(.lbl)){display:flex;justify-content:center}
+#sInstallNote{grid-column:2/-1;margin:0;max-width:none}
+
+/* «¿Cómo se juega?»: panel encima del menú, con su propio desplazamiento (computadora y celular) */
+#howtoBox summary .close{display:none}
+#howtoBox[open] summary .open{display:none}
+#howtoBox[open] summary .close{display:inline}
+#howtoBox[open]{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(640px,92vw);max-width:none;max-height:min(82vh,640px);overflow:auto;z-index:6;
+ background:#0b0d12;border:2px solid #334155;border-radius:8px;padding:12px 16px 16px;box-sizing:border-box;box-shadow:0 20px 60px rgba(0,0,0,.7);text-align:left;font-size:15px}
+#howtoBox[open] summary{position:sticky;top:-12px;background:#0b0d12;padding:6px 0;text-align:right;color:#e2e8f0;z-index:1}
+#howto{grid-template-columns:minmax(7em,auto) minmax(0,1fr);gap:4px 14px;line-height:1.35}
+#howto>div{min-width:0;overflow-wrap:anywhere}
+#howto .full{grid-column:1/-1;color:#cbd5e1}
+#howto .h{grid-column:1/-1;color:#94a3b8;margin-top:10px;font-weight:bold;letter-spacing:1px;border-bottom:1px solid #222a38;padding-bottom:2px}
+#sVibNote{grid-column:2/-1;margin:0;max-width:none;text-align:left!important}
+#howtoBox[open] summary{list-style:none}
+#howtoBox[open] summary::-webkit-details-marker{display:none}

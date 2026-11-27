@@ -72,13 +72,13 @@ function buildHowto(){
  add('ESTILOS DE LAS IAs',undefined,null,'h');
  for(const p of PERS)add(p.name,{asaltante:'va directo por ti',flanqueador:'te corta el paso',campero:'espera en pasillos largos',recolector:'junta armas primero'}[p.key],p.color);
  add('ASPECTO',undefined,null,'h');
- add('SOLO VISUAL','todos los aspectos miden y resisten lo mismo; cada arma se ve distinta');
+ add('Todos los aspectos miden y resisten lo mismo; solo cambia cómo se ven. Cada arma tiene su dibujo, así ves qué lleva cada rival.',undefined,null,'full');
  add('CONTROLES',undefined,null,'h');
  const C=isTouch?[['CRUCETA','desliza el dedo para moverte'],['FUEGO','disparar (mantén presionado)'],['GRAN','lanzar granada'],['ARMA','cambiar arma'],['II','pausa']]
   :[['WASD / FLECHAS','moverte'],['ESPACIO / J','disparar'],['G / K','lanzar granada'],['Q / L','cambiar arma'],['F','niebla de guerra (en línea la elige el anfitrión)'],['P / ESC','pausa · M sonido · O ajustes']];
  for(const [a,b] of C)add(a,b,'#facc15');
  add('REGLAS',undefined,null,'h');
- {const pr=PRESETS[SETTINGS.preset]||PRESETS[1];add('',`Gana quien llegue a ${pr.f} bajas o tenga más al acabar los ${pr.t/60} minutos (cámbialo en PARTIDA). La pistola es infinita; recoge armas, granadas y botiquines.`);}
+ {const pr=PRESETS[SETTINGS.preset]||PRESETS[1];add(`Gana quien llegue a ${pr.f} bajas o tenga más al acabar los ${pr.t/60} minutos (cámbialo en PARTIDA). La pistola es infinita; recoge armas, granadas y botiquines.`,undefined,null,'full');}
  add('CRÉDITOS',undefined,null,'h');
  add('Idea y diseño','chuckgarcia');add('Desarrollo','Claude (Anthropic)');add('Conexión en línea','PeerJS (licencia MIT)');add('Versión','v'+VERSION);
 }

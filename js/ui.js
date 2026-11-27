@@ -29,7 +29,9 @@ function syncSettingsUI(){
  $('sSfxVol').value=Math.round(SETTINGS.sfxVol*100);$('sMusVol').value=Math.round(SETTINGS.musicVol*100);
  const online=!!NET;tog('sFog',online?NET.fog!==false:fog);$('sFog').disabled=online;
  $('sFogNote').textContent=online?'En línea, la niebla la elige el anfitrión.':'';
- $('sVibRow').style.display=isTouch&&navigator.vibrate?'':'none';
+ $('sVibRow').style.display=isTouch?'':'none';
+ {const can=!!navigator.vibrate;$('sVib').disabled=!can;$('sVib').style.opacity=can?1:.45;if(!can)$('sVib').textContent='NO DISPONIBLE';
+  $('sVibNote').textContent=can?'':'Tu teléfono no deja que las páginas vibren (pasa en iPhone y iPad).';$('sVibNote').style.display=can?'none':'';}
  $('sFsRow').style.display=fsOK?'':'none';$('sFs').textContent=document.fullscreenElement?'SALIR':'COMPLETA';
  $('sInstall').style.display=installEvt?'':'none';
  $('sInstallNote').textContent=installEvt?'':installHelp();

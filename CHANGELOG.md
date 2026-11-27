@@ -10,6 +10,13 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.12.2] - 2026-11-26
+
+### Corregido
+- «¿Cómo se juega?» ya no se sale de la pantalla ni corta el texto: se abre como un panel encima del menú, con su propio desplazamiento y un botón CERRAR.
+- Los ajustes en computadora quedan alineados en columnas, igual que en el celular.
+- En iPhone y iPad, la opción VIBRACIÓN aparece como «NO DISPONIBLE» con la explicación, en vez de desaparecer: el navegador de Apple no deja que las páginas vibren.
+
 ## [0.12.1] - 2026-11-26
 
 ### Cambiado

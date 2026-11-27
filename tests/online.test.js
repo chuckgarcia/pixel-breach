@@ -37,6 +37,12 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       assert.ok(!(await M.isVisible('#pad'))&&!(await M.isVisible('#btns')),'los controles no deben verse en el menú');
       for(const id of ['playAI','mkRoom','joinOpen']){const r=await M.locator('#'+id).boundingBox();assert.ok(r&&r.y>=0&&r.y+r.height<=h,`#${id} fuera de la vista`);}
       await M.close();await M.context().close();});
+    await t('«¿Cómo se juega?» se abre como panel completo y se cierra',async()=>{
+      const M=await page('guía',{viewport:{width:1440,height:900}});await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
+      await M.click('#howtoBox summary');const r=await M.locator('#howtoBox').boundingBox();
+      assert.ok(r&&r.x>=0&&r.x+r.width<=1440&&r.y>=0&&r.y+r.height<=900,'el panel se sale de la pantalla');
+      const h=await M.locator('#howto').boundingBox();assert.ok(h.x>=r.x,'el texto se corta a la izquierda');
+      await M.click('#howtoBox summary');assert.ok(!(await M.evaluate("document.getElementById('howtoBox').open")));await M.context().close();});
     await t('el color se cambia con ◀ ▶ y el soldado lo usa',async()=>{
       const M=await page('color');await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
       const c0=await M.evaluate('playerColor');await M.click('#cnext');const c1=await M.evaluate('playerColor');assert.notStrictEqual(c0,c1);
