@@ -71,7 +71,7 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       await H.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))");
       await H.waitForTimeout(2500);
       const G2=await page('invitado nuevo');await G2.goto(URL+'#'+c2);await G2.waitForTimeout(300);await G2.click('#joinInvite');
-      await G2.waitForFunction("state==='lobby'||!NET",null,{timeout:15000});
+      await G2.waitForFunction("state==='lobby'||(!NET&&!document.getElementById('joinInvite').disabled)",null,{timeout:15000});
       assert.strictEqual(await G2.evaluate('state'),'lobby','el invitado nuevo no pudo entrar: '+(await G2.innerText('#netMsg')));
       assert.strictEqual(await H.evaluate('NET.clients.size'),2,'el anfitrión perdió al invitado que ya estaba');
       await H.evaluate('netLeave()');});

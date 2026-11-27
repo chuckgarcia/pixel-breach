@@ -41,10 +41,11 @@ function netLeave(msg){
 }
 function linkFor(code){return location.href.split('#')[0]+'#'+code;}
 // --- anfitrión ---
+let netBusy=false; // evita crear o unirse dos veces mientras se preparan la librería y las credenciales
 async function createRoom(){
- if(NET)return;netMsg('Creando sala…',true);
+ if(NET||netBusy)return;netMsg('Creando sala…',true);
  try{await loadPeer();}catch(e){netMsg('No se pudo cargar el modo en línea. Revisa tu conexión.');return;}
- const ice=await iceServers();if(NET)return;
+ netBusy=true;const ice=await iceServers();netBusy=false;if(NET)return;
  const attempt=(tries)=>{
   const code=genCode(),peer=new Peer(peerIdFor(code),peerOpts(ice));let opened=false;
   peer.on('open',()=>{
@@ -175,11 +176,11 @@ function setJoining(on,code){ // el botón muestra que algo está pasando y no s
  $('joinBtn').textContent=on?'…':'UNIRSE';
 }
 async function joinRoom(code){
- if(NET)return;code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+ if(NET||netBusy)return;code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
  if(code.length!==4){netMsg('El código de sala tiene 4 letras o números.');return;}
  setJoining(true,code);netMsg('Buscando la sala '+code+'…',true);
  try{await loadPeer();}catch(e){setJoining(false);netMsg('No se pudo cargar el modo en línea. Revisa tu conexión a internet.');return;}
- const ice=await iceServers();if(NET){setJoining(false);return;}
+ netBusy=true;const ice=await iceServers();netBusy=false;if(NET){setJoining(false);return;}
  const peer=new Peer(undefined,peerOpts(ice));
  NET={role:'client',peer,code,conn:null,fc:0,gc:0,qc:0,inT:0,welcomed:false,lobby:null,lastIn:''};
  const mine=NET;

@@ -10,6 +10,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.10.8] - 2026-11-26
+
+### Corregido
+- Tocar dos veces muy rápido CREAR SALA o UNIRSE ya no puede crear dos salas ni dos intentos de conexión.
+
 ## [0.10.7] - 2026-11-26
 
 ### Añadido
