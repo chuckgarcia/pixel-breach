@@ -73,7 +73,7 @@ const pv=$('pv');window.pvxMain=pv.getContext('2d');
 const lpvx=$('lpv').getContext('2d');
 function drawPreview(pvx,color){
  pvx=pvx||window.pvxMain;color=color||playerColor;if(!pvx||!pvx.clearRect)return;
- const faces=['down','right','up','left'],face=faces[Math.floor(clock/1.1)%4],frame=Math.floor(clock*6)%2?1:2;
+ const faces=['down','right','down','left'] /* la vista previa no muestra la espalda: frente, lado, frente, otro lado */,face=faces[Math.floor(clock/1.1)%4],frame=Math.floor(clock*6)%2?1:2;
  pvx.imageSmoothingEnabled=false;pvx.clearRect(0,0,52,64);
  pvx.fillStyle='rgba(0,0,0,.35)';pvx.fillRect(10,56,32,5);
  drawSkin(pvx,playerSkin,color,face,frame,false,'rifle',26,58,2);
