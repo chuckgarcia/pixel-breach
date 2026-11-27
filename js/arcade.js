@@ -6,7 +6,9 @@ const ARC_MULT={1:.5,2:.75,3:1,4:1.5}; // la dificultad multiplica los puntos
 const ARC_FIRST_LIFE=10000,ARC_NEXT_LIFE=25000;
 // Botiquines según la dificultad: cada cuántos segundos aparece uno, cuántos puede haber a la vez y
 // la probabilidad de que un enemigo suelte uno al caer.
-const ARC_MED={1:{every:12,max:3,drop:.35},2:{every:18,max:2,drop:.25},3:{every:25,max:2,drop:.15},4:{every:40,max:1,drop:.08}};
+const ARC_MED={1:{every:15,max:3,drop:.3},2:{every:22,max:2,drop:.2},3:{every:35,max:1,drop:.1},4:{every:55,max:1,drop:.05}};
+// Presión por nivel: los enemigos reaccionan más rápido, se avisan desde más lejos y se reparten para flanquearte.
+const arcPress=lv=>({react:Math.max(.72,1.1-.08*lv),alert:Math.round(4+lv*1.5),flank:lv<1?0:3+lv});
 const arcMed=()=>ARC_MED[diff]||ARC_MED[3];
 const ARC_CONT=10; // CONTINUE? 9… 8… … 0
 // ---------- AVANCE GUARDADO (en este navegador) ----------
@@ -26,7 +28,7 @@ function startArcade(i){
 }
 function arcEnemy(k,id){
  const D=ENEMY[k],base=PERS.find(p=>p.key===D.style)||PERS[0];
- const p=Object.assign({},base,{react:base.react*(D.react||1),speed:base.speed*(D.speed||1)});
+ const p=Object.assign({},base,{react:base.react*(D.react||1)*arcPress(ARC?ARC.lv:0).react,speed:base.speed*(D.speed||1)});
  const e=makeEnt(false,p,id,D.n);
  Object.assign(e,{color:VCOL,skin:D.skin,enemy:true,etype:k,maxHp:D.hp,hp:D.hp,weapon:D.w,caps:0,lives:0,out:false,tp:0,
   inv:{pistol:Infinity,smg:D.w==='smg'?Infinity:0,shotgun:D.w==='shotgun'?Infinity:0,rifle:D.w==='rifle'?Infinity:0,frag:0,flash:0}});
@@ -54,6 +56,10 @@ function arcLoad(){
    Object.assign(h,{hostage:true,color:'#e2e8f0',skin:'recruitM',speed:PLAYER_SPEED*1.08,caps:0,lives:0,out:false,tp:0});arcPlace(h,x,y);ents.push(h);ARC.hostage=h;}
   else if(ENEMY[c]){const e=arcEnemy(c,ents.length);arcPlace(e,x,y);ents.push(e);}
  }));
+ ARC.alertT=0;ARC.flank=arcPress(ARC.lv).flank;
+ if(L.goal==='bombs')for(const e of ents.filter(e=>e.enemy)){ // cada enemigo custodia la bomba más cercana
+  let best=null,bd=1e9;for(const b of ARC.bombs){const d=Math.abs(b.x-e.tx)+Math.abs(b.y-e.ty);if(d<bd){bd=d;best=b;}}
+  if(best)e.home=[best.x,best.y];}
  // armas: pasan de un nivel al siguiente; al perder una vida vuelves con pistola y 1 granada
  resetInv(P);if(ARC.inv){P.inv=Object.assign({},ARC.inv,{pistol:Infinity});P.weapon=ARC.weapon&&P.inv[ARC.weapon]>0?ARC.weapon:'pistol';}
  P.invulnT=1.5;P.dir=RIGHT;
@@ -112,6 +118,9 @@ function arcTick(dt){
  ARC.medT-=dt;if(ARC.medT<=0){ARC.medT=arcMed().every;if(pickups.filter(p=>p.type==='medkit').length<arcMed().max)arcSpawnMed();}
  if(ARC.deadT>0)return;
  ARC.t+=dt;if(ARC.comboT>0)ARC.comboT-=dt;
+ // se avisan entre ellos: quien te ve alerta a los compañeros cercanos (más lejos en niveles altos)
+ ARC.alertT-=dt;if(ARC.alertT<=0&&P.alive){ARC.alertT=.5;const R=arcPress(ARC.lv).alert,E=arcAlive(),see=E.filter(e=>e.ai.known[0]&&e.ai.known[0].seen);
+  for(const e of E)if(!e.ai.known[0]&&see.some(s=>Math.abs(s.tx-e.tx)+Math.abs(s.ty-e.ty)<=R))reveal(e.ai,P,false);}
  // rastro de tus pasos (el rehén lo sigue)
  if(P.alive){const k=[wx(Math.floor(P.x/T)),Math.floor(P.y/T)],l=ARC.trail[ARC.trail.length-1];if(!l||l[0]!==k[0]||l[1]!==k[1]){ARC.trail.push(k);if(ARC.trail.length>40)ARC.trail.shift();}}
  if(L.goal==='kill'){if(!arcAlive().length)arcMissionDone();}
@@ -123,7 +132,9 @@ function arcTick(dt){
  }else if(L.goal==='bombs'&&!ARC.exitOpen){
   ARC.bombT-=dt;
   for(const b of ARC.bombs){if(b.done)continue;
-   if(P.alive&&wx(Math.floor(P.x/T))===b.x&&Math.floor(P.y/T)===b.y){b.prog+=dt;if(b.prog>=2){b.done=true;sfx('pick');const n=ARC.bombs.filter(o=>o.done).length;
+   if(P.alive&&wx(Math.floor(P.x/T))===b.x&&Math.floor(P.y/T)===b.y){
+    if(!b.alarm){b.alarm=true;for(const e of arcAlive())reveal(e.ai,P,false);showToast('¡ALARMA! TE VIENEN A DETENER','#f87171');sfx('streak');} // desactivar delata tu posición
+    b.prog+=dt;if(b.prog>=2){b.done=true;sfx('pick');const n=ARC.bombs.filter(o=>o.done).length;
     showToast(`BOMBA DESACTIVADA ${n}/${ARC.bombs.length}`,'#4ade80');}}}
   if(ARC.bombs.every(b=>b.done))arcMissionDone();
   else if(ARC.bombT<=0){for(const b of ARC.bombs)if(!b.done){fx.push({kind:'boom',x:b.x,y:b.y,t:.6,max:.6});sparksLocal(b.x*T+16,b.y*T+16,'#f97316',20,180);}

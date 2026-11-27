@@ -75,7 +75,10 @@ function firePos(e,tx,ty,lo,hi){
   if(!(x===e.tx&&y===e.ty)&&tileTaken(e,x,y))continue;
   let s=D[idx(x,y)];if(s>=1e9)continue;
   s+=Math.abs(k-(lo+hi)/2)*.5; // mejor a media distancia
-  for(const o of ents)if(o!==e&&o.alive&&o.ai&&o.ai.fpos&&o.ai.fpos[0]===x&&o.ai.fpos[1]===y)s+=8; // otra IA ya la eligió
+  for(const o of ents)if(o!==e&&o.alive&&o.ai&&o.ai.fpos){
+   if(o.ai.fpos[0]===x&&o.ai.fpos[1]===y)s+=8; // otra IA ya la eligió
+   else if(ARC&&ARC.flank&&o.enemy&&Math.sign(o.ai.fpos[0]-tx)===d.dx&&Math.sign(o.ai.fpos[1]-ty)===d.dy)s+=ARC.flank; // ese lado ya está cubierto: flanquea por otro
+  }
   if(s<bs){bs=s;best=[x,y];}
  }
  return best;

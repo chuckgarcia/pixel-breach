@@ -155,7 +155,7 @@ t('arcade: botiquines según la dificultad y solo para ti',()=>{
       placeAt(P,[1,13]);let n=0;for(let i=0;i<30*60;i++){update(1/30);n=Math.max(n,pickups.filter(p=>p.type==='medkit').length);}o[d]=n;}
     diff=3;startArcade(0);tut=null;ARC.cardT=0;const e=ents.find(e=>e.enemy);e.hp=20;pickups.push({tx:e.tx,ty:e.ty,type:'medkit',amt:40,t:0});updPickups(1/30);o.enemy=e.hp;
     SETTINGS.mode='dm';return o;})()`);
-  assert.ok(r[1]>=3,'muy fácil: pocos botiquines '+r[1]);assert.strictEqual(r[3],2);assert.strictEqual(r[4],1,'difícil: máximo 1');
+  assert.ok(r[1]>=3,'muy fácil: pocos botiquines '+r[1]);assert.strictEqual(r[3],1);assert.strictEqual(r[4],1,'difícil: máximo 1');
   assert.strictEqual(r.enemy,20,'un enemigo se curó con un botiquín');
 });
 t('arcade: oleadas, rehén y bombas',()=>{
@@ -199,5 +199,21 @@ t('IAs: nunca dos soldados en la misma casilla, buscan posición de tiro y no se
   assert.strictEqual(r.stack,0,'hubo soldados encimados en Arcade');assert.strictEqual(r.dm,0,'hubo soldados encimados en deathmatch');
   assert.ok(r.far>r.near*2,`demasiado tiempo pegados a ti: ${r.near} cerca contra ${r.far} a distancia`);
   assert.ok(r.frags>=3,'las IAs de deathmatch dejaron de pelear');assert.ok(r.arc,'el Arcade siguió activo en una partida normal');
+});
+t('arcade: la presión sube por nivel; en Cargas custodian las bombas y desactivar da la alarma; flanquean por otro lado',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=4;const o={};
+    o.react=[0,3].map(l=>arcPress(l).react);o.alert=[0,3].map(l=>arcPress(l).alert);
+    startArcade(3);tut=null;ARC.cardT=0;const P=arcPlayer();P.invulnT=1e9;const E=ents.filter(e=>e.enemy);
+    o.guard=E.every(e=>ARC.bombs.some(b=>b.x===e.home[0]&&b.y===e.home[1]));
+    for(const e of E)e.ai.known={};const b=ARC.bombs[2];placeAt(P,[b.x,b.y]);update(1/30);o.alarm=E.every(e=>!!e.ai.known[0]);
+    // flanqueo: si un compañero ya cubre un lado, el siguiente elige otro
+    startArcade(1);tut=null;ARC.cardT=0;const Q=arcPlayer();placeAt(Q,[10,5]);const a=arcEnemy('a',ents.length);ents.push(a);arcPlace(a,10,9);
+    const c=arcEnemy('a',ents.length);ents.push(c);arcPlace(c,10,10);
+    const fa=firePos(a,10,5,2,3);a.ai.fpos=fa;const fc=firePos(c,10,5,2,3);
+    o.sides=[Math.sign(fa[0]-10)+','+Math.sign(fa[1]-5),Math.sign(fc[0]-10)+','+Math.sign(fc[1]-5)];
+    SETTINGS.mode='dm';return o;})()`);
+  assert.ok(r.react[1]<r.react[0],'no reaccionan más rápido en niveles altos');assert.ok(r.alert[1]>r.alert[0]);
+  assert.ok(r.guard,'en Cargas no custodian las bombas');assert.ok(r.alarm,'desactivar no dio la alarma');
+  assert.notStrictEqual(r.sides[0],r.sides[1],'los dos eligieron el mismo lado: '+r.sides.join(' / '));
 });
 console.log(`${ok} pruebas OK`);

@@ -10,6 +10,16 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.15.4] - 2026-11-27
+
+### Cambiado
+- Arcade más exigente, y más conforme avanzas de nivel:
+  - **Botiquines más escasos**: MUY FÁCIL cada 15 s (hasta 3), FÁCIL cada 22 s (hasta 2), NORMAL cada 35 s (1), DIFÍCIL cada 55 s (1); los enemigos los sueltan con menos frecuencia.
+  - **Reaccionan más rápido** en cada nivel (hasta 28 % más rápido que en el primero), además de lo que ya marca la dificultad.
+  - **Se avisan entre ellos**: quien te ve alerta a sus compañeros cercanos; el radio crece con el nivel.
+  - **Flanquean**: si un compañero ya te cubre por un lado, el siguiente busca otro lado (a partir del nivel 2).
+  - **Cargas**: cada enemigo custodia la bomba más cercana, y al empezar a desactivar una suena la alarma y todos van por ti.
+
 ## [0.15.3] - 2026-11-27
 
 ### Cambiado
