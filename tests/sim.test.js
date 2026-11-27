@@ -225,4 +225,20 @@ t('arcade: al liberar al rehén suena la alarma, emboscan la extracción y llega
   assert.strictEqual(r.more,2,'no llegaron refuerzos');assert.ok(r.ambush>=3,'nadie embosca la extracción');assert.ok(r.hunt>=1,'nadie te persigue tras la alarma');
   assert.strictEqual(r.label,'DIFICULTAD DIFÍCIL · PUNTOS ×1.5');
 });
+t('arcade: nivel 1 se reagrupan a la mitad; nivel 2 entran por la puerta más lejana, la última oleada por todas y crece con la dificultad',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=4;const o={};
+    diff=3;startArcade(0);tut=null;ARC.cardT=0;let P=arcPlayer();P.invulnT=1e9;const E=ents.filter(e=>e.enemy);for(const e of E)e.ai.known={};
+    for(let i=0;i<2;i++){E[i].invulnT=0;kill(E[i],P,'pistol');}update(1/30);o.before=!ARC.regroup;E[2].invulnT=0;kill(E[2],P,'pistol');update(1/30);
+    o.regroup=ARC.regroup&&arcAlive().every(e=>!!e.ai.known[0]);
+    for(const d of [2,3,4]){diff=d;startArcade(1);tut=null;ARC.cardT=0;o['last'+d]=ARC.waves[2].length;}
+    diff=3;startArcade(1);tut=null;ARC.cardT=0;P=arcPlayer();P.invulnT=1e9;placeAt(P,[2,2]);ARC.waveT=0;update(1/30);
+    const far=ARC.spawns.slice().sort((a,b)=>(Math.abs(b[0]-2)+Math.abs(b[1]-2))-(Math.abs(a[0]-2)+Math.abs(a[1]-2)))[0];
+    o.far=arcAlive().every(e=>Math.abs(e.tx-far[0])+Math.abs(e.ty-far[1])<=3);
+    for(const e of arcAlive()){e.alive=false;e.out=true;}ARC.waveI=2;ARC.waveT=0;update(1/30);
+    o.doors=new Set(arcAlive().map(e=>ARC.spawns.findIndex(s=>Math.abs(s[0]-e.tx)+Math.abs(s[1]-e.ty)<=3))).size;
+    SETTINGS.mode='dm';return o;})()`);
+  assert.ok(r.before&&r.regroup,'no se reagruparon al caer la mitad');
+  assert.strictEqual(r.last2,4);assert.strictEqual(r.last3,5);assert.strictEqual(r.last4,6);
+  assert.ok(r.far,'la oleada no entró por la puerta más lejana');assert.strictEqual(r.doors,3,'la última oleada no entró por las 3 puertas');
+});
 console.log(`${ok} pruebas OK`);

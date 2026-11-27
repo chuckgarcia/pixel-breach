@@ -47,7 +47,7 @@ function arcLoad(){
  P.skin=playerSkin;P.tp=0;P.caps=0;P.lives=0;P.out=false;P.st={shots:0,hits:0,kw:{},nades:0,picks:0,best:0};
  ents=[P];myId=0;
  Object.assign(ARC,{t:0,killPts:0,kills:0,combo:0,comboT:0,bestCombo:0,startScore:ARC.score,exitOpen:false,exit:null,bombs:[],spawns:[],
-  waves:(L.waves||[]).slice(),waveI:0,waveT:2,hostage:null,freed:false,trail:[],bombT:L.limit||0,cardT:1,cardAge:0,cardArmed:false,deadT:0,downMsg:'',fail:false,result:null,tally:null,waitT:0,contT:0,medT:arcMed().every*.5});
+  waves:(L.waves||[]).slice(),waveI:0,waveT:3,hostage:null,freed:false,trail:[],bombT:L.limit||0,cardT:1,cardAge:0,cardArmed:false,deadT:0,downMsg:'',fail:false,result:null,tally:null,waitT:0,contT:0,medT:arcMed().every*.5});
  L.map.forEach((row,y)=>[...row].forEach((c,x)=>{
   const i=idx(x,y);grid[i]=c==='#'?WALL:c==='+'?CRATE:c==='~'?LAVA:FLOOR;if(c==='+')crateHP[i]=3;
   if(c==='P')placeAt(P,[x,y]);
@@ -58,7 +58,8 @@ function arcLoad(){
    Object.assign(h,{hostage:true,color:'#e2e8f0',skin:'recruitM',speed:PLAYER_SPEED*1.08,caps:0,lives:0,out:false,tp:0});arcPlace(h,x,y);ents.push(h);ARC.hostage=h;}
   else if(ENEMY[c]){const e=arcEnemy(c,ents.length);arcPlace(e,x,y);ents.push(e);}
  }));
- ARC.alertT=0;ARC.flank=arcPress(ARC.lv).flank;
+ ARC.alertT=0;ARC.flank=arcPress(ARC.lv).flank;ARC.regroup=false;ARC.total=ents.filter(e=>e.enemy).length;
+ if(ARC.waves.length){const n=ARC.waves.length-1;ARC.waves[n]+=({3:'r',4:'ra'})[diff]||'';} // la última oleada crece con la dificultad: 4, 5 en NORMAL, 6 en DIFÍCIL
  if(L.goal==='bombs')for(const e of ents.filter(e=>e.enemy)){ // cada enemigo custodia la bomba más cercana
   let best=null,bd=1e9;for(const b of ARC.bombs){const d=Math.abs(b.x-e.tx)+Math.abs(b.y-e.ty);if(d<bd){bd=d;best=b;}}
   if(best)e.home=[best.x,best.y];}
@@ -125,7 +126,11 @@ function arcTick(dt){
   for(const e of E)if(!e.ai.known[0]&&see.some(s=>Math.abs(s.tx-e.tx)+Math.abs(s.ty-e.ty)<=R))reveal(e.ai,P,false);}
  // rastro de tus pasos (el rehén lo sigue)
  if(P.alive){const k=[wx(Math.floor(P.x/T)),Math.floor(P.y/T)],l=ARC.trail[ARC.trail.length-1];if(!l||l[0]!==k[0]||l[1]!==k[1]){ARC.trail.push(k);if(ARC.trail.length>40)ARC.trail.shift();}}
- if(L.goal==='kill'){if(!arcAlive().length)arcMissionDone();}
+ if(L.goal==='kill'){
+  const left=arcAlive();
+  if(!ARC.regroup&&left.length&&left.length<=ARC.total/2){ // cae la mitad: los que quedan se reagrupan y van por ti
+   ARC.regroup=true;for(const e of left){reveal(e.ai,P,false);e.home=null;}announce={text:'¡SE REAGRUPAN!',c:'#f87171',t:1.8};sfx('streak');}
+  if(!left.length)arcMissionDone();}
  else if(L.goal==='waves'){
   if(!arcAlive().length){
    if(ARC.waveI<ARC.waves.length){ARC.waveT-=dt;if(ARC.waveT<=0)arcWave();}
@@ -149,11 +154,13 @@ function arcTick(dt){
   else arcComplete();
  }
 }
+// Cada oleada entra por la puerta más lejana a ti; la última, por todas las puertas a la vez.
 function arcWave(){
- const w=ARC.waves[ARC.waveI],S=ARC.spawns;ARC.waveI++;ARC.waveT=2.5;
- [...w].forEach((c,i)=>{const s=S[(i+ARC.waveI)%S.length],e=arcEnemy(c,ents.length);
+ const w=ARC.waves[ARC.waveI],P=arcPlayer(),last=ARC.waveI===ARC.waves.length-1;ARC.waveI++;ARC.waveT=5;
+ const S=ARC.spawns.slice().sort((a,b)=>(Math.abs(b[0]-P.tx)+Math.abs(b[1]-P.ty))-(Math.abs(a[0]-P.tx)+Math.abs(a[1]-P.ty)));
+ [...w].forEach((c,i)=>{const s=last?S[i%S.length]:S[0],e=arcEnemy(c,ents.length);
   const f=freeNear(s[0],s[1],e);arcPlace(e,f[0],f[1]);e.invulnT=.8;ents.push(e);reveal(e.ai,arcPlayer(),false);});
- announce={text:`OLEADA ${ARC.waveI}/${ARC.waves.length}`,c:'#f87171',t:1.8};sfx('streak');
+ announce={text:last?`¡ÚLTIMA OLEADA! POR TODAS LAS PUERTAS`:`OLEADA ${ARC.waveI}/${ARC.waves.length}`,c:'#f87171',t:1.8};sfx('streak');
 }
 // rehén: se libera al tocarlo y luego camina dos casillas detrás de ti
 function updHostage(h,dt){
@@ -255,6 +262,9 @@ function drawArcHud(){ // etiqueta arriba: nivel y vidas; tarjeta de misión; ca
  const under=m&&m.alive&&m.y<64&&Math.abs(m.x-W/2)<w/2+20;ctx.globalAlpha=under?.3:1;
  ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(x,HUD+5,w,20);txt(t,x+8,HUD+15,11,bombs&&ARC.bombT<20?'#f87171':'#e2e8f0','left',false);
  drawHearts(x+w-6,HUD+10,Math.min(5,ARC.lives),Math.min(5,ARC.lives),1.5);ctx.globalAlpha=1;
+ {const L=ARC_LEVELS[ARC.lv]; // entre oleadas: OLEADA 2 EN 3… 2… 1…
+  if(L.goal==='waves'&&ARC.cardT<=0&&ARC.deadT<=0&&ARC.waveI<ARC.waves.length&&!arcAlive().length&&ARC.waveT<=3.5){
+   const n=Math.max(1,Math.ceil(ARC.waveT));txt(`OLEADA ${ARC.waveI+1} EN ${n}…`,W/2,HUD+96,22,ARC.waveI+1===ARC.waves.length?'#f87171':'#facc15','center');}}
  if(ARC.deadT>0){overlay(Math.min(ARC.fail?.55:.35,(2.4-ARC.deadT)*.6));txt(ARC.downMsg,W/2,HUD+H/2-14,26,'#ef4444','center');
   txt(ARC.lives>0?`Te quedan ${ARC.lives} ${ARC.lives===1?'vida':'vidas'} · `+(ARC.fail?'el nivel se reinicia':'reapareces aquí'):'Sin vidas',W/2,HUD+H/2+18,13,'#e2e8f0','center');}
 }

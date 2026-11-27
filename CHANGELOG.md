@@ -10,6 +10,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.15.6] - 2026-11-27
+
+### Cambiado
+- Arcade · Primer día: cuando cae la mitad de los reclutas, los que quedan se reagrupan y van por ti («¡SE REAGRUPAN!»), en lugar de esperar escondidos.
+- Arcade · Limpieza:
+  - Cada oleada entra por la puerta más lejana a ti; la última entra por las tres puertas a la vez.
+  - Entre oleadas hay 5 s y un aviso «OLEADA 2 EN 3… 2… 1…» para recuperarte y recoger botiquines.
+  - La última oleada crece con la dificultad: 4 enemigos en MUY FÁCIL y FÁCIL, 5 en NORMAL y 6 en DIFÍCIL.
+
 ## [0.15.5] - 2026-11-27
 
 ### Cambiado

@@ -1,7 +1,7 @@
 // Service worker de Pixel Breach: permite instalar el juego y jugar solo sin internet.
 // Siempre intenta la red primero (para recibir actualizaciones) y usa la copia guardada si no hay conexión.
 // La versión debe coincidir con VERSION en js/data.js (lo revisan las pruebas).
-const VERSION='0.15.5';
+const VERSION='0.15.6';
 const CACHE='pixel-breach-v'+VERSION;
 const FILES=['./','index.html','css/game.css','manifest.json','apple-touch-icon.png','icon192.png','icon512.png',
  'js/data.js','js/skins.js','js/logo.js','js/map.js','js/entities.js','js/ai.js','js/combat.js','js/modes.js','js/levels.js','js/arcade.js','js/audio.js','js/loop.js',
