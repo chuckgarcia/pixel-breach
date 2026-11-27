@@ -10,6 +10,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.12.3] - 2026-11-26
+
+### Añadido
+- Vibración en iPhone: un toque corto en cada disparo (Safari 17.4 o más nuevo). Apple solo lo permite mientras tocas la pantalla, así que no vibra al recibir daño.
+- En Android, además de vibrar al recibir daño, ahora da un toque muy corto en cada disparo.
+
 ## [0.12.2] - 2026-11-26
 
 ### Corregido

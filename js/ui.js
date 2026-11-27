@@ -30,8 +30,9 @@ function syncSettingsUI(){
  const online=!!NET;tog('sFog',online?NET.fog!==false:fog);$('sFog').disabled=online;
  $('sFogNote').textContent=online?'En línea, la niebla la elige el anfitrión.':'';
  $('sVibRow').style.display=isTouch?'':'none';
- {const can=!!navigator.vibrate;$('sVib').disabled=!can;$('sVib').style.opacity=can?1:.45;if(!can)$('sVib').textContent='NO DISPONIBLE';
-  $('sVibNote').textContent=can?'':'Tu teléfono no deja que las páginas vibren (pasa en iPhone y iPad).';$('sVibNote').style.display=can?'none':'';}
+ {const can=canVibrate()||canTick();$('sVib').disabled=!can;$('sVib').style.opacity=can?1:.45;if(!can)$('sVib').textContent='NO DISPONIBLE';
+  const note=!can?'Tu teléfono no deja que las páginas vibren.':canVibrate()?'':'En iPhone: un toque en cada disparo (Apple no permite vibrar al recibir daño).';
+  $('sVibNote').textContent=note;$('sVibNote').style.display=note?'':'none';}
  $('sFsRow').style.display=fsOK?'':'none';$('sFs').textContent=document.fullscreenElement?'SALIR':'COMPLETA';
  $('sInstall').style.display=installEvt?'':'none';
  $('sInstallNote').textContent=installEvt?'':installHelp();
@@ -41,7 +42,7 @@ $('sMus').addEventListener('click',()=>{SETTINGS.music=!SETTINGS.music;audio();a
 $('sSfxVol').addEventListener('input',e=>{SETTINGS.sfxVol=e.target.value/100;applyVolumes();saveSettings();});
 $('sSfxVol').addEventListener('change',()=>sfx('pick'));
 $('sMusVol').addEventListener('input',e=>{SETTINGS.musicVol=e.target.value/100;applyVolumes();saveSettings();});
-$('sVib').addEventListener('click',()=>{SETTINGS.vibrate=!SETTINGS.vibrate;saveSettings();syncSettingsUI();try{SETTINGS.vibrate&&navigator.vibrate(30);}catch(e){}});
+$('sVib').addEventListener('click',()=>{SETTINGS.vibrate=!SETTINGS.vibrate;saveSettings();syncSettingsUI();buzz('shot');});
 $('sFog').addEventListener('click',()=>{if(NET)return;fog=!fog;SETTINGS.fog=fog;saveSettings();syncSettingsUI();});
 $('sFs').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else{await document.documentElement.requestFullscreen();try{await screen.orientation.lock('landscape');}catch(e){}}}catch(e){}syncSettingsUI();});
 $('sTut').addEventListener('click',()=>{try{localStorage.removeItem('pb_tut');}catch(e){}closeSettings();showToast('LA GUÍA APARECE EN TU PRÓXIMA PARTIDA SOLO','#facc15');});
@@ -59,6 +60,20 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'&&/github\.io$/.te
 
 // ---------- CONTROLES TÁCTILES ----------
 let isTouch=false;
+// ---- vibración: Android usa navigator.vibrate; iPhone (Safari 17.4+) solo da un toque corto con un interruptor
+// escondido, y solo mientras se toca la pantalla, así que allá se siente en los disparos y no al recibir daño.
+const canVibrate=()=>!!navigator.vibrate,canTick=()=>{try{return 'switch' in HTMLInputElement.prototype;}catch(e){return false;}};
+let tickLabel=null;
+function buzz(kind){
+ if(!SETTINGS.vibrate||!isTouch)return;
+ try{
+  if(canVibrate()){navigator.vibrate(kind==='hurt'?25:8);return;}
+  if(kind!=='shot'||!canTick())return;
+  if(!tickLabel){tickLabel=document.createElement('label');const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');
+   tickLabel.appendChild(i);tickLabel.style.cssText='position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none';tickLabel.setAttribute('aria-hidden','true');document.body.appendChild(tickLabel);}
+  tickLabel.click();
+ }catch(e){}
+}
 function enableTouch(){if(isTouch)return;isTouch=true;document.body.classList.add('touch');if(navigator.share)document.body.classList.add('canshare');}
 try{if(matchMedia('(pointer:coarse)').matches||'ontouchstart' in window)enableTouch();}catch(e){}
 addEventListener('touchstart',enableTouch,{passive:true});

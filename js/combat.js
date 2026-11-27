@@ -95,9 +95,9 @@ function applyEv(ev){
  switch(ev.k){
   case 'sfx':sfx(ev.n,ev.x,ev.y);break;
   case 'sp':sparksLocal(ev.x,ev.y,ev.c,ev.n,ev.s);break;
-  case 'mz':parts.push({x:ev.x,y:ev.y,vx:0,vy:0,t:.06,life:.06,col:'#fff7ae',s:8});break;
+  case 'mz':parts.push({x:ev.x,y:ev.y,vx:0,vy:0,t:.06,life:.06,col:'#fff7ae',s:8});{const m=me();if(m&&m.alive&&Math.hypot(m.x-ev.x,m.y-ev.y)<20)buzz('shot');}break;
   case 'shot':if(m&&m.alive&&ev.id!==myId&&Math.hypot(m.x-ev.x,m.y-ev.y)<=HEARING*T){const h=heard.find(h=>h.id===ev.id&&h.t>.2);if(h){h.x=ev.x;h.y=ev.y;h.t=h.max;}else heard.push({id:ev.id,x:ev.x,y:ev.y,t:.45,max:.45});}break;
-  case 'hurt':if(ev.to===myId){shake=Math.max(shake,4);sfx('hurt');try{SETTINGS.vibrate&&isTouch&&navigator.vibrate&&navigator.vibrate(25);}catch(_){}}break;
+  case 'hurt':if(ev.to===myId){shake=Math.max(shake,4);sfx('hurt');buzz('hurt');}break;
   case 'flash':if(ev.to===myId)flashA=Math.max(flashA,ev.a);break;
   case 'toast':if(ev.to===myId)showToast(ev.t,ev.c);break;
   case 'shake':shake=Math.max(shake,ev.a);break;
