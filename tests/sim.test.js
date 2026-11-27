@@ -142,7 +142,7 @@ t('arcade: al caer reapareces en el mismo lugar y el nivel sigue; sin vidas, CON
     ARC.lives=1;P.invulnT=0;kill(P,E[1],'pistol');for(let i=0;i<60;i++)update(1/30);arcContTick(11);o.over=ARC.result;
     arcAgain();o.retry=[state,ARC.lives,ARC.score,ents.filter(e=>e.enemy&&e.alive).length].join();
     SETTINGS.mode='dm';return o;})()`);
-  assert.strictEqual(r.lives,2);assert.ok(r.alive,'no reapareció');assert.strictEqual(r.at,'5,9','no reapareció donde cayó');
+  assert.strictEqual(r.lives,2);assert.ok(r.alive,'no reapareció');{const [x,y]=r.at.split(',').map(Number);assert.ok(Math.abs(x-5)+Math.abs(y-9)<=1,'no reapareció donde cayó: '+r.at);} // o en la casilla de al lado si un enemigo la ocupa
   assert.ok(r.score,'perdió los puntos al caer');assert.strictEqual(r.smg,0,'debe volver con pistola');assert.strictEqual(r.frag,1);assert.ok(r.inv,'sin invencibilidad al reaparecer');
   assert.ok(r.dead0&&r.same,'el nivel se reinició al caer');
   assert.strictEqual(r.res,'cont');assert.strictEqual(r.n,9,'la cuenta debe empezar en 9');assert.strictEqual(r.n2,5);
