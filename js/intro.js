@@ -1,7 +1,7 @@
 'use strict';
 // Pixel Breach — Intro animada
 // ---------- INTRO ANIMADA ----------
-let introT=0;
+let introT=0,introLogo=null;
 const INTRO_COLORS=['#4ade80','#ef4444','#f472b6','#22d3ee','#fb923c'];
 function drawIntro(){
  const _v=()=>txt('v'+VERSION,W-10,cv.height-12,10,'#475569','right',false);
@@ -9,20 +9,18 @@ function drawIntro(){
  ctx.fillStyle=`rgba(8,10,16,${Math.max(.55,1-t*.35)})`;ctx.fillRect(0,0,W,cv.height);
  // barrido de escáner
  const sy=((t*180)%(cv.height+80))-40;const g=ctx.createLinearGradient(0,sy-30,0,sy+30);g.addColorStop(0,'rgba(74,222,128,0)');g.addColorStop(.5,'rgba(74,222,128,.10)');g.addColorStop(1,'rgba(74,222,128,0)');ctx.fillStyle=g;ctx.fillRect(0,sy-30,W,60);
- // título letra por letra con rebote y un poco de "glitch"
- const TITLE='PIXEL BREACH';ctx.font='bold 56px "Courier New",monospace';ctx.textBaseline='middle';ctx.textAlign='left';
- const tw=ctx.measureText(TITLE).width,x0=(W-tw)/2,cw=tw/TITLE.length,ty=170;
- const glitch=(t%2.3)>2.15;
- for(let i=0;i<TITLE.length;i++){
-  const lt=t-.15-i*.07;if(lt<0)continue;
-  const k=Math.min(1,lt/.35),bounce=(1-k)*-60+Math.sin(Math.min(1,lt/.5)*Math.PI)*-8*(1-Math.min(1,lt/.6));
-  const x=x0+i*cw,y=ty+bounce;
+ // logotipo letra por letra con rebote y un poco de "glitch"
+ if(!introLogo)introLogo=logoPieces(5,true);
+ const L=introLogo,x0=Math.round((W-L.w)/2),y0=110,glitch=(t%2.3)>2.15;
+ L.pieces.forEach((p,i)=>{
+  const lt=p.row===2?(t-1.2)*1.5:t-.15-i*.06;if(lt<0)return;
+  const k=Math.min(1,lt/.35),bounce=p.row===2?0:(1-k)*-60+Math.sin(Math.min(1,lt/.5)*Math.PI)*-8*(1-Math.min(1,lt/.6));
+  const x=x0+Math.round(p.x),y=y0+Math.round(p.y+bounce);
   ctx.globalAlpha=k;
-  if(glitch){ctx.fillStyle='#ef4444';ctx.fillText(TITLE[i],x-3,y);ctx.fillStyle='#22d3ee';ctx.fillText(TITLE[i],x+3,y);}
-  ctx.fillStyle='#000';ctx.fillText(TITLE[i],x+4,y+4);ctx.fillStyle='#4ade80';ctx.fillText(TITLE[i],x,y);
- }
+  if(glitch&&p.row<2){ctx.globalAlpha=k*.45;ctx.drawImage(p.img,x-4,y);ctx.drawImage(p.img,x+4,y);ctx.globalAlpha=k;}
+  ctx.drawImage(p.img,x,y);
+ });
  ctx.globalAlpha=1;
- if(t>1.2){ctx.globalAlpha=Math.min(1,(t-1.2)*2);txt('DEATHMATCH CQB',W/2,222,16,'#94a3b8','center');ctx.globalAlpha=1;}
  // escuadrón marchando
  const baseY=372,spd=70,gap=64,span=W+gap*6;
  INTRO_COLORS.forEach((c,i)=>{

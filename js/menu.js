@@ -41,6 +41,7 @@ $('pprev').addEventListener('click',()=>stepPreset(-1));$('pnext').addEventListe
 $('pname2').textContent=presetLabel(SETTINGS.preset);
 $('tprev').addEventListener('click',()=>stepTheme(-1));$('tnext').addEventListener('click',()=>stepTheme(1));
 $('tname').textContent=themeLabel(themeChoice);
+{const lb=$('logoBox');if(lb&&lb.appendChild){const c=logoCanvas(4,false);c.id='logo';lb.appendChild(c);}} // logotipo en pixel art
 $('ver').textContent='v'+VERSION;$('ver').classList.add('inv');
 // vista previa del soldado con el color elegido: camina y gira
 const pv=$('pv');window.pvxMain=pv.getContext('2d');
