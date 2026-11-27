@@ -70,6 +70,8 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
         assert.strictEqual(await M.innerText('#playAI'),'JUGAR NIVEL 1');
         const r=await M.locator('#playAI').boundingBox();assert.ok(r&&r.y+r.height<=h,'JUGAR fuera de la vista');
         await M.click('#playAI');assert.ok(await M.evaluate("!!ARC&&ARC.lv===0&&state==='play'"));
+        await M.waitForTimeout(1500);assert.ok(await M.evaluate('ARC.cardT>0'),'la tarjeta no esperó');assert.ok(await M.isVisible('#arcReady'),'no se ve ¡LISTO!');
+        await M.click('#arcReady');assert.ok(await M.evaluate('ARC.cardT===0'),'¡LISTO! no empezó el nivel');assert.ok(!(await M.isVisible('#arcReady')));
         await M.evaluate("localStorage.setItem('pb_settings',JSON.stringify(Object.assign(SETTINGS,{mode:'dm'})))");await M.context().close();}});
     await t('el color se cambia con ◀ ▶ y el soldado lo usa',async()=>{
       const M=await page('color');await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");

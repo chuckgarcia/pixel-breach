@@ -1,6 +1,6 @@
 # Pixel Breach
 
-**Versión actual: v0.15.0** · [Historial de cambios](CHANGELOG.md)
+**Versión actual: v0.15.1** · [Historial de cambios](CHANGELOG.md)
 
 Deathmatch CQB retro en un laberinto, inspirado en Bomberman y Pac-Man.
 

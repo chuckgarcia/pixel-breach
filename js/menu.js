@@ -9,6 +9,7 @@ function syncOverlays(){
  if(state!==shownState){shownState=state;document.body.classList.toggle('menus',state==='title'||state==='lobby'); /* en celular: menú a pantalla completa, sin controles */menuEl.style.display=state==='title'?'flex':'none';overEl.style.display=state==='over'?'flex':'none';$('lobby').style.display=state==='lobby'?'flex':'none';if(state==='title'){buildHowto();showMode();} /* estrellas y niveles nuevos al volver al menú */
   const host=!NET||NET.role==='host';$('again').style.display=host?'':'none';if(!ARC)$('again').textContent='REVANCHA';$('toMenu').textContent=!NET?'MENÚ':host?'SALA':'SALIR';
   if(state==='lobby')renderLobby();}
+ {const show=!!(ARC&&state==='play'&&ARC.cardT>0),el=$('readyBtns');if((el.style.display==='flex')!==show)el.style.display=show?'flex':'none';}
  if(state==='over'&&ARC){ // Arcade: SIGUIENTE NIVEL o CONTINUAR
   const a=$('again'),t=ARC.result==='win'?(arcHasNext()?'SIGUIENTE NIVEL':''):'CONTINUAR';
   if(t&&a.textContent!==t)a.textContent=t;a.style.display=t?'':'none';if($('toMenu').textContent!=='MENÚ')$('toMenu').textContent='MENÚ';}
@@ -49,6 +50,7 @@ function showMode(){const m=menuMode(),arc=m==='arcade';$('mname').textContent=M
  $('playAI').textContent=arc?`JUGAR NIVEL ${arcSel+1}`:'JUGAR CONTRA IAs';showLevel();}
 function showLevel(){$('lvname').textContent=arcLevelLabel(arcSel);if(menuMode()==='arcade')$('playAI').textContent=`JUGAR NIVEL ${arcSel+1}`;}
 function stepLevel(d){arcSel=Math.max(0,Math.min(arcSave.open-1,arcSel+d));showLevel();} // solo los niveles desbloqueados
+$('arcReady').addEventListener('click',()=>arcReady());
 $('lvprev').addEventListener('click',()=>stepLevel(-1));$('lvnext').addEventListener('click',()=>stepLevel(1));
 function stepMode(d,maxHumans){ // maxHumans: en la sala, los humanos que ya hay (bandera admite hasta 4)
  let i=MODE_KEYS.indexOf(menuMode());

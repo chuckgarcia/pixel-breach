@@ -162,4 +162,11 @@ t('arcade: en el menú, MODO ofrece ARCADE pero la sala en línea no',()=>{
   const r=run(`(()=>{SETTINGS.mode='lms';stepMode(1);const a=menuMode();SETTINGS.mode='lms';stepMode(1,2);const b=menuMode();SETTINGS.mode='dm';return a+','+b;})()`);
   assert.strictEqual(r,'arcade,dm');
 });
+t('arcade: la tarjeta de misión espera a que confirmes y no la salta una tecla que ya venía presionada',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;dirStack=[];for(const k in keys)keys[k]=false;keys.Enter=true; // ENTER del nivel anterior, todavía presionado
+    startArcade(0);tut=null;for(let i=0;i<30*15;i++)update(1/30);const held=ARC.cardT>0&&ARC.t===0;
+    keys.Enter=false;update(1/30);keys.Space=true;update(1/30);const go=ARC.cardT===0;keys.Space=false;
+    for(let i=0;i<30;i++)update(1/30);const o={held,go,t:ARC.t>0};SETTINGS.mode='dm';return o;})()`);
+  assert.ok(r.held,'la tarjeta se quitó sola o con la tecla que venía presionada');assert.ok(r.go,'ESPACIO no confirmó');assert.ok(r.t,'el nivel no empezó');
+});
 console.log(`${ok} pruebas OK`);

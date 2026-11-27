@@ -38,7 +38,7 @@ function arcLoad(){
  P.skin=playerSkin;P.tp=0;P.caps=0;P.lives=0;P.out=false;P.st={shots:0,hits:0,kw:{},nades:0,picks:0,best:0};
  ents=[P];myId=0;
  Object.assign(ARC,{t:0,killPts:0,kills:0,combo:0,comboT:0,bestCombo:0,startScore:ARC.score,exitOpen:false,exit:null,bombs:[],spawns:[],
-  waves:(L.waves||[]).slice(),waveI:0,waveT:2,hostage:null,freed:false,trail:[],bombT:L.limit||0,cardT:3,deadT:0,downMsg:'',result:null,tally:null,waitT:0});
+  waves:(L.waves||[]).slice(),waveI:0,waveT:2,hostage:null,freed:false,trail:[],bombT:L.limit||0,cardT:1,cardAge:0,cardArmed:false,deadT:0,downMsg:'',result:null,tally:null,waitT:0});
  L.map.forEach((row,y)=>[...row].forEach((c,x)=>{
   const i=idx(x,y);grid[i]=c==='#'?WALL:c==='+'?CRATE:c==='~'?LAVA:FLOOR;if(c==='+')crateHP[i]=3;
   if(c==='P')placeAt(P,[x,y]);
@@ -86,9 +86,14 @@ function arcMissionDone(){ // la misión está cumplida: se abre la extracción
 // ---------- CICLO ----------
 // Devuelve true mientras el juego deba estar detenido (tarjeta de misión).
 function arcGate(dt){
- if(ARC.cardT>0){ARC.cardT-=dt;if(ARC.cardT<2.4&&(keys.Space||keys.Enter||keys.KeyJ))ARC.cardT=0;tickFx(dt);return true;}
+ if(ARC.cardT>0){ // la tarjeta espera a que confirmes: ¡LISTO!, ESPACIO, ENTER o FUEGO
+  ARC.cardAge+=dt;const k=keys.Space||keys.Enter||keys.NumpadEnter||keys.KeyJ;
+  if(!k&&ARC.cardAge>.4)ARC.cardArmed=true; // una tecla que venía presionada (disparo, ENTER del nivel anterior) no cuenta
+  else if(k&&ARC.cardArmed)arcReady();
+  tickFx(dt);return true;}
  return false;
 }
+function arcReady(){if(ARC&&ARC.cardT>0){ARC.cardT=0;sfx('go');}}
 function arcTick(dt){
  const L=ARC_LEVELS[ARC.lv],P=arcPlayer();
  if(ARC.deadT>0){ARC.deadT-=dt;if(ARC.deadT<=0){if(ARC.lives>0){ARC.score=ARC.startScore;ARC.inv=null;arcLoad();ARC.lostHere=true;}else arcGameOver();}return;}
@@ -197,10 +202,10 @@ function drawArcCard(){
  txt(`NIVEL ${ARC.lv+1}`,W/2,HUD+92,32,'#facc15','center');txt(L.name,W/2,HUD+136,24,'#e2e8f0','center');txt(THEMES[L.theme].name,W/2,HUD+164,12,'#64748b','center');
  ctx.strokeStyle='#facc15';ctx.lineWidth=2;ctx.strokeRect(96,HUD+186,W-192,78);
  txt(L.text[0],W/2,HUD+212,14,'#facc15','center');txt(L.text[1],W/2,HUD+238,14,'#facc15','center');
- if(L.nw){const D=ENEMY[L.nw];drawSkin(ctx,D.skin,VCOL,'down',0,false,D.w,W/2-130,HUD+340,2);txt('NUEVO: '+D.n,W/2-100,HUD+316,12,'#cbd5e1','left');
-  txt({r:'pistola · poca vida',a:'subfusil · va directo por ti',s:'escopeta · espera en las esquinas'}[L.nw]||'',W/2-100,HUD+334,11,'#64748b','left',false);}
- txt(`VIDAS ${ARC.lives}   ·   ${fmtPts(ARC.score)}`,W/2,HUD+390,14,'#f87171','center');
- if(ARC.cardT<2.4&&Math.floor(clock*2)%2)txt(isTouch?'Toca FUEGO para empezar':'ESPACIO para empezar',W/2,HUD+430,11,'#94a3b8','center',false);
+ if(L.nw){const D=ENEMY[L.nw];drawSkin(ctx,D.skin,VCOL,'down',0,false,D.w,W/2-130,HUD+318,2);txt('NUEVO: '+D.n,W/2-100,HUD+296,12,'#cbd5e1','left');
+  txt({r:'pistola · poca vida',a:'subfusil · va directo por ti',s:'escopeta · espera en las esquinas'}[L.nw]||'',W/2-100,HUD+314,11,'#64748b','left',false);}
+ txt(`VIDAS ${ARC.lives}   ·   ${fmtPts(ARC.score)}`,W/2,HUD+350,14,'#f87171','center');
+ if(!isTouch)txt('Cuando estés listo: ESPACIO o ENTER',W/2,HUD+376,11,'#94a3b8','center',false);
 }
 function drawArcOver(){
  overlay(.86);const L=ARC_LEVELS[ARC.lv];
