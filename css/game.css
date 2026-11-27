@@ -269,3 +269,15 @@ body.touch #overBtns .mbtn{flex:1;max-width:240px;padding:12px 8px}
 #menu .sub{letter-spacing:.45em;margin-top:2px}
 body.touch.menus #logo{width:min(320px,80vw)}
 @media (orientation:landscape){body.touch.menus #logo{width:min(240px,34vw)}}
+
+/* listos y cuenta regresiva */
+#lplayers .rdy{margin-left:auto;font-style:normal;font-size:.8em;color:#64748b;padding-left:10px}
+#lplayers .rdy.on{color:#4ade80}
+#lready.on{background:#14301f;border-color:#4ade80;color:#4ade80}
+#lready{background:#151a24;color:#e2e8f0;border-color:#334155}
+#lstart:disabled{cursor:not-allowed}
+#countdown{inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(8,10,16,.72);z-index:7;pointer-events:none}
+#countdown small{font:bold 18px "Courier New",monospace;color:#94a3b8;letter-spacing:.3em}
+#countdown b{font:bold 96px "Courier New",monospace;color:#facc15;text-shadow:5px 5px 0 #000;animation:cdpop 1s ease-out infinite}
+@keyframes cdpop{0%{transform:scale(1.5);opacity:.4}25%{transform:scale(1);opacity:1}100%{transform:scale(.95)}}
+body.touch.menus #countdown{position:fixed}

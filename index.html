@@ -64,8 +64,8 @@
   <div class="row sel hostrow"><span class="lbl">PARTIDA</span><button class="mbtn hostonly" id="lpPrev">◀</button><b id="lpName" class="tn"></b><button class="mbtn hostonly" id="lpNext">▶</button></div>
   <div class="row sel hostrow"><span class="lbl">NIEBLA</span><button class="mbtn hostonly" id="lfPrev">◀</button><b id="lfName" class="tn"></b><button class="mbtn hostonly" id="lfNext">▶</button></div>
   <div class="row sel hostrow"><span class="lbl">DIFICULTAD</span><button class="mbtn hostonly" id="ldPrev">◀</button><b id="ldName"></b><button class="mbtn hostonly" id="ldNext">▶</button></div>
-  <div id="lwait">Esperando a que el anfitrión empiece…</div>
-  <div class="dock"><div class="row ldock"><button class="mbtn big hostonly" id="lstart">EMPEZAR</button><button class="mbtn" id="lleave">SALIR</button></div></div>
+  <div id="lwait"></div>
+  <div class="dock"><div class="row ldock"><button class="mbtn big hostonly" id="lstart">EMPEZAR</button><button class="mbtn big clientonly" id="lready">ESTOY LISTO</button><button class="mbtn" id="lleave">SALIR</button></div></div>
   </div>
   <div class="note">Máximo 5 combatientes por partida (humanos + IAs). Comparte el enlace o el código.</div>
  </div>
@@ -83,6 +83,7 @@
  </div>
  <button class="gear ovl" id="gearMenu" aria-label="Ajustes">⚙</button>
  <button class="gear ovl" id="gearGame" aria-label="Ajustes">⚙</button>
+ <div id="countdown" class="ovl" aria-live="assertive"><small>EMPEZANDO EN</small><b id="cdNum">3</b></div>
  <div id="overBtns" class="ovl"><button class="mbtn big" id="again">REVANCHA</button><button class="mbtn" id="toMenu">MENÚ</button></div>
 </div>
 <div id="pad" class="touch-ui"><span class="u">▲</span><span class="d">▼</span><span class="l">◀</span><span class="r">▶</span><div id="knob"></div></div>

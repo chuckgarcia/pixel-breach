@@ -10,6 +10,17 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.13.0] - 2026-11-26
+
+### Añadido
+- En la sala, cada invitado toca ESTOY LISTO; la lista muestra «✓ LISTO» junto a quien ya está preparado.
+- El anfitrión solo puede EMPEZAR cuando todos los invitados están listos (el botón dice cuántos faltan, por ejemplo «ESPERANDO (1/2 LISTOS)»).
+- Al empezar, todos ven una cuenta regresiva «EMPEZANDO EN 3… 2… 1… ¡YA!» con sonido. El anfitrión puede CANCELAR durante la cuenta, y si un invitado deja de estar listo, se cancela sola.
+- La REVANCHA en línea también usa la cuenta regresiva.
+
+### Cambiado
+- Versión MENOR nueva: anfitrión e invitados deben recargar para jugar juntos.
+
 ## [0.12.7] - 2026-11-26
 
 ### Cambiado

@@ -35,7 +35,7 @@ function loadPeer(){
 }
 function netMsg(t,ok){const m=$('netMsg');if(t&&!ok&&!/github\.io|127\.0\.0\.1|localhost/.test(location.host))t+=' El modo en línea funciona en '+ONLINE_URL.replace('https://','');m.textContent=t||'';m.classList.toggle('ok',!!ok);} /* classList: no borrar la clase 'inv' que lo mantiene visible en la pantalla de invitación */
 function netLeave(msg){
- if(NET){try{if(NET.role==='host')for(const c of NET.clients.values())try{c.conn.send({t:'closed'});}catch(e){}}catch(e){}
+ if(NET){try{if(NET.role==='host')for(const c of NET.clients.values())try{c.conn.send({t:'closed'});}catch(e){}else if(NET.conn&&NET.conn.open)NET.conn.send({t:'bye'});}catch(e){}
   const pr=NET.peer;setTimeout(()=>{try{pr.destroy();}catch(e){}},200);}
  NET=null;toTitle();netMsg(msg||'');
 }
@@ -92,24 +92,25 @@ function shareLink(){
 }
 function copyLink(){const l=$('llink');try{navigator.clipboard.writeText(l.value).then(()=>{$('lcopy').textContent='¡COPIADO!';setTimeout(()=>$('lcopy').textContent='COPIAR',1500);},()=>{l.select();});}catch(e){l.select();}}
 function lobbyPlayers(){
- const L=[{key:'host',name:displayName(),color:playerColor,skin:playerSkin,host:true}];
- for(const [k,c] of NET.clients)L.push({key:k,name:c.name,color:c.color,skin:c.skin});
+ const L=[{key:'host',name:displayName(),color:playerColor,skin:playerSkin,host:true,ready:true}];
+ for(const [k,c] of NET.clients)L.push({key:k,name:c.name,color:c.color,skin:c.skin,ready:!!c.ready});
  return L;
 }
 function clampAIs(){const n=NET.role==='host'?NET.clients.size+1:(NET.lobby?NET.lobby.players.length:1);NET.ais=Math.max(n<2?1:0,Math.min(MAX_PLAYERS-n,NET.ais));}
 function hostBroadcast(msg){for(const c of NET.clients.values())if(c.conn.open)try{c.conn.send(msg);}catch(e){}}
-function hostLobbyUpdate(go){clampAIs();hostBroadcast({t:'lobby',go:!!go,players:lobbyPlayers().map(p=>({key:p.key,name:p.name,color:p.color,skin:p.skin,host:!!p.host})),ais:NET.ais,an:(NET.aiNames||[]).slice(0,MAX_PLAYERS),diff,theme:themeChoice,fog:NET.fog,preset:SETTINGS.preset,code:NET.code});if(state==='lobby')renderLobby();}
+function hostLobbyUpdate(go){clampAIs();hostBroadcast({t:'lobby',go:!!go,players:lobbyPlayers().map(p=>({key:p.key,name:p.name,color:p.color,skin:p.skin,host:!!p.host,ready:!!p.ready})),ais:NET.ais,an:(NET.aiNames||[]).slice(0,MAX_PLAYERS),diff,theme:themeChoice,fog:NET.fog,preset:SETTINGS.preset,code:NET.code});if(state==='lobby')renderLobby();}
 function hostAccept(conn){
  conn.on('data',d=>{
   if(!d||typeof d!=='object')return;
-  const c=NET&&NET.clients.get(conn.peer);
+  const c=NET&&NET.clients.get(conn.peer);if(c)c.seen=performance.now();
+  if(d.t==='bye'){drop();try{conn.close();}catch(e){}return;} // el invitado salió de la sala
   if(d.t==='hello'&&!c){
    if(!sameMinor(d.ver)){conn.send({t:'version',host:VERSION});setTimeout(()=>conn.close(),600);showToast('ALGUIEN INTENTÓ ENTRAR CON OTRA VERSIÓN','#f87171');return;}
    if(NET.clients.size+1>=MAX_PLAYERS){conn.send({t:'full'});setTimeout(()=>conn.close(),400);return;}
    const used=new Set([playerColor,...[...NET.clients.values()].map(x=>x.color)]);
    let color=PALETTE.some(p=>p[1]===d.color)&&!used.has(d.color)?d.color:(PALETTE.find(p=>!used.has(p[1]))||PALETTE[0])[1];
    const name=cleanName(d.name);
-   NET.clients.set(conn.peer,{conn,name,color,skin:SKIN_KEYS.includes(d.skin)?d.skin:'recruitM',ent:null,input:{}});
+   NET.clients.set(conn.peer,{conn,name,color,seen:performance.now(),skin:SKIN_KEYS.includes(d.skin)?d.skin:'recruitM',ent:null,input:{}});
    const nc=NET.clients.get(conn.peer);
    if(state==='play'||state==='over'){ // partida en curso: entra como espectador y juega en la siguiente
     nc.spectator=true;
@@ -121,6 +122,8 @@ function hostAccept(conn){
     conn.send({t:'welcome',color,code:NET.code});
     hostLobbyUpdate();showToast(name+' ENTRÓ A LA SALA',color);snd('pick',0,0);
    }
+  }else if(d.t==='ready'&&c&&state==='lobby'){ // un invitado avisa que está listo (o ya no)
+   c.ready=!!d.r;if(!c.ready&&NET.count)hostCancelCount();hostLobbyUpdate();
   }else if(d.t==='skin'&&c&&state!=='play'){ // un invitado cambia su aspecto en la sala
    if(SKIN_KEYS.includes(d.k)){c.skin=d.k;hostLobbyUpdate();}
   }else if(d.t==='color'&&c&&state!=='play'){ // un invitado cambia su color en la sala
@@ -137,6 +140,7 @@ function hostAccept(conn){
   hostLobbyUpdate();
  };
  conn.on('close',drop);conn.on('error',drop);
+ conn._pbDrop=drop;
 }
 function hostStart(){
  if(!NET||NET.role!=='host')return;
@@ -151,7 +155,24 @@ function sendStart(c,id){ // id -1 = espectador
  const roster=ents.map(e=>({n:e.name,c:e.color,s:e.style,k:e.skin,h:e.isPlayer?1:0}));
  try{c.conn.send({t:'start',myId:id,roster,diff,theme:themeKey,fog:NET.fog,mt:matchTime,fl:fragLimit,g:gridStr()});}catch(e){}
 }
-function hostToLobby(){state='lobby';hostLobbyUpdate(true);}
+function hostToLobby(){hostCancelCount(true);state='lobby';for(const c of NET.clients.values()){c.ready=false;c.spectator=false;}hostLobbyUpdate(true);}
+// ---- listos y cuenta regresiva: EMPEZAR solo cuando todos los invitados están listos; luego 3… 2… 1… para todos ----
+function allReady(){for(const c of NET.clients.values())if(!c.spectator&&!c.ready)return false;return true;}
+function readyCount(){let r=0,n=0;for(const c of NET.clients.values()){if(c.spectator)continue;n++;if(c.ready)r++;}return [r,n];}
+function hostCountdown(){
+ if(!NET||NET.role!=='host'||NET.count)return;
+ if(state==='lobby'&&!allReady())return;
+ NET.count={n:3};const tick=()=>{if(!NET||!NET.count)return;const n=NET.count.n;hostBroadcast({t:'count',n});showCount(n);
+  if(n<=0){NET.count=null;hostStart();return;}NET.count.n--;NET.count.t=setTimeout(tick,1000);};
+ tick();if(state==='lobby')renderLobby();
+}
+function hostCancelCount(silent){if(!NET||!NET.count)return;clearTimeout(NET.count.t);NET.count=null;hostBroadcast({t:'count',n:-1});showCount(-1);if(!silent&&state==='lobby')renderLobby();}
+function showCount(n){ // n>0: número; 0: ¡YA!; -1: se oculta
+ const el=$('countdown');if(!el)return;
+ if(n<0){el.style.display='none';return;}
+ el.style.display='flex';$('cdNum').textContent=n>0?String(n):'¡YA!';el.querySelector('small').style.visibility=n>0?'visible':'hidden';
+ sfx(n>0?'tick':'go');if(n===0)setTimeout(()=>{if($('countdown').style.display!=='none'&&$('cdNum').textContent==='¡YA!')el.style.display='none';},700);
+}
 function gridStr(){let r='';for(let i=0;i<grid.length;i++)r+=grid[i]===CRATE?String(1+crateHP[i]):grid[i]===LAVA?'5':String(grid[i]);return r;}
 function applyGridStr(g){for(let i=0;i<g.length&&i<grid.length;i++){const c=+g[i];if(c>=2&&c<=4){grid[i]=CRATE;crateHP[i]=c-1;}else{grid[i]=c===5?LAVA:c===1?WALL:FLOOR;crateHP[i]=0;}}}
 function statRow(e){const s=e.st||{};const kw=s.kw||{};let fav=-1,best=0;for(const k in kw)if(kw[k]>best){best=kw[k];fav=WIDX.indexOf(k);}return [s.shots|0,s.hits|0,fav,s.nades|0,s.picks|0,s.best|0];}
@@ -212,9 +233,10 @@ function clientOnData(d){
   case 'full':netLeave('La sala está llena (máximo '+MAX_PLAYERS+' combatientes).');break;
   case 'busy':netLeave('La partida ya empezó. Intenta de nuevo cuando termine.');break;
   case 'closed':netLeave('El anfitrión cerró la sala.');break;
-  case 'lobby':NET.lobby=d;if(d.go||state==='lobby')state='lobby';/* solo cambia de pantalla si el anfitrión regresa a la sala */if(Number.isInteger(d.diff)&&DIFF[d.diff])diff=d.diff;{const mine=Array.isArray(d.players)&&d.players.find(p=>p.key===NET.peer.id);if(mine&&PALETTE.some(p=>p[1]===mine.color)){NET.color=mine.color;if(playerColor!==mine.color){playerColor=mine.color;save();buildSwatches();}}}
+  case 'lobby':NET.lobby=d;{const me=Array.isArray(d.players)&&d.players.find(p=>p.key===NET.peer.id);if(me)NET.ready=!!me.ready;}if(d.go||state==='lobby')state='lobby';/* solo cambia de pantalla si el anfitrión regresa a la sala */if(Number.isInteger(d.diff)&&DIFF[d.diff])diff=d.diff;{const mine=Array.isArray(d.players)&&d.players.find(p=>p.key===NET.peer.id);if(mine&&PALETTE.some(p=>p[1]===mine.color)){NET.color=mine.color;if(playerColor!==mine.color){playerColor=mine.color;save();buildSwatches();}}}
   NET.fog=d.fog!==false;if(PRESETS[d.preset])NET.preset=d.preset;if(THEME_OPTS.includes(d.theme))themeChoice=d.theme;$('tname').textContent=themeLabel(themeChoice);renderLobby();break;
-  case 'start':clientStart(d);break;
+  case 'count':{const n=d.n|0;NET.counting=n>0;showCount(n);if(state==='lobby')renderLobby();}break;
+  case 'start':showCount(-1);NET.counting=false;clientStart(d);break;
   case 's':if(state==='play'||state==='over')applySnapshot(d);break;
  }
 }
@@ -308,13 +330,19 @@ function renderLobby(){
  const box=$('lplayers');box.textContent='';
  players.forEach(p=>{const r=document.createElement('div');const i=document.createElement('i');i.style.background=/^#[0-9a-f]{6}$/i.test(p.color)?p.color:'#94a3b8';
   const n=document.createElement('span');n.textContent=cleanName(p.name);const sm=document.createElement('small');sm.textContent=[p.host?'anfitrión':'',SKIN_KEYS.includes(p.skin)?skinOf(p.skin).n.toLowerCase():''].filter(Boolean).join(' · ');
-  r.append(i,n,sm);box.appendChild(r);});
+  const rd=document.createElement('em');rd.className=p.ready?'rdy on':'rdy';rd.textContent=p.host?'':p.ready?'✓ LISTO':'esperando';
+  r.append(i,n,sm,rd);box.appendChild(r);});
  const an=host?NET.aiNames:(NET.lobby&&Array.isArray(NET.lobby.an)?NET.lobby.an:[]);
  for(let i=0;i<ais;i++){const r=document.createElement('div');r.innerHTML='<i style="background:#475569"></i><span style="color:#64748b"></span>';r.querySelector('span').textContent='IA'+(an&&an[i]?' · '+cleanName(an[i]):'');box.appendChild(r);}
  $('aiCount').textContent=String(ais);$('ldName').textContent=DIFF[diff].name;$('ltName').textContent=themeLabel(themeChoice);$('lfName').textContent=NET.fog!==false?'SÍ':'NO';
  document.querySelectorAll('#lobby .hostonly').forEach(b=>b.style.display=host?'':'none');
  document.querySelectorAll('#lobby .hostrow').forEach(b=>b.style.display=host?'':'none');
  $('lwait').style.display=host?'none':'';
+ if(host){const [r,n]=readyCount(),st=$('lstart');st.disabled=!NET.count&&n>0&&r<n;
+  st.textContent=NET.count?'CANCELAR':n>0&&r<n?`ESPERANDO (${r}/${n} LISTOS)`:'EMPEZAR';st.style.opacity=st.disabled?.55:1;}
+ else{const b=$('lready');b.textContent=NET.ready?'✓ LISTO':'ESTOY LISTO';b.classList.toggle('on',!!NET.ready);b.disabled=!!NET.counting;
+  $('lwait').textContent=NET.counting?'¡La partida está por empezar!':NET.ready?'Esperando a que el anfitrión empiece…':'Toca ESTOY LISTO cuando estés preparado.';}
+ document.querySelectorAll('#lobby .clientonly').forEach(b=>b.style.display=host?'none':'');
  $('lsummary').style.display=host?'none':'';
  $('lpName').textContent=presetLabel(host?SETTINGS.preset:(NET.preset|0)||1);
  $('lsummary').textContent=`${presetLabel(host?SETTINGS.preset:(NET.preset??1))} · ${ais} IA${ais===1?'':'s'} · ${themeLabel(themeChoice)} · NIEBLA ${NET.fog!==false?'SÍ':'NO'} · ${DIFF[diff].name}`;
@@ -330,7 +358,8 @@ $('mkRoom').addEventListener('click',()=>{audio();createRoom();});
 $('joinBtn').addEventListener('click',()=>{audio();joinRoom($('jcode').value);});
 $('jcode').addEventListener('input',()=>{const el=$('jcode');el.value=el.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);});
 $('lleave').addEventListener('click',()=>netLeave());
-$('lstart').addEventListener('click',()=>{audio();hostStart();});
+$('lstart').addEventListener('click',()=>{audio();if(NET&&NET.count)hostCancelCount();else hostCountdown();});
+$('lready').addEventListener('click',()=>{audio();if(!NET||NET.role!=='client'||NET.counting)return;NET.ready=!NET.ready;try{NET.conn.send({t:'ready',r:NET.ready});}catch(e){}renderLobby();});
 $('aiMinus').addEventListener('click',()=>{NET.ais--;hostLobbyUpdate();});
 $('aiPlus').addEventListener('click',()=>{NET.ais++;hostLobbyUpdate();});
 $('ldPrev').addEventListener('click',()=>{diff=Math.max(1,diff-1);hostLobbyUpdate();});
@@ -356,3 +385,11 @@ $('inviteCancel').addEventListener('click',()=>{clearInvite();netMsg('');});
 readInvite();addEventListener('hashchange',readInvite);
 addEventListener('beforeunload',()=>{if(NET&&NET.role==='host')try{hostBroadcast({t:'closed'});}catch(e){}});
 
+
+// En la sala, los invitados avisan cada 3 s que siguen ahí; el anfitrión saca a quien lleva 12 s sin dar señales
+// (por ejemplo, si cerró la pestaña sin salir), para que no se quede esperando a alguien que ya no está.
+setInterval(()=>{
+ if(!NET)return;
+ if(NET.role==='client'&&NET.conn&&NET.conn.open&&NET.welcomed){try{NET.conn.send({t:'ping'});}catch(e){}}
+ if(NET.role==='host'&&state==='lobby'){const now=performance.now();for(const c of [...NET.clients.values()])if(c.seen&&now-c.seen>12000&&c.conn._pbDrop)c.conn._pbDrop();}
+},3000);

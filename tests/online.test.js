@@ -61,7 +61,15 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       const k0=await B.evaluate('playerSkin');await B.click('#lknext');const k1=await B.evaluate('playerSkin');assert.notStrictEqual(k0,k1);
       await A.waitForFunction(`[...NET.clients.values()][0].skin==='${k1}'`,null,{timeout:5000});
       assert.ok((await B.innerText('#lkname')).length>0);});
-    await A.evaluate("themeChoice='bunker'");await A.click('#lstart');await B.waitForFunction("state==='play'",null,{timeout:5000});await B.waitForTimeout(600);
+    await t('EMPEZAR espera a que el invitado esté listo y luego cuenta 3… 2… 1… para todos',async()=>{
+      assert.ok(await A.isDisabled('#lstart'),'EMPEZAR debería esperar');{const tx=await A.innerText('#lstart');assert.ok(/0\/\d/.test(tx),'texto: '+tx);}
+      await B.click('#lready');await A.waitForFunction("!document.getElementById('lstart').disabled",null,{timeout:5000});
+      assert.ok((await A.innerText('#lplayers')).includes('LISTO'));
+      await A.evaluate("themeChoice='bunker'");await A.click('#lstart');
+      await B.waitForFunction("document.getElementById('countdown').style.display==='flex'",null,{timeout:3000});
+      assert.strictEqual(await B.evaluate('state'),'lobby','no debe empezar antes de la cuenta');
+      await B.waitForFunction("state==='play'",null,{timeout:8000});});
+    await B.waitForTimeout(600);
     await A.evaluate("for(const e of ents)if(!e.isPlayer){e.alive=false;e.respawnT=1e9;}");
     await t('las IAs de la partida tienen los nombres que se vieron en la sala',async()=>{
       assert.ok(await A.evaluate("ents.filter(e=>!e.isPlayer).every((e,i)=>e.name===NET.aiNames[i])"));
@@ -80,7 +88,7 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       await C.goto(URL+'#'+code);await C.waitForTimeout(300);await C.click('#joinInvite');await C.waitForFunction("state==='play'",null,{timeout:15000});
       assert.strictEqual(await C.evaluate('myId'),-1);assert.strictEqual(await B.evaluate('state'),'play');
       await A.evaluate('timeLeft=0.05');await C.waitForFunction("state==='over'",null,{timeout:5000});
-      await A.click('#again');await C.waitForFunction("state==='play'&&myId>=0",null,{timeout:5000});});
+      await A.click('#again');await C.waitForFunction("state==='play'&&myId>=0",null,{timeout:9000});});
     await t('si el anfitrión deja de responder, el invitado ve el aviso',async()=>{
       await A.evaluate("window._hb=hostBroadcast;hostBroadcast=()=>{}");await B.waitForFunction("NET&&NET.hostQuiet>2.5",null,{timeout:6000});
       await A.evaluate("hostBroadcast=window._hb");await B.waitForFunction("NET.hostQuiet<1",null,{timeout:4000});});

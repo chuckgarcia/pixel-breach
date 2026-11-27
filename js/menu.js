@@ -65,7 +65,7 @@ $('dnext').addEventListener('click',()=>{diff=Math.min(4,diff+1);});
 $('playAI').addEventListener('click',()=>{audio();startMatch();});
 $('again').addEventListener('click',()=>{audio();overAgain();});
 $('toMenu').addEventListener('click',()=>overMenu());
-function overAgain(){if(!NET)startMatch();else if(NET.role==='host')hostStart();}
+function overAgain(){if(!NET)startMatch();else if(NET.role==='host')hostCountdown();} // en línea, la revancha también cuenta 3… 2… 1…
 function overMenu(){if(!NET)toTitle();else if(NET.role==='host')hostToLobby();else netLeave();}
 function buildHowto(){
  const h=$('howto');h.textContent='';

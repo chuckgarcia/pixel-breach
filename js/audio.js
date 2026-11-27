@@ -22,6 +22,8 @@ function sfx(n,x,y){
   case 'bounce':tone(220,.04,'triangle',.03*v);break;
   case 'boom':noise(.75,.45*v,500);noise(.2,.18*v,2800);tone(95,.5,'square',.08*v,32);break;
   case 'flash':tone(3200,.45,'sine',.05*v,2600);noise(.2,.15*v,6000);break;
+  case 'tick':tone(880,.09,'square',.05);break;
+  case 'go':tone(1320,.22,'square',.06);break;
   case 'pick':tone(660,.06,'square',.045*v);tone(990,.09,'square',.045*v,0,null,AC.currentTime+.06);break;
   case 'die':tone(420,.35,'square',.06*v,60);noise(.25,.08*v,1200);break;
   case 'streak':[523,659,784,1047].forEach((f,i)=>tone(f,.12,'square',.045,0,null,AC.currentTime+i*.07));break;
