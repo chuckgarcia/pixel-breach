@@ -10,6 +10,13 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.17.4] - 2026-11-27
+
+### Cambiado
+
+- Ícono nuevo de la app y de la pestaña: el OPERADOR en color VERDE, de frente.
+- `tools/icons.js` vuelve a generar los íconos (512, 192, 180 y el de la pestaña) con el mismo código del juego.
+
 ## [0.17.3] - 2026-11-27
 
 ### Corregido
