@@ -3,12 +3,12 @@
 // ---------- IA ----------
 // Las IAs solo saben dónde está alguien si lo ven, lo oyen disparar o les acaba de pegar.
 function reveal(ai,o,seen){ai.known[o.id]={tx:wx(Math.floor(o.x/T)),ty:Math.floor(o.y/T),dir:o.dir,t:0,seen};}
-function hearShot(o){for(const e of ents)if(!e.isPlayer&&e!==o&&e.alive&&Math.hypot(e.x-o.x,e.y-o.y)<=HEARING*T)reveal(e.ai,o,false);}
+function hearShot(o){if(ARC&&o.enemy)return;for(const e of ents)if(!e.isPlayer&&e!==o&&e.alive&&Math.hypot(e.x-o.x,e.y-o.y)<=HEARING*T)reveal(e.ai,o,false);}
 function perceive(e,dt){
  const a=e.ai;
  for(const k in a.known){a.known[k].t+=dt;a.known[k].seen=false;}
  for(const o of ents){
-  if(o===e||!o.alive)continue;
+  if(o===e||!o.alive||(ARC&&(o.enemy||o.hostage)))continue; // en Arcade los enemigos solo te buscan a ti
   if(Math.hypot(e.x-o.x,e.y-o.y)<=SIGHT*T&&losPx(e.x,e.y,o.x,o.y))reveal(a,o,true);
  }
  {const c=carrierOf();if(c&&c!==e&&c.alive&&!(a.known[c.id]&&a.known[c.id].seen))reveal(a,c,false);} // a quien lleva la bandera lo ven todos
@@ -38,7 +38,9 @@ function patrolGoal(e){
  const a=e.ai;
  if(!a.patrol||a.patrolT<=0||(a.patrol[0]===e.tx&&a.patrol[1]===e.ty)){
   a.patrolT=rnd(6,10);a.patrol=null;
-  for(let k=0;k<40&&!a.patrol;k++){const x=ri(1,COLS-2),y=ri(1,ROWS-2);if(walkable(x,y)&&Math.abs(x-e.tx)+Math.abs(y-e.ty)>=6)a.patrol=[x,y];}
+  for(let k=0;k<40&&!a.patrol;k++){const x=ri(1,COLS-2),y=ri(1,ROWS-2);if(!walkable(x,y))continue;
+   if(ARC&&e.home){if(Math.abs(x-e.home[0])+Math.abs(y-e.home[1])<=4&&(x!==e.tx||y!==e.ty))a.patrol=[x,y];} // en Arcade vigilan su zona hasta que te ven
+   else if(Math.abs(x-e.tx)+Math.abs(y-e.ty)>=6)a.patrol=[x,y];}
  }
  return a.patrol;
 }
@@ -61,10 +63,10 @@ function aiGoal(e){
  const a=e.ai,P=e.p;
  if(hasFlag(e))return ctfGoal(e); // con la bandera: directo a su base
  const careful=gameMode==='lms'&&(e.lives|0)===1; // con la última vida se cuida más
- if(e.hp<(careful?70:45)){const m=nearestPickup(e,p=>p.type==='medkit');if(m)return [m.p.tx,m.p.ty];}
+ if(!ARC&&e.hp<(careful?70:45)){const m=nearestPickup(e,p=>p.type==='medkit');if(m)return [m.p.tx,m.p.ty];}
  if(gameMode==='ctf'){const g=ctfGoal(e);if(g&&!(g[0]===e.tx&&g[1]===e.ty))return g;}
  const onlyPistol=!['smg','shotgun','rifle'].some(k=>e.inv[k]>0);
- if(P.key==='recolector'||onlyPistol){
+ if(!ARC&&(P.key==='recolector'||onlyPistol)){
   const pk=nearestPickup(e,p=>p.type!=='medkit'&&e.inv[p.type]<MAXAMMO[p.type]);
   if(pk&&(onlyPistol?(P.key==='recolector'||pk.d<=6):pk.d<=4))return [pk.p.tx,pk.p.ty];
  }
@@ -108,7 +110,7 @@ function updAI(e,dt){
  }
  // objetivo en línea de tiro
  let best=null;
- for(const o of ents){if(o===e||!o.alive||o.invulnT>0)continue;const al=aligned(e,o,13);if(al&&(!best||al.dist<best.al.dist))best={o,al};}
+ for(const o of ents){if(o===e||!o.alive||o.invulnT>0||(ARC&&(o.enemy||o.hostage)))continue;const al=aligned(e,o,13);if(al&&(!best||al.dist<best.al.dist))best={o,al};}
  if(best){
   if(a.seeId!==best.o.id){a.seeId=best.o.id;const r=(P.closeReact&&best.al.dist<=3)?P.closeReact:P.react;a.reaction=r*D.react*rnd(.8,1.3)*(tut?1.8:1);/* en la guía las IAs reaccionan más lento */}
   a.reaction-=dt;chooseWeapon(e,best.al.dist);

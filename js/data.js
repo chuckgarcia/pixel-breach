@@ -2,7 +2,7 @@
 // Pixel Breach — Versión, constantes, escenarios, armas, roles y estado global
 // Versionado semántico vMAYOR.MENOR.PARCHE (ver CHANGELOG.md).
 // Cambios en el protocolo en línea suben MENOR: anfitrión e invitado deben coincidir en MAYOR.MENOR.
-const VERSION='0.14.0';
+const VERSION='0.15.0';
 const cv=document.getElementById('c'), ctx=cv.getContext('2d');
 const T=32,COLS=21,ROWS=15,HUD=44,W=COLS*T,H=ROWS*T;
 const FLOOR=0,WALL=1,CRATE=2,LAVA=3; // LAVA: no se puede pisar, pero las balas, granadas y la vista pasan por encima
@@ -11,7 +11,7 @@ const THEMES={
  bunker:{name:'BÚNKER',fog:'rgba(5,7,12,.74)',debris:['#a16207','#78350f']},
  jungle:{name:'JUNGLA',fog:'rgba(3,10,5,.74)',debris:['#2f9e4f','#14532d']},
  brick:{name:'LADRILLO',fog:'rgba(8,6,6,.74)',debris:['#a16207','#78350f']},
- arcade:{name:'ARCADE',fog:'rgba(0,0,0,.8)',debris:['#fbbf24','#2b4cff'],wrap:true},
+ arcade:{name:'NEÓN',fog:'rgba(0,0,0,.8)',debris:['#fbbf24','#2b4cff'],wrap:true},
  volcano:{name:'VOLCÁN',fog:'rgba(10,4,2,.76)',debris:['#f97316','#3f2a1d'],lava:true},
  desert:{name:'DESIERTO',fog:'rgba(20,14,6,.72)',debris:['#4d5a2c','#c2a36b']},
  killhouse:{name:'KILLHOUSE',fog:'rgba(6,6,6,.74)',debris:['#1f2937','#4b5563']},
@@ -28,8 +28,9 @@ let fragLimit=10,matchTime=180;
 // ---------- MODOS ----------
 // dm: deathmatch · ctf: captura la bandera (bandera neutral al centro, se lleva a tu base) · lms: último en pie (N vidas)
 const CTF_PRESETS=[{c:1,t:180},{c:3,t:300},{c:5,t:480}],LMS_PRESETS=[{l:1,t:240},{l:3,t:360},{l:5,t:480}];
-const MODES={dm:{n:'DEATHMATCH',p:PRESETS,key:'preset',max:5},ctf:{n:'CAPTURA LA BANDERA',p:CTF_PRESETS,key:'pctf',max:4},lms:{n:'ÚLTIMO EN PIE',p:LMS_PRESETS,key:'plms',max:5}};
-const MODE_KEYS=['dm','ctf','lms'];
+const MODES={dm:{n:'DEATHMATCH',p:PRESETS,key:'preset',max:5},ctf:{n:'CAPTURA LA BANDERA',p:CTF_PRESETS,key:'pctf',max:4},lms:{n:'ÚLTIMO EN PIE',p:LMS_PRESETS,key:'plms',max:5},
+ arcade:{n:'ARCADE',p:[{t:0}],key:'parc',max:1,solo:true}}; // arcade: un jugador, niveles en js/levels.js
+const MODE_KEYS=['dm','ctf','lms','arcade'];
 const FLAG_HOME=[10,7],FLAG_RETURN=20,FLAG_SLOW=.85; // la bandera vuelve sola a los 20 s; quien la lleva va 15 % más lento
 let gameMode='dm',capLimit=3,lifeCount=3,flag=null,goalSign=null;
 const menuMode=()=>MODES[SETTINGS.mode]?SETTINGS.mode:'dm';

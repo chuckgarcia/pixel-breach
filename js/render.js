@@ -140,6 +140,7 @@ function drawPickups(){
 }
 function drawFx(){
  for(const f of fx){
+  if(f.kind==='pts')continue; // puntos flotantes del Arcade: los dibuja arcade.js
   const a=f.t/f.max;
   if(f.kind==='boom'){
    ctx.fillStyle=(Math.floor(f.t*30)%2)?`rgba(255,200,60,${a})`:`rgba(255,110,30,${a})`;
@@ -182,7 +183,7 @@ function drawEnt(e){
  drawSoldier(e,x,y);
  if(hasFlag(e))drawCarriedFlag(e,x,y);
  ctx.globalAlpha=1;
- if(e.hp<100){ctx.fillStyle='#3f1d1d';ctx.fillRect(x-11,y-33,22,3);ctx.fillStyle=e.hp>50?'#4ade80':e.hp>25?'#facc15':'#ef4444';ctx.fillRect(x-11,y-33,22*e.hp/100,3);}
+ {const mx=e.maxHp||100,f=e.hp/mx;if(e.hp<mx){ctx.fillStyle='#3f1d1d';ctx.fillRect(x-11,y-33,22,3);ctx.fillStyle=f>.5?'#4ade80':f>.25?'#facc15':'#ef4444';ctx.fillRect(x-11,y-33,22*f,3);}}
  if(e.id===myId&&e.invulnT>0)txt('TÚ',x,y-38,10,'#4ade80','center');
  else if(e.isPlayer&&NET&&e.invulnT>0)txt(e.name,x,y-38,10,e.color,'center');
  if(!e.isPlayer&&e.blindT<=0&&state==='play'){const k=awareOf(e);if(k)txt(k.seen?'!':'?',x+15,y-30,13,k.seen?'#f87171':'#facc15','center');}
@@ -234,6 +235,7 @@ function drawHUD(){
   txt(WEAP[k].short,x+w/2,y+11,11,has?WEAP[k].color:'#475569','center',false);
   txt(k==='pistol'?'∞':String(p.inv[k]),x+w/2,y+24,11,has?'#e2e8f0':'#475569','center',false);
  });
+ if(ARC){arcHud();return;} // Arcade: puntos y misión en lugar del reloj
  const m=Math.ceil(timeLeft);
  txt(`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`,W-10,14,15,timeLeft<30?'#f87171':'#e2e8f0','right');
  hudGoal(p);

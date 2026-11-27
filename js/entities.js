@@ -20,6 +20,7 @@ function spawn(e,fixed){
  Object.assign(e.ai,{known:{},patrol:null,patrolT:0,camp:null,dodgeAxisH:null,dodgeT:0,seeId:-1,lastHp:100,keepT:0});
 }
 function startMatch(humans,nAI,aiNames){
+ if(!humans&&!NET&&menuMode()==='arcade')return startArcade(arcSel); // ARCADE: empieza el nivel elegido
  // humans: [{name,color}] — el primero eres tú (anfitrión). Sin argumentos: partida de un jugador.
  humans=humans||[{name:displayName(),color:playerColor,skin:playerSkin}];applyModePreset(menuMode());
  nAI=nAI===undefined?Math.min(PERS.length,MODES[gameMode].max-humans.length):Math.min(nAI,Math.max(0,MODES[gameMode].max-humans.length)); /* bandera: hasta 4, una base por esquina */
@@ -35,7 +36,7 @@ function startMatch(humans,nAI,aiNames){
  timeLeft=matchTime;pickupT=6;firstBlood=false;announce=null;for(let i=0;i<3;i++)spawnPickup();
  state='play';paused=false;shake=0;flashA=0;winner=null;showToast('ESCENARIO: '+theme.name,'#facc15');tutStart();
 }
-function toTitle(){state='title';flag=null;goalSign=null;gameMode=menuMode();myId=0;setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);genMap();/* el fondo coincide con el escenario elegido */ents=[];bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];}
+function toTitle(){state='title';ARC=null;flag=null;goalSign=null;gameMode=menuMode();myId=0;setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);genMap();/* el fondo coincide con el escenario elegido */ents=[];bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];}
 function endMatch(){
  if(state!=='play')return;
  state='over';winner=[...ents].filter(e=>!e.gone).sort(byScore)[0]||ents[0];
@@ -115,7 +116,7 @@ const TUT=[
  {m:()=>`Dispara con ${isTouch?'FUEGO':'ESPACIO'}. Los muros te cubren de las balas`,ok:t=>t.shots>=3},
  {m:()=>'Rompe cajas: a veces sueltan armas, granadas o botiquines',ok:t=>t.picks>=1||t.t>10},
  {m:()=>`Lanza una granada con ${isTouch?'GRAN':'G'}: explota en cruz`,ok:t=>t.nades>=1||t.t>10},
- {m:()=>(gameMode==='ctf'?'Toma la bandera del centro y llévala a tu base':gameMode==='lms'?`Tienes ${lifeCount} vida${lifeCount>1?'s':''}: gana el último en pie`:`Gana quien llegue a ${fragLimit} bajas`)+'. ¡Suerte, soldado!',ok:t=>t.t>5},
+ {m:()=>(gameMode==='arcade'?'Acaba con los enemigos y llega a la extracción amarilla':gameMode==='ctf'?'Toma la bandera del centro y llévala a tu base':gameMode==='lms'?`Tienes ${lifeCount} vida${lifeCount>1?'s':''}: gana el último en pie`:`Gana quien llegue a ${fragLimit} bajas`)+'. ¡Suerte, soldado!',ok:t=>t.t>5},
 ];
 function tutStart(){tut=null;if(NET)return;try{if(localStorage.getItem('pb_tut'))return;}catch(e){return;}tut={i:0,t:0,moves:0,last:null,shots:0,nades:0,picks:0};}
 function tutTick(dt){
@@ -146,19 +147,21 @@ function drawTut(){
 }
 const STREAKS={2:'¡DOBLE!',3:'¡TRIPLE!',5:'¡IMPARABLE!',7:'¡LEYENDA!'};
 function kill(e,src,w){
- e.streak=0;dropFlag(e);
- if(src&&src!==e){
+ e.streak=0;dropFlag(e);if(ARC)arcOnKill(e,src);
+ if(src&&src!==e&&!ARC){
   src.streak=(src.streak|0)+1;
   if(src.st){src.st.best=Math.max(src.st.best,src.streak);const k=w||'pistol';src.st.kw[k]=(src.st.kw[k]|0)+1;}
   if(!firstBlood){firstBlood=true;emitEv({k:'ann',t:'PRIMERA SANGRE',n:src.name,c:src.color});}
   else if(STREAKS[src.streak])emitEv({k:'ann',t:STREAKS[src.streak],n:src.name,c:src.color});
  }
  e.alive=false;e.hp=0;e.respawnT=2.2;e.deaths++;loseLife(e);
- if(src&&src!==e){src.frags++;if(src.p&&src.p.key==='campero'){src.ai.campT=0;src.ai.relocate=true;}emitEv({k:'feed',parts:[[src.name,src.color],[' ▸ ','#cbd5e1'],[e.name,e.color]]});}
+ const fc=o=>o.enemy?'#f87171':o.color; // el vino del bando enemigo no se lee sobre fondo oscuro
+ if(src&&src!==e){src.frags++;if(src.p&&src.p.key==='campero'){src.ai.campT=0;src.ai.relocate=true;}emitEv({k:'feed',parts:[[src.name,fc(src)],[' ▸ ','#cbd5e1'],[e.name,fc(e)]]});}
  else{e.frags=Math.max(0,e.frags-1);emitEv({k:'feed',parts:[[e.name,e.color],[' se voló solo','#cbd5e1']]});}
  let drop=e.weapon!=='pistol'&&e.inv[e.weapon]>0?e.weapon:null;
  if(!drop)for(const k of ['rifle','shotgun','smg','frag','flash'])if(e.inv[k]>0){drop=k;break;}
- if(drop)pickups.push({tx:wx(Math.floor(e.x/T)),ty:Math.floor(e.y/T),type:drop,amt:e.inv[drop],t:0,life:15});
+ if(ARC&&e.enemy)drop=drop&&Math.random()<.45?drop:Math.random()<.12?'medkit':null; // en Arcade sueltan su arma a veces, con munición normal
+ if(drop)pickups.push({tx:wx(Math.floor(e.x/T)),ty:Math.floor(e.y/T),type:drop,amt:isFinite(e.inv[drop])?e.inv[drop]:PICK[drop].amt,t:0,life:15});
  sparks(e.x,e.y,e.color,18,160);sparks(e.x,e.y,'#7f1d1d',10,90);
  snd('die',e.x,e.y);
  if(src&&src!==e&&src.frags>=fragLimit)endMatch();

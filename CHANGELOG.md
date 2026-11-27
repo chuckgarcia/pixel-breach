@@ -10,6 +10,21 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.15.0] - 2026-11-27
+
+### Añadido
+- **Modo ARCADE** (un jugador): en MODO aparece ARCADE y la línea NIVEL reemplaza a ESCENARIO y PARTIDA. Cada nivel tiene un mapa hecho a mano y una misión; al cumplirla se abre la extracción amarilla.
+  - Niveles disponibles: 1 · Primer día (Killhouse, elimina a 6 reclutas), 2 · Limpieza (Búnker, resiste 3 oleadas), 3 · Rescate (Jungla, el rehén te sigue a la extracción), 4 · Cargas (Ladrillo, desactiva 3 bombas en 90 s). Los niveles 5 a 10 llegan en las siguientes versiones.
+  - Puntos por cada baja según el enemigo, combo por bajas seguidas (hasta ×4), bonos por tiempo, por cumplir la misión y por no perder vida; la dificultad multiplica los puntos.
+  - 3 vidas, vida extra a los 10,000 puntos y luego cada 25,000. Al perder una vida el nivel se reinicia; sin vidas, CONTINUAR repite el nivel con 3 vidas y los puntos en 0.
+  - Las armas pasan de un nivel al siguiente; al perder una vida vuelves con pistola y 1 granada.
+  - Tarjeta con la misión antes de cada nivel, conteo con estrellas al terminar (misión, tiempo meta y sin perder vida) y avance guardado en el navegador.
+- **El bando de la calavera**: enemigos con aspectos propios que el jugador no puede elegir. Recluta y asaltante (máscara de calavera), escopetero (capucha con ojos rojos). Todo el bando viste de vino y no se hace daño entre sí.
+
+### Cambiado
+- El escenario ARCADE se llama ahora **NEÓN**, para no confundirlo con el modo.
+- La barra de vida sobre cada soldado se mide contra su vida máxima (los reclutas tienen 50).
+
 ## [0.14.0] - 2026-11-27
 
 ### Añadido

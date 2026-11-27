@@ -10,14 +10,15 @@ function computeVis(){
  }
 }
 function update(dt){
+ if(ARC&&arcGate(dt))return; // tarjeta de misión del Arcade
  timeLeft-=dt;if(timeLeft<=0){timeLeft=0;endMatch();return;}
  tutTick(dt);
  for(const e of ents){
   if(!e.alive){if(e.out||e.gone)continue;e.respawnT-=dt;if(e.respawnT<=0)spawn(e,gameMode==='ctf'?baseOf(e):null);continue;} // en bandera se reaparece en tu base
   e.cd-=dt;e.gcd-=dt;e.invulnT-=dt;e.hurtT-=dt;
-  if(e.isPlayer)(e.id===myId?updPlayer(e,dt):updRemote(e,dt));else if(!(tut&&tut.i===0&&tut.moves===0))updAI(e,dt); /* con la guía, las IAs esperan tu primer paso */
+  if(e.isPlayer)(e.id===myId?updPlayer(e,dt):updRemote(e,dt));else if(e.hostage)updHostage(e,dt);else if(!(tut&&tut.i===0&&tut.moves===0))updAI(e,dt); /* con la guía, las IAs esperan tu primer paso */
  }
- updBullets(dt);updNades(dt);updPickups(dt);updFlag(dt);lmsCheck();
+ updBullets(dt);updNades(dt);updPickups(dt);updFlag(dt);lmsCheck();if(ARC&&state==='play')arcTick(dt);
  tickFx(dt);
 }
 function tickFx(dt){ // efectos visuales locales (anfitrión, invitado y un jugador)

@@ -97,4 +97,69 @@ t('bandera: al reaparecer vuelves a tu base y la IA que la lleva corre a la suya
     placeAt(a,FLAG_HOME);updFlag(.016);const g=aiGoal(a);SETTINGS.mode='dm';return {back,g:g.join(','),b:SPAWNS[2].join(',')};})()`);
   assert.ok(r.back,'no reapareció en su base');assert.strictEqual(r.g,r.b);
 });
+t('arcade: los mapas miden 21 × 15, tienen borde, tú, extracción y todo es alcanzable',()=>{
+  const r=run(`ARC_LEVELS.map((L,i)=>{const m=L.map;let P=null;const want=[];m.forEach((row,y)=>[...row].forEach((c,x)=>{if(c==='P')P=[x,y];if(/[EHBW]/.test(c)||ENEMY[c])want.push([x,y]);}));
+    const seen=new Set([P+'']),q=[P];while(q.length){const [x,y]=q.shift();for(const d of DIRS){const nx=x+d.dx,ny=y+d.dy,c=(m[ny]||'')[nx];if(!c||c==='#'||c==='~')continue;const k=[nx,ny]+'';if(!seen.has(k)){seen.add(k);q.push([nx,ny]);}}}
+    return {i,size:m.length===15&&m.every(r=>r.length===21),border:m[0]==='#'.repeat(21)&&m[14]==='#'.repeat(21)&&m.every(r=>r[0]==='#'&&r[20]==='#'),
+      P:!!P,E:m.join('').split('E').length===2,lost:want.filter(w=>!seen.has(w+'')).length,goal:['kill','waves','rescue','bombs'].includes(L.goal),txt:L.text.length===2};})`);
+  for(const l of r){assert.ok(l.size&&l.border&&l.P&&l.E&&l.goal&&l.txt,'nivel '+(l.i+1)+': '+JSON.stringify(l));assert.strictEqual(l.lost,0,'nivel '+(l.i+1)+': hay cosas fuera de alcance');}
+});
+t('arcade: los aspectos del bando enemigo se dibujan completos y miden lo mismo',()=>{
+  const r=run(`VSKINS.map(s=>{const pal=Object.assign({},SKIN_BASE,SKIN_PAL[s.p],GUN_PAL,{T:1,t:1,u:1});let bad=0;for(const f of ['down','up','right'])for(const w of ['pistol','smg','shotgun','rifle'])skinCells(s.k,f,0,w).forEach(r=>r.forEach(x=>{if(x&&!(x.ch in pal))bad++;}));
+    const h=['down','right'].map(v=>{const g=SKIN_GRID[s.k][v],f=g.map((x,i)=>/[^.]/.test(x)?i:-1).filter(i=>i>=0);return f[f.length-1]-f[0]+1;});return {k:s.k,bad,h:h.join(),pl:SKIN_KEYS.includes(s.k)};})`);
+  for(const v of r){assert.strictEqual(v.bad,0,v.k+': letras sin color');assert.strictEqual(v.h,'18,18',v.k+': altura distinta');assert.ok(!v.pl,v.k+' no debe poder elegirse');}
+});
+t('arcade: acabar con todos abre la extracción; al llegar suma bonos, estrellas y desbloquea el siguiente',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;arcSave.open=1;arcSave.stars=[];startArcade(0);tut=null;ARC.cardT=0;const P=arcPlayer();
+    const closed=!ARC.exitOpen;for(const e of ents.filter(e=>e.enemy)){e.invulnT=0;kill(e,P,'pistol');}update(1/30);
+    const open=ARC.exitOpen,pts=ARC.score;placeAt(P,ARC.exit);update(1/30);
+    const o={closed,open,pts,state,res:ARC.result,stars:ARC.tally.stars,score:ARC.score,openNext:arcSave.open,saved:arcSave.stars[0]};
+    arcAgain();o.lv=ARC.lv;o.inv=P.inv===arcPlayer().inv;o.next=ARC.startScore===o.score;SETTINGS.mode='dm';return o;})()`);
+  assert.ok(r.closed&&r.open,'la extracción no se abrió al acabar con todos');
+  assert.ok(r.pts>=600,'puntos por las 6 bajas: '+r.pts);
+  assert.strictEqual(r.state,'over');assert.strictEqual(r.res,'win');assert.strictEqual(r.stars,3);
+  assert.ok(r.score>r.pts+2500,'faltan los bonos');assert.strictEqual(r.openNext,2);assert.strictEqual(r.saved,3);
+  assert.strictEqual(r.lv,1,'no pasó al nivel 2');assert.ok(r.next,'los puntos no pasan al siguiente nivel');
+});
+t('arcade: combo por bajas seguidas, vida extra a los 10,000 y los enemigos no se hacen daño entre sí',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;startArcade(0);tut=null;ARC.cardT=0;const P=arcPlayer(),E=ents.filter(e=>e.enemy);
+    for(let i=0;i<3;i++){E[i].invulnT=0;kill(E[i],P,'pistol');}const combo=ARC.combo,pts=ARC.score;
+    const l0=ARC.lives;arcAddScore(10000);const l1=ARC.lives,nl=ARC.nextLife;
+    const a=E[3],b=E[4];b.invulnT=0;const hp=b.hp;bullets.push({x:b.x-12,y:b.y,vx:300,vy:0,owner:a,dmg:25,range:200,trav:0,crate:1,color:'#fff',checked:{},w:'pistol'});
+    for(let i=0;i<6;i++)updBullets(1/60);SETTINGS.mode='dm';return {combo,pts,l0,l1,nl,hp,hp2:b.hp};})()`);
+  assert.strictEqual(r.combo,3);assert.strictEqual(r.pts,100+200+300,'puntos con combo');
+  assert.strictEqual(r.l1,r.l0+1,'no dio vida extra');assert.strictEqual(r.nl,35000);
+  assert.strictEqual(r.hp2,r.hp,'un enemigo le hizo daño a otro');
+});
+t('arcade: al caer pierdes una vida y el nivel se reinicia; sin vidas, CONTINUAR deja los puntos en 0',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;startArcade(0);tut=null;ARC.cardT=0;ARC.score=1234;ARC.startScore=1234;let P=arcPlayer();
+    P.inv.smg=40;P.invulnT=0;kill(P,ents[1],'pistol');const lives=ARC.lives;for(let i=0;i<100;i++)update(1/30);
+    P=arcPlayer();const o={lives,alive:P.alive,score:ARC.score,smg:P.inv.smg,enemies:ents.filter(e=>e.enemy&&e.alive).length};
+    ARC.lives=1;ARC.cardT=0;P.invulnT=0;kill(P,ents[1],'pistol');for(let i=0;i<100;i++)update(1/30);o.state=state;o.res=ARC.result;
+    arcAgain();o.after=[ARC.lives,ARC.score,ARC.cont,state].join();SETTINGS.mode='dm';return o;})()`);
+  assert.strictEqual(r.lives,2);assert.ok(r.alive,'no reapareció');assert.strictEqual(r.score,1234);assert.strictEqual(r.smg,0,'debe volver con pistola');
+  assert.strictEqual(r.enemies,6,'los enemigos no volvieron');assert.strictEqual(r.state,'over');assert.strictEqual(r.res,'lose');
+  assert.strictEqual(r.after,'3,0,1,play');
+});
+t('arcade: oleadas, rehén y bombas',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;const o={};arcSave.open=4;dirStack=[];for(const k in keys)keys[k]=false;
+    startArcade(1);tut=null;ARC.cardT=0;const P=arcPlayer();P.invulnT=1e9;let waves=0;
+    for(let k=0;k<20&&!ARC.exitOpen;k++){for(let i=0;i<120;i++)update(1/30);const E=ents.filter(e=>e.enemy&&e.alive);if(E.length)waves=Math.max(waves,ARC.waveI);for(const e of E){e.invulnT=0;kill(e,P,'pistol');}}
+    o.waves=waves;o.open2=ARC.exitOpen;
+    startArcade(2);tut=null;ARC.cardT=0;const P3=arcPlayer();P3.invulnT=1e9;for(const e of ents.filter(e=>e.enemy)){e.alive=false;e.out=true;}
+    const h=ARC.hostage;o.closed3=!ARC.exitOpen;placeAt(P3,[h.tx-1,h.ty]);update(1/30);o.freed=ARC.freed&&ARC.exitOpen;
+    placeAt(P3,ARC.exit);update(1/30);o.wait=state==='play'; // el rehén está lejos: hay que esperarlo
+    placeAt(h,[ARC.exit[0],ARC.exit[1]-1]);update(1/30);o.done3=state==='over'&&ARC.result==='win';
+    startArcade(3);tut=null;ARC.cardT=0;const P4=arcPlayer();P4.invulnT=1e9;for(const e of ents.filter(e=>e.enemy)){e.alive=false;e.out=true;}
+    const b=ARC.bombs[0];placeAt(P4,[b.x,b.y]);for(let i=0;i<70;i++)update(1/30);o.def=b.done;o.open4=ARC.exitOpen;
+    ARC.bombT=.01;P4.invulnT=0;for(let i=0;i<5;i++)update(1/30);o.boom=ARC.deadT>0&&ARC.lives===2;
+    SETTINGS.mode='dm';return o;})()`);
+  assert.strictEqual(r.waves,3,'no llegaron las 3 oleadas');assert.ok(r.open2,'la extracción no se abrió tras las oleadas');
+  assert.ok(r.closed3&&r.freed,'el rehén no se liberó');assert.ok(r.wait,'terminó sin el rehén');assert.ok(r.done3,'no terminó con el rehén');
+  assert.ok(r.def,'la bomba no se desactivó en 2 s');assert.ok(!r.open4,'se abrió con bombas activas');assert.ok(r.boom,'las bombas no explotaron al acabarse el tiempo');
+});
+t('arcade: en el menú, MODO ofrece ARCADE pero la sala en línea no',()=>{
+  const r=run(`(()=>{SETTINGS.mode='lms';stepMode(1);const a=menuMode();SETTINGS.mode='lms';stepMode(1,2);const b=menuMode();SETTINGS.mode='dm';return a+','+b;})()`);
+  assert.strictEqual(r,'arcade,dm');
+});
 console.log(`${ok} pruebas OK`);

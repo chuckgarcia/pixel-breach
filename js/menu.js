@@ -6,9 +6,12 @@ const menuEl=$('menu'),overEl=$('overBtns'),nameEl=$('pname'),dnameEl=$('dname')
 let shownState=null,shownDiff=null;
 function syncOverlays(){
  if(typeof syncGuide==='function'&&!(tut&&state==='play'))syncGuide(); // ocultar la guía al salir de la partida
- if(state!==shownState){shownState=state;document.body.classList.toggle('menus',state==='title'||state==='lobby'); /* en celular: menú a pantalla completa, sin controles */menuEl.style.display=state==='title'?'flex':'none';overEl.style.display=state==='over'?'flex':'none';$('lobby').style.display=state==='lobby'?'flex':'none';if(state==='title')buildHowto();
-  const host=!NET||NET.role==='host';$('again').style.display=host?'':'none';$('toMenu').textContent=!NET?'MENÚ':host?'SALA':'SALIR';
+ if(state!==shownState){shownState=state;document.body.classList.toggle('menus',state==='title'||state==='lobby'); /* en celular: menú a pantalla completa, sin controles */menuEl.style.display=state==='title'?'flex':'none';overEl.style.display=state==='over'?'flex':'none';$('lobby').style.display=state==='lobby'?'flex':'none';if(state==='title'){buildHowto();showMode();} /* estrellas y niveles nuevos al volver al menú */
+  const host=!NET||NET.role==='host';$('again').style.display=host?'':'none';if(!ARC)$('again').textContent='REVANCHA';$('toMenu').textContent=!NET?'MENÚ':host?'SALA':'SALIR';
   if(state==='lobby')renderLobby();}
+ if(state==='over'&&ARC){ // Arcade: SIGUIENTE NIVEL o CONTINUAR
+  const a=$('again'),t=ARC.result==='win'?(arcHasNext()?'SIGUIENTE NIVEL':''):'CONTINUAR';
+  if(t&&a.textContent!==t)a.textContent=t;a.style.display=t?'':'none';if($('toMenu').textContent!=='MENÚ')$('toMenu').textContent='MENÚ';}
  if(diff!==shownDiff){shownDiff=diff;dnameEl.textContent=DIFF[diff].name;}
  $('gearMenu').style.display=(state==='title'&&!menuEl.classList.contains('invite'))||state==='lobby'?'block':'none';
  $('gearGame').style.display=state==='play'?'block':'none';
@@ -40,10 +43,16 @@ function stepTheme(d){const i=THEME_OPTS.indexOf(themeChoice);themeChoice=THEME_
  $('tname').textContent=themeLabel(themeChoice);$('ltName').textContent=themeLabel(themeChoice);}
 // PARTIDA ofrece opciones propias de cada modo y recuerda la última elegida en cada uno
 function stepPreset(d){const m=menuMode(),k=MODES[m].key;SETTINGS[k]=Math.max(0,Math.min(MODES[m].p.length-1,presetIdx(m)+d));saveSettings();showMode();shownState=null;}
-function showMode(){const m=menuMode();$('mname').textContent=MODES[m].n;$('lmName').textContent=MODES[m].n;$('pname2').textContent=presetLabel(presetIdx(m));$('lpName').textContent=presetLabel(presetIdx(m));}
+function showMode(){const m=menuMode(),arc=m==='arcade';$('mname').textContent=MODES[m].n;$('lmName').textContent=MODES[m].n;
+ if(!arc){$('pname2').textContent=presetLabel(presetIdx(m));$('lpName').textContent=presetLabel(presetIdx(m));}
+ document.body.classList.toggle('arcmenu',arc); // ARCADE: nivel en lugar de escenario y partida; sin salas en línea
+ $('playAI').textContent=arc?`JUGAR NIVEL ${arcSel+1}`:'JUGAR CONTRA IAs';showLevel();}
+function showLevel(){$('lvname').textContent=arcLevelLabel(arcSel);if(menuMode()==='arcade')$('playAI').textContent=`JUGAR NIVEL ${arcSel+1}`;}
+function stepLevel(d){arcSel=Math.max(0,Math.min(arcSave.open-1,arcSel+d));showLevel();} // solo los niveles desbloqueados
+$('lvprev').addEventListener('click',()=>stepLevel(-1));$('lvnext').addEventListener('click',()=>stepLevel(1));
 function stepMode(d,maxHumans){ // maxHumans: en la sala, los humanos que ya hay (bandera admite hasta 4)
  let i=MODE_KEYS.indexOf(menuMode());
- for(let k=0;k<MODE_KEYS.length;k++){i=(i+d+MODE_KEYS.length)%MODE_KEYS.length;if(!maxHumans||MODES[MODE_KEYS[i]].max>=maxHumans)break;}
+ for(let k=0;k<MODE_KEYS.length;k++){i=(i+d+MODE_KEYS.length)%MODE_KEYS.length;const M=MODES[MODE_KEYS[i]];if(!maxHumans||(!M.solo&&M.max>=maxHumans))break;} // en la sala no se ofrece ARCADE
  SETTINGS.mode=MODE_KEYS[i];gameMode=SETTINGS.mode;saveSettings();showMode();shownState=null;
 }
 $('mprev').addEventListener('click',()=>stepMode(-1));$('mnext').addEventListener('click',()=>stepMode(1));
@@ -75,7 +84,7 @@ $('dnext').addEventListener('click',()=>{diff=Math.min(4,diff+1);});
 $('playAI').addEventListener('click',()=>{audio();startMatch();});
 $('again').addEventListener('click',()=>{audio();overAgain();});
 $('toMenu').addEventListener('click',()=>overMenu());
-function overAgain(){if(!NET)startMatch();else if(NET.role==='host')hostCountdown();} // en línea, la revancha también cuenta 3… 2… 1…
+function overAgain(){if(ARC)arcAgain();else if(!NET)startMatch();else if(NET.role==='host')hostCountdown();} // en línea, la revancha también cuenta 3… 2… 1…
 // ---- salir de la partida: desde la pausa (un jugador) o desde Ajustes (también en línea) ----
 let quitArmed=-1e9;
 function quitMatch(btn){
@@ -104,6 +113,7 @@ function buildHowto(){
  {const pr=PRESETS[presetIdx('dm')];add('DEATHMATCH',`Gana quien llegue a ${pr.f} bajas o tenga más al acabar el tiempo.`,'#4ade80');}
  {const pr=CTF_PRESETS[presetIdx('ctf')];add('CAPTURA LA BANDERA',`Toma la bandera del centro y llévala a tu base (tu punto de aparición). Si te derriban, cae donde estabas; si nadie la toca en ${FLAG_RETURN} s, vuelve al centro. Quien la lleva va más lento y se ve a través de la niebla. Gana quien haga ${pr.c} captura${pr.c>1?'s':''}. Hasta 4 combatientes.`,'#facc15');}
  {const pr=LMS_PRESETS[presetIdx('lms')];add('ÚLTIMO EN PIE',`Cada quien tiene ${pr.l} vida${pr.l>1?'s':''}; sin vidas ya no reapareces y miras la partida. Gana el último con vidas (o, al acabar el tiempo, quien tenga más).`,'#f87171');}
+ add('ARCADE',`Un jugador contra el bando de la calavera, nivel por nivel. Cumple la misión y llega a la extracción amarilla. 3 vidas, vida extra a los 10,000 puntos y luego cada 25,000; las bajas seguidas suben el combo. Niveles disponibles: ${ARC_LEVELS.length} de ${ARC_TOTAL}.`,'#60a5fa');
  add('La pistola es infinita; recoge armas, granadas y botiquines.',undefined,null,'full');
  add('CRÉDITOS',undefined,null,'h');
  add('Idea y diseño','chuckgarcia');add('Desarrollo','Claude (Anthropic)');add('Conexión en línea','PeerJS (licencia MIT)');add('Versión','v'+VERSION);

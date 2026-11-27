@@ -13,6 +13,7 @@ function updBullets(dt){
    if(t===CRATE){b.dead=true;hitCrate(tx,ty,b.crate);sparks(b.x,b.y,'#a16207',4);break;}
    for(const e of ents){
     if(!e.alive||e===b.owner)continue;
+    if(ARC&&b.owner&&((b.owner.enemy&&e.enemy)||(!b.owner.enemy&&e.hostage)))continue; // en Arcade no hay fuego amigo
     if(Math.abs(e.x-b.x)<11&&Math.abs(e.y-b.y)<11){b.dead=true;const hit=e.alive&&e.invulnT<=0;damage(e,b.dmg,b.owner,b.w);if(hit&&b.owner.st)b.owner.st.hits++;sparks(b.x,b.y,'#f87171',5);break;}
    }
    if(b.trav>b.range)b.dead=true;
@@ -43,7 +44,7 @@ function explode(g){ // explosión en cruz, como Bomberman
  }
  for(const [x,y] of tiles)emitEv({k:'fx',f:{kind:'boom',x,y}});
  for(const e of ents){
-  if(!e.alive)continue;const ex=wx(Math.floor(e.x/T)),ey=Math.floor(e.y/T);
+  if(!e.alive||(ARC&&g.owner&&g.owner.enemy&&e.enemy))continue;const ex=wx(Math.floor(e.x/T)),ey=Math.floor(e.y/T);
   if(tiles.some(([x,y])=>x===ex&&y===ey))damage(e,ex===cx&&ey===cy?100:75,g.owner,'frag');
  }
  for(const o of nades)if(!o.dead&&tiles.some(([x,y])=>x===Math.floor(o.x/T)&&y===Math.floor(o.y/T)))o.fuse=Math.min(o.fuse,.05);

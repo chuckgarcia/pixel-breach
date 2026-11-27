@@ -4,7 +4,7 @@
 const SKINS=[{k:'recruitF',n:'RECLUTA ♀',p:'recruit'},{k:'recruitM',n:'RECLUTA ♂',p:'recruit'},{k:'commandoF',n:'COMANDO ♀',p:'commando'},{k:'commandoM',n:'COMANDO ♂',p:'commando'},
  {k:'operator',n:'OPERADOR',p:'operator'},{k:'gas',n:'ANTIGÁS',p:'gas'},{k:'ghillie',n:'GHILLIE',p:'ghillie'}];
 const SKIN_KEYS=SKINS.map(s=>s.k);
-const skinOf=k=>SKINS.find(s=>s.k===k)||SKINS[1];
+const skinOf=k=>SKINS.find(s=>s.k===k)||(typeof VSKINS!=='undefined'&&VSKINS.find(s=>s.k===k))||SKINS[1];
 const SKIN_BASE={S:'#f2c18d',s:'#cf8f5d',E:'#1b1b22',W:'#ffffff',A:'#6b3a1f',a:'#4a2814',P:'#3a4250',p:'#2a303b',K:'#1d2129',L:'#7a5230',l:'#a87443'};
 const SKIN_PAL={
  recruit:{H:'#5b6f3c',h:'#7e9455',d:'#3d4c27'},
@@ -35,6 +35,27 @@ const SKIN_GRID={
  ghillie:{down:["................", "....Y.YY.Y......", "...YXYXXYXY.Y...", "..YXXYXXXXYXX...", ".YXZXXXXXXXXZXY.", "..XXZZZZZZZZXX..", ".YXZSSSSSSSSZXY.", "..XZSEESSEESZX..", ".YXZcSSssSScZXY.", "..XXZsSSSSsZXX..", ".YXXuTTTTTTuXXY.", "..XXXXXXXXXXXX..", ".YXYXXZXXZXXYXY.", "..TXXXXXXXXXXT..", ".YuXZXXXXXXZXuY.", "..XYXXZXXZXXYX..", "...YXXXXXXXXY...", "....ZZZ..ZZZ....", "....KKK..KKK....", "................"],
   right:["................", "....Y.YY.Y......", "...YXYXXYXY.Y...", "..YXXYXXXXYXX...", ".YXZXXXXXXXXZXY.", "..XXXZZZZZZZZX..", ".YXXZSSSSSSSSZY.", "..XXZSSEESSEEZ..", ".YXXZScSSssScZY.", "..XXXZsSSSSsZX..", ".YXXXuTTTTTTuXY.", "..XXXXXXXXXXXXX.", ".YXYXXZXXZXXYXY.", "..TXXXXXXXXXXTS.", ".YuXZXXXXXXZXuY.", "...XYXXZXXZXXYX.", "....YXXXXXXXXY..", ".....ZZZ..ZZZ...", ".....KKK..KKK...", "................"]},
 };
+// ---------- BANDO ENEMIGO (modo Arcade) ----------
+// Aspectos que el jugador no puede elegir: cara cubierta y ojos rojos para reconocerlos al instante.
+const VCOL='#991b1b'; // uniforme vino de todo el bando
+const VSKINS=[{k:'vSkull',n:'CALAVERA',p:'vskull'},{k:'vHood',n:'ENCAPUCHADO',p:'vskull'},{k:'vGas',n:'ANTIGÁS ROJO',p:'vgas'},
+ {k:'vShield',n:'ESCUDO',p:'vshield'},{k:'vColossusC',n:'COMANDANTE',p:'vcolC'}];
+{const VB={D:'#18181b',e:'#3f3f46',O:'#e7e5e4',o:'#a8a29e',Q:'#0a0a0a',R:'#ef4444',r:'#fca5a5'};
+ Object.assign(SKIN_PAL,{vskull:VB,vgas:{H:'#27272a',h:'#3f3f46',d:'#18181b',M:'#3f3f46',m:'#27272a',R:'#ef4444',r:'#fecaca',C:'#7f1d1d'},
+  vshield:Object.assign({},VB,{H:'#3f3f46',h:'#71717a',V:'#18181b',v:'#27272a',m:'#27272a',M:'#52525b'}),
+  vcolC:Object.assign({},VB,{H:'#3f3f46',h:'#71717a',V:'#27272a',v:'#3f3f46',Y:'#facc15',F:'#7f1d1d'})});}
+Object.assign(SKIN_BACK,{vSkull:{O:'D',o:'D',Q:'D',R:'D'},vHood:{Q:'D',R:'D',r:'D'},vGas:{R:'M',r:'M',C:'m'},vShield:{V:'H',R:'H'},vColossusC:{O:'H',Q:'H',R:'H'}});
+for(const k of ['vSkull','vHood','vGas','vShield','vColossusC'])SKIN_HAND[k]={down:[13,14],right:[14,14]};
+SKIN_GRID.vSkull={down:["................",".....DDDDDD.....","....DeeDDDDD....","...DeDDDDDDDD...","...DOOOOOOOOD...","..DOOOOOOOOOOD..","..DOQQOOOOQQOD..","..DOQROOOORQOD..","..DOQQOooOQQOD..","...DOOOQQOOOD...","...DOQoQoQoOD...","....DOoOoOoD....","....uTTTTTTu....","...tTTtTTtTTu...","..DTTTuTTuTTTD..","..DTTTLLlLTTTD..","....PPPPPPPP....","....PPp..pPP....","....KKK..KKK....","................"],
+ right:["................",".....DDDDDD.....","....DDeeDDDD....","...DDeDDDDDDD...","...DDDOOOOOOOD..","..DDDOOOOOOOOOD.","..DDDOQQOOOQQOD.","..DDDOQROOOQRO..","...DDOQQOooQQO..","...DDOOOOQQOOO..","....DOQoQoQoQD..",".....DOoOoOoD...",".....uTTTTTTu...","....tTTtTTtTTu..","...DTTuTTuTTTTD.","...DTTTLLlLTTTD.",".....PPPPPPPP...",".....PPp..pPP...",".....KKK..KKK...","................"]};
+SKIN_GRID.vHood={down:["................","......DDDD......","....DDeeDDDD....","...DDeDDDDDDD...","..DDeDDDDDDDDD..","..DDDQQQQQQDDD..","..DDQQQQQQQQDD..","..DDQRRQQRRQDD..","..DDQrQQQQrQDD..","..DDQQQQQQQQDD..","..DDDQQQQQQDDD..","...DDDDDDDDDD...","...DuTTTTTTuD...","...tTTtTTtTTu...","..DTTTuTTuTTTD..","..DTTTLLlLTTTD..","....PPPPPPPP....","....PPp..pPP....","....KKK..KKK....","................"],
+ right:["................","......DDDD......","....DDDeeDDD....","...DDDeDDDDDD...","..DDDeDDDDDDDD..","..DDDDDQQQQQQD..","..DDDDQQQQQQQQ..","..DDDDQQRRQQRR..","..DDDDQQrQQQrQ..","..DDDDQQQQQQQQ..","..DDDDDQQQQQQD..","...DDDDDDDDDD...","....DuTTTTTTu...","....tTTtTTtTTu..","...DTTuTTuTTTTD.","...DTTTLLlLTTTD.",".....PPPPPPPP...",".....PPp..pPP...",".....KKK..KKK...","................"]};
+SKIN_GRID.vShield={down:["................",".....HHHHHH.....","....HhhHHHHH....","...HhHHHHHHHH...","..HHHHHHHHHHHH..","..HVVVVVVVVVVH..","..HVRRRRRRRRVH..","..HVVVVVVVVVVH..","..HHHmmmmmmHHH..",".hHHmMMMMMMmHHh.","hHHhTTTTTTTThHHh","hHHTTtTTTTtTTHHh",".HHTVVVVVVVVTHH.","..DTVvVVVVvVTD..","..DTVVTTTTVVTD..","..DTVVLLLLVVTD..","....PPPPPPPP....","....PPp..pPP....","....KKK..KKK....","................"],
+ right:["................",".....HHHHHH.....","....HHhhHHHH....","...HHhHHHHHHH...","..HHHHHHHHHHHH..","..HHHHHVVVVVVVH.","..HHHHHVRRRRRRH.","..HHHHHVVVVVVVH.","..HHHHHmmmmmmH..","..hHHHmMMMMMMm..",".hHHhTTTTTTTThH.",".hHHTTtTTTTtTTH.","..HHTVVVVVVVVTH.","...DTVvVVVVvVTD.","...DTVVTTTTVVTD.","...DTVVLLLLVVTD.",".....PPPPPPPP...",".....PPp..pPP...",".....KKK..KKK...","................"]};
+SKIN_GRID.vColossusC={down:["................","....HHFFFFHH....","...HhhHHHHHHH...","..HhHHHHHHHHHH..","..HHOOOOOOOOHH..","..HOQQOOOOQQOH..","..HOQROOOORQOH..","..HOOOOQQOOOOH..","..HHOQOQOQOQHH..",".hhHHHHHHHHHHhh.","YYHHhTTTTTThHHYY","YHHHTTtTTtTTHHHY","FHHHVYVYVVVVHHHF","FHHDVvVVVVvVDHHF","FFDDVVVTTVVVDDFF","FFDDVVLLLLVVDDFF","FF.PPPPPPPPPP.FF","FF.PPPp..pPPP.FF","F..KKKK..KKKK..F","................"],
+ right:["................","....HHFFFFHH....","...HHhhHHHHHH...","..HHhHHHHHHHHH..","..HHHHOOOOOOOOH.","..HHHOQQOOOQQOH.","..HHHOQROOOQROH.","..HHHOOOOQQOOOH.","..HHHHOQOQOQOHH.",".hhHHHHHHHHHHHh.","YHHHHhTTTTTThHYY","hHHHHTTtTTtTTHHh","hHHHHVVYVYVVVHHh","FHHHDVvVVVVvVDH.","FFFDDVVVTTVVVDD.","FFFDDVVLLLLVVDD.","FFF.PPPPPPPPPP..","FF..PPPp..pPPP..","F...KKKK..KKKK..","................"]};
+SKIN_GRID.vGas=SKIN_GRID.gas; // la careta del antigás, con cristales rojos
+
 // Armas: de lado apuntan hacia adelante; de frente, hacia abajo (de espaldas, hacia arriba y detrás del cuerpo)
 const GUN_PAL={N:'#3a4352',n:'#9aa6b8',w:'#7a5230',x:'#c08a52'};
 const GUN_SPR={

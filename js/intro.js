@@ -70,7 +70,7 @@ function render(){
  if(state!=='play')fogOn=false;
  const sx=shake>0?Math.round(rnd(-shake,shake)):0,sy=shake>0?Math.round(rnd(-shake,shake)):0;
  ctx.save();ctx.translate(sx,HUD+sy);
- drawMap();drawModeMap();drawPickups();drawFx();
+ drawMap();drawModeMap();if(ARC)drawArcMap();drawPickups();drawFx();
  if(fogOn){drawFog();drawHeard();}
  drawNades();drawBullets();for(const e of ents)drawEnt(e);drawParts();
  if(state==='play')drawFlagArrow();
@@ -79,11 +79,13 @@ function render(){
  syncOverlays();
  if(state==='intro'){drawIntro();return;}
  if(state==='title'||state==='lobby'){drawTitle();if(state==='title')drawPreview();else if(NET&&lpvx)drawPreview(lpvx,myLobbyColor());return;}
- drawHUD();drawModeHud();drawFeed();
+ drawHUD();if(ARC)drawArcHud();else drawModeHud();drawFeed();
  if(announce&&state==='play'){const a=Math.min(1,announce.t*2),k=1+Math.max(0,announce.t-1.6)*1.5;ctx.globalAlpha=a;txt(announce.text,W/2,HUD+78,Math.round(22*k),announce.c||'#facc15','center');ctx.globalAlpha=1;}
- if(tut&&state==='play')drawTut();
+ if(tut&&state==='play'&&!(ARC&&ARC.cardT>0))drawTut();
+ if(ARC&&state==='play'&&ARC.cardT>0)drawArcCard(); // tarjeta de misión, encima de todo
  const p=me();
- if(state==='over'){
+ if(state==='over'&&ARC){drawArcOver();}
+ else if(state==='over'){
   overlay(.82);txt('FIN DE LA PARTIDA',W/2,100,30,'#facc15','center');
   txt(winTitle(winner),W/2,142,18,winner.color,'center');
   if(!winner.isPlayer)txt(winner.style,W/2,166,10,'#94a3b8','center');
@@ -94,12 +96,13 @@ function render(){
    txt(`MEJOR RACHA ${r[5]}   ·   GRANADAS ${r[3]}   ·   BOTÍN ${r[4]}`,W/2,370,11,'#cbd5e1','center');}}if(!isTouch&&(!NET||NET.role==='host'))txt('ENTER: revancha (mapa nuevo)   ·   ESC: menú',W/2,402,11,'#94a3b8','center');
   else if(NET&&NET.role==='client'&&me())txt('Esperando a que el anfitrión elija revancha o sala…',W/2,402,11,'#94a3b8','center');
  }else if(paused){
-  overlay(.8);txt('PAUSA',W/2,120,30,'#facc15','center');scoreboard(176);if(!isTouch)txt('P o ESC: continuar',W/2,500,11,'#94a3b8','center');
+  overlay(.8);txt('PAUSA',W/2,120,30,'#facc15','center');if(ARC)drawArcPause();else scoreboard(176);if(!isTouch)txt('P o ESC: continuar',W/2,500,11,'#94a3b8','center');
  }else if(NET&&NET.role==='client'&&NET.hostQuiet>2.5){ // el anfitrión no responde
   overlay(.55);txt('ESPERANDO AL ANFITRIÓN…',W/2,HUD+H/2-12,22,'#facc15','center');
   txt(`Si no vuelve en ${Math.max(0,Math.ceil(15-NET.hostQuiet))} s, regresarás al menú`,W/2,HUD+H/2+18,12,'#cbd5e1','center');
  }else if(!p){ // espectador
   if(Math.floor(clock*1.5)%3!==0)txt('ESPECTADOR · ENTRAS EN LA SIGUIENTE PARTIDA',W/2,HUD+H-22,13,'#facc15','center');
+ }else if(ARC){ // Arcade: la caída la dibuja drawArcHud
  }else if(!p.alive&&p.out){ // último en pie: sin vidas, miras hasta el final
   txt('SIN VIDAS',W/2,HUD+H/2-14,28,'#ef4444','center');
   if(Math.floor(clock*1.5)%3!==0)txt('Miras la partida hasta que termine',W/2,HUD+H/2+18,13,'#e2e8f0','center');

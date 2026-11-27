@@ -43,6 +43,7 @@ function linkFor(code){return location.href.split('#')[0]+'#'+code;}
 // --- anfitrión ---
 let netBusy=false; // evita crear o unirse dos veces mientras se preparan la librería y las credenciales
 async function createRoom(){
+ if(menuMode()==='arcade'){SETTINGS.mode='dm';saveSettings();showMode();} // ARCADE es de un jugador
  if(NET||netBusy)return;netMsg('Creando sala…',true);
  try{await loadPeer();}catch(e){netMsg('No se pudo cargar el modo en línea. Revisa tu conexión.');return;}
  netBusy=true;const ice=await iceServers();netBusy=false;if(NET)return;

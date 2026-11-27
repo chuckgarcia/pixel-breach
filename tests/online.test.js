@@ -62,6 +62,15 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       await M.click('#pResume');assert.strictEqual(await M.evaluate('paused'),false);
       await M.keyboard.press('KeyP');await M.click('#pQuit');assert.strictEqual(await M.evaluate('state'),'play','debe pedir confirmación');
       await M.click('#pQuit');assert.strictEqual(await M.evaluate('state'),'title');await M.context().close();});
+    await t('MODO ARCADE: el nivel reemplaza a escenario y partida, sin salas, y JUGAR empieza el nivel',async()=>{
+      for(const [w,h,mob] of [[1200,900,false],[375,667,true]]){
+        const M=await page('arcade',{viewport:{width:w,height:h},isMobile:mob,hasTouch:mob});await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
+        while((await M.evaluate('menuMode()'))!=='arcade')await M.click('#mnext');
+        assert.ok(await M.isVisible('#levelRow'),'no se ve NIVEL');for(const id of ['themeRow','presetRow','mkRoom'])assert.ok(!(await M.isVisible('#'+id)),id+' debería ocultarse');
+        assert.strictEqual(await M.innerText('#playAI'),'JUGAR NIVEL 1');
+        const r=await M.locator('#playAI').boundingBox();assert.ok(r&&r.y+r.height<=h,'JUGAR fuera de la vista');
+        await M.click('#playAI');assert.ok(await M.evaluate("!!ARC&&ARC.lv===0&&state==='play'"));
+        await M.evaluate("localStorage.setItem('pb_settings',JSON.stringify(Object.assign(SETTINGS,{mode:'dm'})))");await M.context().close();}});
     await t('el color se cambia con ◀ ▶ y el soldado lo usa',async()=>{
       const M=await page('color');await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
       const c0=await M.evaluate('playerColor');await M.click('#cnext');const c1=await M.evaluate('playerColor');assert.notStrictEqual(c0,c1);
