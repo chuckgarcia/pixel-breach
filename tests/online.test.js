@@ -45,13 +45,16 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       for(let i=0;i<12;i++)await M.click('#cnext');assert.strictEqual(await M.evaluate('playerColor'),c0,'da la vuelta a la paleta');
       await M.context().close();});
     await t('la sala del invitado se actualiza cuando el anfitrión cambia opciones',async()=>{
-      await A.click('#lfNext');await B.waitForFunction("document.getElementById('lsummary').textContent.includes('NIEBLA NO')",null,{timeout:5000});await A.click('#lfNext');});
+      await A.click('#lfNext');await B.waitForFunction("document.getElementById('lsummary').textContent.includes('NIEBLA NO')",null,{timeout:5000});await A.click('#lfNext');
+      const n0=await A.evaluate('NET.aiNames[0]');assert.ok((await B.innerText('#lplayers')).includes('IA · '+n0),'el invitado no ve los nombres de las IAs');});
     await t('el invitado elige un color libre y no uno ocupado',async()=>{
       const hostC=await A.evaluate('playerColor');
       for(let i=0;i<13;i++){await B.click('#lcnext');await B.waitForTimeout(60);assert.notStrictEqual(await B.evaluate('playerColor'),hostC,'eligió el color del anfitrión');}
       const mine=await B.evaluate('playerColor');await A.waitForFunction(`[...NET.clients.values()][0].color==='${mine}'`,null,{timeout:5000});});
     await A.evaluate("themeChoice='bunker'");await A.click('#lstart');await B.waitForFunction("state==='play'",null,{timeout:5000});await B.waitForTimeout(600);
     await A.evaluate("for(const e of ents)if(!e.isPlayer){e.alive=false;e.respawnT=1e9;}");
+    await t('las IAs de la partida tienen los nombres que se vieron en la sala',async()=>{
+      assert.ok(await A.evaluate("ents.filter(e=>!e.isPlayer).every((e,i)=>e.name===NET.aiNames[i])"));});
     await t('el invitado se mueve al instante y el anfitrión lo ve',async()=>{
       const x0=await B.evaluate('me().x');await B.keyboard.down('KeyA');await B.waitForTimeout(80);const x1=await B.evaluate('me().x');
       await B.waitForTimeout(500);await B.keyboard.up('KeyA');await B.waitForTimeout(500);

@@ -10,6 +10,16 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.11.2] - 2026-11-26
+
+### Añadido
+- En la sala se ven los nombres de las IAs (IA · RON, IA · ICE…) y son los mismos que tendrán en la partida.
+- En celular, los ajustes se abren a pantalla completa (también desde la partida), con las opciones alineadas y LISTO abajo.
+- En celular, REVANCHA y MENÚ al final de la partida son botones grandes.
+
+### Corregido
+- Una llave de más en los estilos podía hacer que el navegador ignorara la regla siguiente.
+
 ## [0.11.1] - 2026-11-26
 
 ### Corregido

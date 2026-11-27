@@ -4,11 +4,11 @@
 let settingsOpen=false,pausedBySettings=false,installEvt=null;
 const fsOK=!!(document.documentElement&&document.documentElement.requestFullscreen);
 function openSettings(){
- if(settingsOpen)return;settingsOpen=true;$('settings').style.display='flex';syncSettingsUI();
+ if(settingsOpen)return;settingsOpen=true;$('settings').style.display='flex';document.body.classList.add('sett');syncSettingsUI();
  if(state==='play'&&!NET&&!paused){paused=true;pausedBySettings=true;}
 }
 function closeSettings(){
- if(!settingsOpen)return;settingsOpen=false;$('settings').style.display='none';
+ if(!settingsOpen)return;settingsOpen=false;$('settings').style.display='none';document.body.classList.remove('sett');
  if(pausedBySettings){paused=false;pausedBySettings=false;}
 }
 // Cómo instalar según el dispositivo (el botón solo existe cuando el navegador ofrece instalar)

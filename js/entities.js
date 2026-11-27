@@ -19,12 +19,12 @@ function spawn(e,fixed){
  e.tp=(e.tp|0)+1;e.hp=100;e.alive=true;e.invulnT=1.5;resetInv(e);e.blindT=0;e.cd=.3;e.dir=RIGHT;
  Object.assign(e.ai,{known:{},patrol:null,patrolT:0,camp:null,dodgeAxisH:null,dodgeT:0,seeId:-1,lastHp:100,keepT:0});
 }
-function startMatch(humans,nAI){
+function startMatch(humans,nAI,aiNames){
  // humans: [{name,color}] — el primero eres tú (anfitrión). Sin argumentos: partida de un jugador.
  humans=humans||[{name:displayName(),color:playerColor}];nAI=nAI===undefined?PERS.length:nAI;
  setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);
  genMap();bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];heard=[];toast=null;netEvents=[];gridVer++;
- const names=AI_NAMES.slice().sort(()=>Math.random()-.5);
+ const names=Array.isArray(aiNames)&&aiNames.length>=nAI?aiNames:AI_NAMES.slice().sort(()=>Math.random()-.5); /* en línea: los mismos nombres que se vieron en la sala */
  const styles=PERS.slice().sort(()=>Math.random()-.5);
  ents=humans.map((h,i)=>{const e=makeEnt(true,null,i,h.name);e.color=h.color;e.lfc=e.lgc=e.lqc=0;return e;});
  for(let i=0;i<nAI;i++){const p=nAI>=PERS.length?PERS[i%PERS.length]:styles[i];ents.push(makeEnt(false,p,ents.length,names[i]));}

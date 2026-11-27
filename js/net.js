@@ -50,7 +50,7 @@ async function createRoom(){
   const code=genCode(),peer=new Peer(peerIdFor(code),peerOpts(ice));let opened=false;
   peer.on('open',()=>{
    if(opened){if(NET&&NET.peer===peer)setSig('ok');return;} // reconexión: la sala y sus jugadores se conservan
-   opened=true;NET={role:'host',peer,code,clients:new Map(),ais:Math.max(1,MAX_PLAYERS-2),sendT:0,fog:true,sig:'ok',rcTries:0};myId=0;state='lobby';netMsg('');renderLobby();
+   opened=true;NET={role:'host',peer,code,clients:new Map(),ais:Math.max(1,MAX_PLAYERS-2),aiNames:AI_NAMES.slice().sort(()=>Math.random()-.5),sendT:0,fog:true,sig:'ok',rcTries:0};myId=0;state='lobby';netMsg('');renderLobby();
   });
   peer.on('connection',conn=>hostAccept(conn));
   peer.on('disconnected',()=>{if(NET&&NET.peer===peer&&!NET.forcing){setSig('reconnecting');hostReconnect(800);}});
@@ -98,7 +98,7 @@ function lobbyPlayers(){
 }
 function clampAIs(){const n=NET.role==='host'?NET.clients.size+1:(NET.lobby?NET.lobby.players.length:1);NET.ais=Math.max(n<2?1:0,Math.min(MAX_PLAYERS-n,NET.ais));}
 function hostBroadcast(msg){for(const c of NET.clients.values())if(c.conn.open)try{c.conn.send(msg);}catch(e){}}
-function hostLobbyUpdate(go){clampAIs();hostBroadcast({t:'lobby',go:!!go,players:lobbyPlayers().map(p=>({key:p.key,name:p.name,color:p.color,host:!!p.host})),ais:NET.ais,diff,theme:themeChoice,fog:NET.fog,preset:SETTINGS.preset,code:NET.code});if(state==='lobby')renderLobby();}
+function hostLobbyUpdate(go){clampAIs();hostBroadcast({t:'lobby',go:!!go,players:lobbyPlayers().map(p=>({key:p.key,name:p.name,color:p.color,host:!!p.host})),ais:NET.ais,an:(NET.aiNames||[]).slice(0,MAX_PLAYERS),diff,theme:themeChoice,fog:NET.fog,preset:SETTINGS.preset,code:NET.code});if(state==='lobby')renderLobby();}
 function hostAccept(conn){
  conn.on('data',d=>{
   if(!d||typeof d!=='object')return;
@@ -140,7 +140,7 @@ function hostStart(){
  if(!NET||NET.role!=='host')return;
  clampAIs();
  const list=[...NET.clients.values()];
- startMatch([{name:displayName(),color:playerColor},...list.map(c=>({name:c.name,color:c.color}))],NET.ais);
+ startMatch([{name:displayName(),color:playerColor},...list.map(c=>({name:c.name,color:c.color}))],NET.ais,NET.aiNames);
  list.forEach((c,i)=>{c.spectator=false;c.ent=ents[i+1];c.ent.input=c.input||{};c.ent.lfc=c.input.fc|0;c.ent.lgc=c.input.gc|0;c.ent.lqc=c.input.qc|0;});
  list.forEach((c,i)=>sendStart(c,i+1)); // quienes esperaban como espectadores ya juegan
  NET.sentGrid=gridVer;NET.sendT=0;
@@ -307,7 +307,8 @@ function renderLobby(){
  players.forEach(p=>{const r=document.createElement('div');const i=document.createElement('i');i.style.background=/^#[0-9a-f]{6}$/i.test(p.color)?p.color:'#94a3b8';
   const n=document.createElement('span');n.textContent=cleanName(p.name);const sm=document.createElement('small');sm.textContent=p.host?'anfitrión':'';
   r.append(i,n,sm);box.appendChild(r);});
- for(let i=0;i<ais;i++){const r=document.createElement('div');r.innerHTML='<i style="background:#475569"></i><span style="color:#64748b">IA</span>';box.appendChild(r);}
+ const an=host?NET.aiNames:(NET.lobby&&Array.isArray(NET.lobby.an)?NET.lobby.an:[]);
+ for(let i=0;i<ais;i++){const r=document.createElement('div');r.innerHTML='<i style="background:#475569"></i><span style="color:#64748b"></span>';r.querySelector('span').textContent='IA'+(an&&an[i]?' · '+cleanName(an[i]):'');box.appendChild(r);}
  $('aiCount').textContent=String(ais);$('ldName').textContent=DIFF[diff].name;$('ltName').textContent=themeLabel(themeChoice);$('lfName').textContent=NET.fog!==false?'SÍ':'NO';
  document.querySelectorAll('#lobby .hostonly').forEach(b=>b.style.display=host?'':'none');
  document.querySelectorAll('#lobby .hostrow').forEach(b=>b.style.display=host?'':'none');
