@@ -10,6 +10,18 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.17.1] - 2026-11-27
+
+### Corregido
+
+- Menú: al cambiar a ARCADE las opciones ya no brincan. NIVEL ocupa el lugar de ESCENARIO, el
+  nuevo renglón RÉCORD (tu mejor puntaje) el de PARTIDA, y una nota de «un jugador» el de las salas
+  en línea. Las flechas y JUGAR quedan en el mismo lugar con cualquier modo, en computadora y celular.
+
+### Pruebas
+
+- Al pasar por todos los modos, los botones del menú no se mueven (computadora, celular vertical y horizontal).
+
 ## [0.17.0] - 2026-11-27
 
 ### Añadido

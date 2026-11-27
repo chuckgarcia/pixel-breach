@@ -37,6 +37,13 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       assert.ok(!(await M.isVisible('#pad'))&&!(await M.isVisible('#btns')),'los controles no deben verse en el menú');
       for(const id of ['playAI','mkRoom','joinOpen']){const r=await M.locator('#'+id).boundingBox();assert.ok(r&&r.y>=0&&r.y+r.height<=h,`#${id} fuera de la vista`);}
       await M.close();await M.context().close();});
+    for(const [w,h,mob] of [[1280,800,false],[390,844,true],[844,390,true]])await t(`${w}×${h}: al pasar por todos los modos (ARCADE incluido) los botones no se mueven`,async()=>{
+      const M=await page('modos',{viewport:{width:w,height:h},isMobile:mob,hasTouch:mob});await M.goto(URL);await M.waitForTimeout(300);
+      await M.evaluate("document.body.classList.add('portrait-ok');state==='intro'&&endIntro()");await M.waitForTimeout(200);
+      const pos=()=>M.evaluate("['mprev','mnext','dnext','playAI','howtoBox'].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return Math.round(r.left+r.width/2)+','+Math.round(r.top)}).join(' ')");
+      const first=await pos();
+      for(let k=0;k<await M.evaluate('MODE_KEYS.length');k++){await M.evaluate('stepMode(1)');await M.waitForTimeout(60);assert.strictEqual(await pos(),first,'en '+await M.evaluate('MODES[menuMode()].n'));}
+      await M.context().close();});
     await t('«¿Cómo se juega?» se abre como panel completo y se cierra',async()=>{
       const M=await page('guía',{viewport:{width:1440,height:900}});await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
       await M.click('#howtoBox summary');const r=await M.locator('#howtoBox').boundingBox();

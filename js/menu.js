@@ -51,7 +51,7 @@ function showMode(){const m=menuMode(),arc=m==='arcade';$('mname').textContent=M
  if(!arc){$('pname2').textContent=presetLabel(presetIdx(m));$('lpName').textContent=presetLabel(presetIdx(m));}
  document.body.classList.toggle('arcmenu',arc); // ARCADE: nivel en lugar de escenario y partida; sin salas en línea
  $('playAI').textContent=arc?`JUGAR NIVEL ${arcSel+1}`:'JUGAR CONTRA IAs';showLevel();}
-function showLevel(){$('lvname').textContent=arcLevelLabel(arcSel);if(menuMode()==='arcade')$('playAI').textContent=`JUGAR NIVEL ${arcSel+1}`;}
+function showLevel(){$('lvname').textContent=arcLevelLabel(arcSel);{const r=arcSave.best[0];$('recName').textContent=r?`${r.s.toLocaleString('es-MX')} · ${r.i}`:'SIN RÉCORD AÚN';}if(menuMode()==='arcade')$('playAI').textContent=`JUGAR NIVEL ${arcSel+1}`;}
 function stepLevel(d){arcSel=Math.max(0,Math.min(arcSave.open-1,arcSel+d));showLevel();} // solo los niveles desbloqueados
 $('arcReady').addEventListener('click',()=>arcReady());
 $('hsSave').addEventListener('click',()=>arcSaveRecord($('hsName').value));

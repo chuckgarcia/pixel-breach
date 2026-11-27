@@ -325,7 +325,15 @@ body.touch #pauseBtns .mbtn{flex:1;max-width:240px;padding:12px 8px}
 /* ARCADE: el nivel reemplaza a ESCENARIO y PARTIDA; las salas en línea no aplican */
 #menu #levelRow{display:none}
 body.arcmenu #menu #levelRow{display:grid}
-body.arcmenu #themeRow,body.arcmenu #presetRow,body.arcmenu #menu .dock .duo,body.arcmenu #joinRow,body.arcmenu #joinRow.open{display:none!important}
+/* ARCADE usa los mismos renglones que los demás modos para que nada brinque al cambiar: NIVEL ocupa el lugar de ESCENARIO, RÉCORD el de PARTIDA
+   y la nota de un jugador el de las salas en línea (mismo alto) */
+#menu #recRow,#menu #arcNote{display:none}
+body.arcmenu #menu #recRow{display:grid}
+body.arcmenu #themeRow,body.arcmenu #presetRow{display:none!important}
+body.arcmenu #menu .dock .duo,body.arcmenu #joinRow{visibility:hidden} /* ocultos pero ocupando su lugar */
+#menu .dock{position:relative}
+body.arcmenu #menu #arcNote{display:flex;position:absolute;left:0;right:0;bottom:0;top:auto;min-height:2.4em;align-items:center;justify-content:center;color:#64748b;font-size:.8em;text-align:center}
+#menu .row.sel .ph{visibility:hidden}
 /* celulares bajos en vertical (p. ej. 375 × 667): con la línea MODO, todo debe caber sin desplazarse */
 @media (orientation:portrait) and (max-height:740px){
  body.touch.menus #menu,body.touch.menus #lobby{gap:7px}
