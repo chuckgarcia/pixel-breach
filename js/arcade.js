@@ -193,6 +193,10 @@ function arcRescueAlarm(){
  for(const k of extra){
   let s=null;for(let t=0;t<80&&!s;t++){const x=ri(1,COLS-2),y=ri(1,ROWS-2),dx=Math.abs(x-X[0])+Math.abs(y-X[1]),dp=Math.abs(x-P.tx)+Math.abs(y-P.ty);
    if(walkable(x,y)&&dx>=2&&dx<=6&&dp>=7&&!tileTaken(null,x,y))s=[x,y];}
+  if(!s){ // el azar no encontró lugar: la casilla libre más cercana a la extracción que quede lejos de ti
+   let best=null;for(let y=1;y<ROWS-1;y++)for(let x=1;x<COLS-1;x++){const dx=Math.abs(x-X[0])+Math.abs(y-X[1]),dp=Math.abs(x-P.tx)+Math.abs(y-P.ty);
+    if(!walkable(x,y)||tileTaken(null,x,y)||dx<1||dp<4)continue;const sc=Math.abs(dx-3)*2+Math.max(0,7-dp);if(!best||sc<best[0])best=[sc,x,y];}
+   if(best)s=[best[1],best[2]];}
   if(!s)continue;const e=arcEnemy(k,ents.length);arcPlace(e,s[0],s[1]);e.home=X.slice();e.invulnT=.8;ents.push(e);
  }
  announce={text:'¡ALARMA! TE ESPERAN EN LA EXTRACCIÓN',c:'#f87171',t:2.2};sfx('streak');
@@ -360,6 +364,10 @@ function arcSpawnAt(k,near,minP){ // un enemigo en una casilla libre cerca de 'n
  const P=arcPlayer();let s=null;
  for(let t=0;t<120&&!s;t++){const x=near[0]+ri(-4,4),y=near[1]+ri(-4,4);
   if(x<1||y<1||x>COLS-2||y>ROWS-2||!walkable(x,y)||tileTaken(null,x,y))continue;if(Math.abs(x-P.tx)+Math.abs(y-P.ty)<(minP||5))continue;s=[x,y];}
+ if(!s){ // el azar no encontró lugar (mapa apretado): busca casilla por casilla, de la más cercana a 'near' hacia afuera
+  const c=[];for(let y=1;y<ROWS-1;y++)for(let x=1;x<COLS-1;x++){const dn=Math.abs(x-near[0])+Math.abs(y-near[1]);
+   if(dn<=8&&walkable(x,y)&&!tileTaken(null,x,y)&&Math.abs(x-P.tx)+Math.abs(y-P.ty)>=Math.min(3,minP||5))c.push([dn,x,y]);}
+  c.sort((a,b)=>a[0]-b[0]);if(c.length)s=[c[0][1],c[0][2]];}
  if(!s)return null;const e=arcEnemy(k,ents.length);arcPlace(e,s[0],s[1]);e.invulnT=.8;ents.push(e);return e;
 }
 function arcFarDoors(){const P=arcPlayer();return ARC.spawns.slice().sort((a,b)=>(Math.abs(b[0]-P.tx)+Math.abs(b[1]-P.ty))-(Math.abs(a[0]-P.tx)+Math.abs(a[1]-P.ty)));}

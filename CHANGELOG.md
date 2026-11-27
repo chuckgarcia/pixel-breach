@@ -10,6 +10,14 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.17.3] - 2026-11-27
+
+### Corregido
+
+- ARCADE: al liberar al rehén, a veces llegaba un solo refuerzo (o ninguno) en vez de dos, porque
+  el azar no encontraba lugar cerca de la extracción. Ahora, si el azar falla, se busca la casilla libre
+  más cercana. Lo mismo para los refuerzos de la bomba y del maletín.
+
 ## [0.17.2] - 2026-11-27
 
 ### Cambiado
