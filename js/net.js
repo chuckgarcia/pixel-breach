@@ -161,7 +161,7 @@ function snapshot(){
   e:ents.map(e=>[Math.round(e.x),Math.round(e.y),DIRS.indexOf(e.dir),e.moving?1:0,Math.ceil(Math.max(0,e.hp)),e.alive?1:0,r(e.invulnT),r(e.hurtT),r(e.blindT),e.frags,e.deaths,WIDX.indexOf(e.weapon),r(Math.min(99,e.respawnT)),
    e.isPlayer?[e.inv.smg,e.inv.shotgun,e.inv.rifle,e.inv.frag,e.inv.flash]:0,
    e.isPlayer?0:(()=>{const o={};for(const k in e.ai.known)if(ents[k]&&ents[k].isPlayer)o[k]=e.ai.known[k].seen?1:0;return o;})(),e.gone?1:0,e.tp|0,state==='over'&&e.isPlayer?statRow(e):0]),
-  b:bullets.map(b=>[Math.round(b.x),Math.round(b.y),Math.round(b.vx),Math.round(b.vy),b.color]),
+  b:bullets.map(b=>[Math.round(b.x),Math.round(b.y),Math.round(b.vx),Math.round(b.vy),b.color,Math.max(0,Math.round((b.vis||0)-b.trav))]),
   n:nades.map(g=>[Math.round(g.x),Math.round(g.y),g.type==='frag'?0:1,r(g.fuse)]),
   p:pickups.map(p=>[p.tx,p.ty,p.type,p.life===undefined?-1:r(p.life)]),
   ev:netEvents};
@@ -244,7 +244,7 @@ function applySnapshot(s){
    if(!e.alive||tp!==e.tp){e.tp=tp;e.x=e.nx;e.y=e.ny;e.tx=e.ntx=wx(Math.floor(e.x/T));e.ty=e.nty=Math.floor(e.y/T);e.x=e.tx*T+T/2;e.y=e.ty*T+T/2;e.moving=false;if(DIRS[a[2]])e.dir=DIRS[a[2]];}
   }else if(!wasAlive&&e.alive){e.x=e.nx;e.y=e.ny;}
  });
- if(Array.isArray(s.b))bullets=s.b.map(a=>({x:a[0],y:a[1],vx:a[2],vy:a[3],color:String(a[4]).slice(0,7)}));
+ if(Array.isArray(s.b))bullets=s.b.map(a=>({x:a[0],y:a[1],vx:a[2],vy:a[3],color:String(a[4]).slice(0,7),vis:+a[5]||0,trav:0}));
  if(Array.isArray(s.n))nades=s.n.map(a=>({x:a[0],y:a[1],vx:0,vy:0,type:a[2]?'flash':'frag',fuse:a[3]}));
  if(Array.isArray(s.p))pickups=s.p.filter(a=>PICK[a[2]]).map(a=>({tx:a[0],ty:a[1],type:a[2],t:clock+a[0],life:a[3]<0?undefined:a[3]}));
  if(Array.isArray(s.ev))for(const ev of s.ev)if(ev&&typeof ev==='object')try{applyEv(ev);}catch(e){}
@@ -261,7 +261,7 @@ function clientUpdate(dt){
   if(d>T*1.5){e.x=e.nx;e.y=e.ny;}else{const k=Math.min(1,dt*18);e.x+=(e.nx-e.x)*k;e.y+=(e.ny-e.y)*k;}
   e.invulnT-=dt;e.hurtT-=dt;e.blindT-=dt;e.respawnT-=dt;
  }
- for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;}
+ for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.trav=(b.trav||0)+Math.hypot(b.vx,b.vy)*dt;}
  for(const g of nades)g.fuse-=dt;
  for(const p of pickups){p.t+=dt;if(p.life!==undefined)p.life-=dt;}
  timeLeft=Math.max(0,timeLeft-dt);

@@ -36,16 +36,40 @@ const SKIN_GRID={
   right:["................", "....Y.YY.Y......", "...YXYXXYXY.Y...", "..YXXYXXXXYXX...", ".YXZXXXXXXXXZXY.", "..XXXZZZZZZZZX..", ".YXXZSSSSSSSSZY.", "..XXZSSEESSEEZ..", ".YXXZScSSssScZY.", "..XXXZsSSSSsZX..", ".YXXXuTTTTTTuXY.", "..XXXXXXXXXXXXX.", ".YXYXXZXXZXXYXY.", "..TXXXXXXXXXXTS.", ".YuXZXXXXXXZXuY.", "...XYXXZXXZXXYX.", "....YXXXXXXXXY..", ".....ZZZ..ZZZ...", ".....KKK..KKK...", "................"]},
 };
 // Armas: de lado apuntan hacia adelante; de frente, hacia abajo (de espaldas, hacia arriba y detrás del cuerpo)
-const GUN_PAL={N:'#323a47',n:'#7c8799',w:'#7a5230',x:'#a87443'};
+const GUN_PAL={N:'#3a4352',n:'#9aa6b8',w:'#7a5230',x:'#c08a52'};
 const GUN_SPR={
  pistol:{side:[-1,0,["nNNNN","NN..."]],front:[-1,1,["NN","Nn","N."]]},
  smg:{side:[-2,0,["..nNNNNN","NNNNNNN.","N..NN..."]],front:[-1,-1,["nN","NN","NN","NN","N."]]},
  shotgun:{side:[-3,0,["wwxNNNNNNNNN","ww.wwx......"]],front:[-1,-2,["w.","x.","NN","NN","Nn","NN","N."]]},
  rifle:{side:[-3,-1,["......n......","wwxNNNNNNNNNN","w..NN.N......"]],front:[-1,-2,["n.","NN","NN","NN","Nn","NN","N.","N."]]}
 };
-const SK_W=24,SK_H=24,SK_OUT='#0b0e14';
+// De frente el arma se sostiene al centro (columnas 7–8) con la punta abajo; de espaldas, la misma al revés,
+// detrás del cuerpo y asomando sobre el casco. De lado, el cañón va en el renglón del carril de la bala.
+const GUN_FRONT={pistol:[17,["NN","Nn","nN"]],smg:[14,["nN","NN","Nn","NN","N.","N."]],
+ shotgun:[13,["xw","ww","NN","NN","Nn","NN","NN","N."]],rifle:[13,["xw","ww","NN","Nn","NN","NN","NN","NN","N.","N."]]};
+const SK_LANE=13,SK_TOP=4; // renglón por donde viaja la bala (centro del soldado); renglones extra arriba para el cañón de espaldas
+const SK_W=24,SK_H=20+SK_TOP+4,SK_OUT='#0b0e14';
 function skinShade(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;const m=c=>Math.max(0,Math.min(255,Math.round(f<0?c*(1+f):c+(255-c)*f)));return `rgb(${m(r)},${m(g)},${m(b)})`;}
 // Arma un mapa de 24 × 24: cada celda {ch, gun}. face: down/up/right; frame 0 quieto, 1 y 2 pasos.
+// Dónde va el arma (columna, renglón sin los renglones extra) y dónde queda su punta
+function gunPlace(S,face,weapon){
+ if(!GUN_SPR[weapon])return null;
+ if(face==='right'){const [hx]=SKIN_HAND[S].right,[ox,,gr]=GUN_SPR[weapon].side;let bi=0,best=-1;
+  gr.forEach((r,i)=>{const e=r.replace(/\.+$/,'').length;if(e>best){best=e;bi=i;}});
+  return {x:hx+ox,y:SK_LANE-bi,rows:gr,tip:[hx+ox+best-1,SK_LANE]};}
+ const [y0,gr]=GUN_FRONT[weapon];
+ if(face==='up'){const src=gr.slice().reverse();return {x:7,y:-2,rows:src,tip:[7,-2]};}
+ return {x:7,y:y0,rows:gr,tip:[7,y0+gr.length-1]};
+}
+// Punta del cañón respecto al centro del soldado, en píxeles del juego (escala 2). face: down/up/right/left
+const tipCache=new Map();
+function gunTip(skin,face,weapon){
+ const S=SKIN_GRID[skin]?skin:'recruitM',w=GUN_SPR[weapon]?weapon:'pistol',key=S+face+w;let t=tipCache.get(key);if(t)return t;
+ const gp=gunPlace(S,face==='left'?'right':face,w),[c,r]=gp.tip;
+ if(face==='right'||face==='left'){const dx=(c+1-8)*2;t={dx:face==='left'?-dx:dx,dy:0};}
+ else if(face==='down')t={dx:0,dy:-27+2*r+2};else t={dx:0,dy:-27+2*r};
+ tipCache.set(key,t);return t;
+}
 function skinCells(skin,face,frame,weapon){
  const S=SKIN_GRID[skin]?skin:'recruitM',view=face==='right'?'right':'down';
  let rows=SKIN_GRID[S][view].map(r=>r.split(''));
@@ -56,13 +80,11 @@ function skinCells(skin,face,frame,weapon){
  if(frame&&b>0){const runs=[];let st=-1;rows[b].forEach((c,x)=>{if(c==='K'&&st<0)st=x;if(c!=='K'&&st>=0){runs.push([st,x-1]);st=-1;}});if(st>=0)runs.push([st,rows[b].length-1]);
   const run=runs[frame===1?0:runs.length-1];if(run)for(let x=run[0];x<=run[1];x++){rows[b-1][x]='K';rows[b][x]='.';}}
  let feet=0;rows.forEach((r,y)=>{if(r.some(c=>c!=='.'))feet=y;});
- const dy=19-feet,cells=Array.from({length:SK_H},()=>Array(SK_W).fill(null));
+ const dy=19-feet+SK_TOP,cells=Array.from({length:SK_H},()=>Array(SK_W).fill(null));
  rows.forEach((r,y)=>r.forEach((c,x)=>{if(c!=='.'&&y+dy<SK_H)cells[y+dy][x]={ch:c,gun:false};}));
- const g=GUN_SPR[weapon];
- if(g){const [hx,hy]=SKIN_HAND[S][view];const [ox,oy,gr]=face==='right'?g.side:g.front;
-  const src=face==='up'?gr.slice().reverse():gr;const y0=face==='up'?hy+dy-oy-gr.length+1:hy+dy+oy;
-  src.forEach((r,yy)=>[...r].forEach((c,xx)=>{if(c==='.')return;const X=hx+ox+xx,Y=y0+yy;if(X<0||Y<0||X>=SK_W||Y>=SK_H)return;
-   if(face==='up'&&cells[Y][X])return; /* de espaldas el arma queda detrás */ cells[Y][X]={ch:c,gun:true};}));}
+ const gp=gunPlace(S,face,weapon);
+ if(gp)gp.rows.forEach((r,yy)=>[...r].forEach((c,xx)=>{if(c==='.')return;const X=gp.x+xx,Y=gp.y+yy+SK_TOP;if(X<0||Y<0||X>=SK_W||Y>=SK_H)return;
+  if(face==='up'&&cells[Y][X])return; /* de espaldas el arma queda detrás */ cells[Y][X]={ch:c,gun:true};}));
  return cells;
 }
 const skinCache=new Map();
@@ -84,7 +106,7 @@ function skinSprite(skin,color,face,frame,hurt,weapon,scale){
 // Dibuja un soldado con el centro del cuerpo en cx y la planta de los pies en feetY. face incluye 'left' (espejo).
 function drawSkin(g,skin,color,face,frame,hurt,weapon,cx,feetY,scale){
  scale=scale||2;const left=face==='left',spr=skinSprite(skin,color,left?'right':face,frame,hurt,weapon,scale);
- const top=feetY-21*scale;
+ const top=feetY-(21+SK_TOP)*scale;
  if(left){g.save();g.translate(cx+9*scale,top);g.scale(-1,1);g.drawImage(spr,0,0);g.restore();}
  else g.drawImage(spr,cx-9*scale,top);
 }

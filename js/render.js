@@ -199,7 +199,7 @@ function drawNades(){
 function drawBullets(){
  ctx.lineWidth=3;
  for(const b of bullets){
-  if(!canSee(b.x,b.y))continue;
+  if(!canSee(b.x,b.y)||(b.vis&&(b.trav||0)<b.vis))continue; // todavía dentro del arma
   ctx.strokeStyle=b.color;ctx.globalAlpha=.45;ctx.beginPath();ctx.moveTo(b.x-b.vx*.025,b.y-b.vy*.025);ctx.lineTo(b.x,b.y);ctx.stroke();
   ctx.globalAlpha=1;ctx.fillStyle=b.color;ctx.fillRect(b.x-2,b.y-2,4,4);
  }

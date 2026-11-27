@@ -80,16 +80,18 @@ function fire(e){
  const w=WEAP[e.weapon],d=e.dir;
  {
   const sx=e.x+d.dx*14,sy=e.y+d.dy*14,base=Math.atan2(d.dy,d.dx);
+  // la bala nace aquí (para los choques), pero se dibuja desde la punta del arma
+  const tp=gunTip(e.skin,d.dy<0?'up':d.dy>0?'down':d.dx>0?'right':'left',e.weapon),vis=Math.max(0,Math.abs(tp.dx+tp.dy)-14);
   const extra=e.moving&&w.pellets===1?MOVE_SPREAD:0;
   for(let i=0;i<w.pellets;i++){
    let a=base;
    if(w.pellets>1)a+=(i/(w.pellets-1)-.5)*w.spread+rnd(-.04,.04);else a+=rnd(-(w.spread+extra)/2,(w.spread+extra)/2);
    const sp=w.spd*T*(w.pellets>1?rnd(.9,1.1):1);
-   bullets.push({x:sx,y:sy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,owner:e,dmg:w.dmg,range:w.range*T,trav:0,crate:w.crate,color:w.color,checked:{},w:e.weapon});
+   bullets.push({x:sx,y:sy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,owner:e,dmg:w.dmg,range:w.range*T,trav:0,crate:w.crate,color:w.color,checked:{},w:e.weapon,vis});
   }
   if(e.st)e.st.shots+=w.pellets;
   if(tut&&e.id===myId)tut.shots++;
-  emitEv({k:'mz',x:Math.round(sx),y:Math.round(sy)});
+  emitEv({k:'mz',x:Math.round(e.x+tp.dx),y:Math.round(e.y+tp.dy)}); // fogonazo en la boca del cañón
   hearShot(e);
   emitEv({k:'shot',id:e.id,x:Math.round(sx),y:Math.round(sy)}); // fogonazo que oyen los demás
   snd(e.weapon,e.x,e.y);

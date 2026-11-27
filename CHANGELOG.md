@@ -10,6 +10,13 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.12.4] - 2026-11-26
+
+### Cambiado
+- Los disparos salen del arma: de lado el cañón va justo en la línea de la bala; de frente el arma se sostiene al centro y la punta asoma bajo las botas; de espaldas el cañón asoma sobre el casco.
+- El fogonazo aparece en la boca del cañón y la bala se dibuja desde ahí. Las balas siguen el mismo camino y los mismos choques: se juega igual.
+- Las armas tienen más contraste para verse sobre el uniforme y el piso.
+
 ## [0.12.3] - 2026-11-26
 
 ### Añadido

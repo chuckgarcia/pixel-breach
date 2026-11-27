@@ -39,6 +39,15 @@ t('cada aspecto tiene frente y lado de 16 × 20, mano para el arma y nombre',()=
     c.forEach(r=>r.forEach(x=>{if(x&&!(x.ch in pal))out.push(s.k+f+x.ch);}));}return out;})()`);
   assert.strictEqual(bad.length,0,'letras sin color: '+[...bad].slice(0,5).join(', '));
 });
+t('la punta del arma queda sobre el carril de la bala en las 4 vistas, 7 aspectos y 4 armas',()=>{
+  const bad=run(`(()=>{const out=[];for(const s of SKINS)for(const f of ['down','up','right','left'])for(const w of ['pistol','smg','shotgun','rifle']){
+    const t=gunTip(s.k,f,w);const lateral=(f==='down'||f==='up')?t.dx:t.dy,ahead=f==='down'?t.dy:f==='up'?-t.dy:f==='right'?t.dx:-t.dx;
+    if(lateral!==0||ahead<12)out.push(s.k+'/'+f+'/'+w+':'+lateral+','+ahead);
+    // y en esa punta hay un píxel del arma
+    const ff=f==='left'?'right':f,c=skinCells(s.k,ff,0,w),gp=gunPlace(s.k,ff,w),cell=c[gp.tip[1]+SK_TOP][gp.tip[0]];if(!cell||!cell.gun)out.push(s.k+'/'+f+'/'+w+': punta vacía');}
+    return out;})()`);
+  assert.strictEqual(bad.length,0,[...bad].slice(0,6).join(' | '));
+});
 t('las IAs y el jugador llevan un aspecto válido',()=>{
   const r=run(`(()=>{themeChoice='bunker';startMatch();return ents.map(e=>SKIN_KEYS.includes(e.skin));})()`);
   assert.ok(r.every(Boolean));
