@@ -1,11 +1,11 @@
 'use strict';
 // Pixel Breach — Niveles del modo Arcade: mapas de 21 × 15 escritos a mano y la misión de cada uno.
 // # muro · + caja · ~ lava · . piso · P tú · E extracción · W puerta de oleada · H rehén · B bomba
-// Enemigos: r recluta · a asaltante · s escopetero
+// Enemigos: r recluta · a asaltante · s escopetero · range: a cuántas casillas de ti prefieren dispararte
 const ENEMY={
- r:{n:'RECLUTA',skin:'vSkull',w:'pistol',hp:50,pts:100,style:'asaltante',react:1.35,speed:.85},
- a:{n:'ASALTANTE',skin:'vSkull',w:'smg',hp:100,pts:150,style:'asaltante'},
- s:{n:'ESCOPETERO',skin:'vHood',w:'shotgun',hp:100,pts:200,style:'flanqueador',speed:.95},
+ r:{n:'RECLUTA',skin:'vSkull',w:'pistol',hp:50,pts:100,style:'asaltante',react:1.35,speed:.85,range:[3,4]},
+ a:{n:'ASALTANTE',skin:'vSkull',w:'smg',hp:100,pts:150,style:'asaltante',range:[2,3]},
+ s:{n:'ESCOPETERO',skin:'vHood',w:'shotgun',hp:100,pts:200,style:'flanqueador',speed:.95,range:[2,3]},
 };
 const ARC_TOTAL=10; // niveles planeados; los que faltan llegan en las siguientes versiones
 const ARC_LEVELS=[

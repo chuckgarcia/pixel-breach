@@ -169,4 +169,18 @@ t('arcade: la tarjeta de misión espera a que confirmes y no la salta una tecla 
     for(let i=0;i<30;i++)update(1/30);const o={held,go,t:ARC.t>0};SETTINGS.mode='dm';return o;})()`);
   assert.ok(r.held,'la tarjeta se quitó sola o con la tecla que venía presionada');assert.ok(r.go,'ESPACIO no confirmó');assert.ok(r.t,'el nivel no empezó');
 });
+t('IAs: nunca dos soldados en la misma casilla, buscan posición de tiro y no se te pegan',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=4;
+    startArcade(1);tut=null;ARC.cardT=0;const P=arcPlayer();let stack=0,near=0,far=0,shots=0;
+    for(let i=0;i<30*40;i++){P.invulnT=0;P.hp=100;update(1/30);if(ARC.deadT>0){ARC.deadT=0;}
+      const E=arcAlive(),m={};for(const e of E){const k=e.tx+','+e.ty;m[k]=(m[k]||0)+1;if(!e.moving&&Object.keys(e.ai.known).length){const d=Math.abs(e.tx-P.tx)+Math.abs(e.ty-P.ty);if(d<=1)near++;else far++;}}
+      for(const k in m)if(m[k]>1)stack++;if(E.some(e=>e.tx===P.tx&&e.ty===P.ty))stack+=100;}
+    shots=ents.filter(e=>e.enemy).reduce((a,e)=>a+(e.st?e.st.shots:0),0);
+    SETTINGS.mode='dm';themeChoice='bunker';startMatch();tut=null;let dm=0;
+    for(let i=0;i<30*60&&state==='play';i++){update(1/30);const n={};for(const e of ents)if(e.alive){const k=e.tx+','+e.ty;n[k]=(n[k]||0)+1;}for(const k in n)if(n[k]>1)dm++;}
+    return {stack,near,far,shots,dm,frags:ents.reduce((a,e)=>a+e.frags,0),arc:ARC===null};})()`);
+  assert.strictEqual(r.stack,0,'hubo soldados encimados en Arcade');assert.strictEqual(r.dm,0,'hubo soldados encimados en deathmatch');
+  assert.ok(r.far>r.near*2,`demasiado tiempo pegados a ti: ${r.near} cerca contra ${r.far} a distancia`);
+  assert.ok(r.frags>=3,'las IAs de deathmatch dejaron de pelear');assert.ok(r.arc,'el Arcade siguió activo en una partida normal');
+});
 console.log(`${ok} pruebas OK`);

@@ -82,6 +82,17 @@ function distField(gx,gy){
  }
  return D;
 }
+// ¿hay otro soldado en esa casilla (o entrando a ella)? Las IAs no se enciman; el jugador sí puede pasar.
+function tileTaken(e,x,y){
+ for(const o of ents){if(o===e||!o.alive||o.gone)continue;if((o.tx===x&&o.ty===y)||(o.moving&&o.ntx===x&&o.nty===y))return true;}
+ return false;
+}
+function freeNear(x,y,e){ // casilla libre más cercana (para que dos soldados no aparezcan juntos)
+ const seen=new Set([x+','+y]),q=[[x,y]];
+ while(q.length){const [cx,cy]=q.shift();if(walkable(cx,cy)&&!tileTaken(e,cx,cy))return [cx,cy];
+  for(const d of DIRS){const nx=cx+d.dx,ny=cy+d.dy,k=nx+','+ny;if(nx<0||ny<0||nx>=COLS||ny>=ROWS||seen.has(k)||tile(nx,ny)===WALL)continue;seen.add(k);q.push([nx,ny]);}}
+ return [x,y];
+}
 function nextStep(e,goal){
  const [gx,gy]=goal;if(gx===e.tx&&gy===e.ty)return null;
  const D=distField(gx,gy);let best=null,bd=D[idx(e.tx,e.ty)];

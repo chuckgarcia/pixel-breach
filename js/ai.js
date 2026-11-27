@@ -59,6 +59,43 @@ function pickCamp(e,far){
  if(!best)return null;
  e.ai.campDir=best.dir;return [best.x,best.y];
 }
+// ---------- POSICIÓN DE TIRO ----------
+// En vez de caminar hasta tu casilla, cada IA busca una casilla en tu fila o columna, con línea libre
+// y a su distancia preferida, que no ocupe ni haya elegido otro soldado. Así se reparten y no se enciman.
+function aiRange(e){
+ if(e.enemy&&ENEMY[e.etype]&&ENEMY[e.etype].range)return ENEMY[e.etype].range;
+ const r={asaltante:[2,3],flanqueador:[3,5],recolector:[3,4],campero:[3,6]}[e.p.key]||[2,4];
+ return gameMode==='lms'&&(e.lives|0)===1?[r[0]+1,r[1]+2]:r; // con la última vida, más lejos
+}
+function firePos(e,tx,ty,lo,hi){
+ const D=distField(e.tx,e.ty);let best=null,bs=1e9;
+ for(const d of DIRS)for(let k=1;k<=hi;k++){
+  const x=tx+d.dx*k,y=ty+d.dy*k;if(x<0||y<0||x>=COLS||y>=ROWS)break;
+  const tt=tile(x,y);if(blocks(tt))break;if(tt!==FLOOR||k<lo)continue;
+  if(!(x===e.tx&&y===e.ty)&&tileTaken(e,x,y))continue;
+  let s=D[idx(x,y)];if(s>=1e9)continue;
+  s+=Math.abs(k-(lo+hi)/2)*.5; // mejor a media distancia
+  for(const o of ents)if(o!==e&&o.alive&&o.ai&&o.ai.fpos&&o.ai.fpos[0]===x&&o.ai.fpos[1]===y)s+=8; // otra IA ya la eligió
+  if(s<bs){bs=s;best=[x,y];}
+ }
+ return best;
+}
+function holdPos(e,tx,ty){ // casilla libre a 3–5 casillas de ti (aunque no tenga línea de tiro), la más cercana para la IA
+ const D=distField(e.tx,e.ty);let best=null,bs=1e9;
+ for(let y=Math.max(1,ty-5);y<=Math.min(ROWS-2,ty+5);y++)for(let x=Math.max(1,tx-5);x<=Math.min(COLS-2,tx+5);x++){
+  const m=Math.abs(x-tx)+Math.abs(y-ty);if(m<3||m>5||!walkable(x,y)||(!(x===e.tx&&y===e.ty)&&tileTaken(e,x,y)))continue;
+  let s=D[idx(x,y)]+m;for(const o of ents)if(o!==e&&o.alive&&o.ai&&o.ai.fpos&&o.ai.fpos[0]===x&&o.ai.fpos[1]===y)s+=8;if(s<bs){bs=s;best=[x,y];}}
+ return best;
+}
+// paso hacia la meta esquivando casillas ocupadas; si el camino está tapado, rodea o espera
+function aiStep(e,g){
+ const D=distField(g[0],g[1]),here=D[idx(e.tx,e.ty)];let best=null,bd=1e9;
+ for(const d of DIRS.slice().sort(()=>Math.random()-.5)){const nx=wx(e.tx+d.dx),ny=e.ty+d.dy,tt=tile(nx,ny);
+  if(tt===WALL||tt===LAVA||(tt===FLOOR&&tileTaken(e,nx,ny)))continue;const v=D[idx(nx,ny)];if(v<bd){bd=v;best=d;}}
+ if(best&&bd<here)return best;
+ if(best&&bd<=here+1&&(e.ai.blockT=(e.ai.blockT||0)+1)>40){e.ai.blockT=0;return best;} // tapado un rato: rodea
+ return null;
+}
 function aiGoal(e){
  const a=e.ai,P=e.p;
  if(hasFlag(e))return ctfGoal(e); // con la bandera: directo a su base
@@ -70,7 +107,7 @@ function aiGoal(e){
   const pk=nearestPickup(e,p=>p.type!=='medkit'&&e.inv[p.type]<MAXAMMO[p.type]);
   if(pk&&(onlyPistol?(P.key==='recolector'||pk.d<=6):pk.d<=4))return [pk.p.tx,pk.p.ty];
  }
- const t=nearestEnemy(e);
+ const t=nearestEnemy(e);a.fpos=null;
  if(t&&!t.seen&&t.tx===e.tx&&t.ty===e.ty){delete a.known[t.id];return patrolGoal(e);} // llegó a la última posición y no hay nadie
  if(!t&&P.key!=='campero')return patrolGoal(e);
  if(P.key==='flanqueador'&&t&&Math.abs(t.tx-e.tx)+Math.abs(t.ty-e.ty)>5){
@@ -81,7 +118,9 @@ function aiGoal(e){
   if(a.camp&&a.camp[0]===e.tx&&a.camp[1]===e.ty)a.relocate=false; // ya llegó a la nueva posición
   return a.camp;
  }
- return [t.tx,t.ty];
+ const R=aiRange(e),fp=firePos(e,t.tx,t.ty,R[0],R[1])||firePos(e,t.tx,t.ty,2,R[1]+4)||holdPos(e,t.tx,t.ty);a.fpos=fp; // si no hay hueco: espera su turno a 3–5 casillas
+ if(fp){if(!t.seen&&fp[0]===e.tx&&fp[1]===e.ty){delete a.known[t.id];return patrolGoal(e);}return fp;} // desde ahí no se ve a nadie: lo olvida
+ return [t.tx,t.ty]; // sin posición libre: se acerca (no puede entrar a tu casilla)
 }
 function chooseWeapon(e,dist){
  const I=e.inv,a=e.ai;
@@ -125,21 +164,27 @@ function updAI(e,dt){
   const relocating=P.key==='campero'&&a.relocate;
   if(!want&&best&&a.dodgeT<=0&&!relocating&&!hasFlag(e)){ /* con la bandera no se detiene a pelear */
    e.dir=best.al.dir;
-   const hold={asaltante:1,flanqueador:2,campero:99,recolector:3}[P.key];
-   if(best.al.dist>hold+(gameMode==='lms'&&(e.lives|0)===1?2:0))want=best.al.dir;
+   const R=P.key==='campero'?[1,99]:aiRange(e),dd=best.al.dist;
+   if(dd>R[1])want=best.al.dir;
+   else if(dd<R[0]){ // demasiado cerca: retrocede una casilla sin dejar de apuntarte
+    const back=DIRS.find(d=>d.dx===-best.al.dir.dx&&d.dy===-best.al.dir.dy),bx=wx(e.tx+back.dx),by=e.ty+back.dy;
+    if(walkable(bx,by)&&!tileTaken(e,bx,by)){want=back;a.backing=true;}
+    else{const g=aiGoal(e);if(g){const s=aiStep(e,g);if(s&&tile(e.tx+s.dx,e.ty+s.dy)!==CRATE)want=s;}} // atrás está ocupado: se va a su posición de tiro
+   }
   }else if(!want){
    if(P.key!=='campero'&&Math.random()<.05){
     const o=DIRS.filter(d=>walkable(e.tx+d.dx,e.ty+d.dy)&&!(d.dx===-e.dir.dx&&d.dy===-e.dir.dy));
     if(o.length)want=o[ri(0,o.length-1)];
    }else{
     const g=aiGoal(e);
-    if(g){const s=nextStep(e,g);
+    if(g){const s=aiStep(e,g);
      if(s){if(tile(e.tx+s.dx,e.ty+s.dy)===CRATE){e.dir=s;a.breach=true;}else want=s;}
      else if(P.key==='campero'&&a.campDir)e.dir=a.campDir;}
    }
   }
  }
  stepMove(e,want,dt,false);
+ if(a.backing){if(best)e.dir=best.al.dir;if(!e.moving)a.backing=false;} // retrocede de frente a ti
  if(best&&a.reaction<=0&&e.dir===best.al.dir&&a.dodgeT<.35){
   const dd=best.al.dist,I=e.inv;
   if(!(I.frag>0&&dd>=2&&dd<=4&&Math.random()<.02&&throwNade(e,'frag'))&&!(I.flash>0&&dd>=2&&dd<=5&&Math.random()<.01&&throwNade(e,'flash')))fire(e);

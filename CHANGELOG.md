@@ -10,6 +10,18 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.15.2] - 2026-11-27
+
+### Cambiado
+- IAs (en todos los modos): ya no se enciman ni se pegan a ti.
+  - Cada IA busca una **posición de tiro**: una casilla en tu fila o columna, con línea libre y a su distancia preferida. Escopetero y asaltante: 2–3 casillas; recluta: 3–4; flanqueador: 3–5; con la última vida en Último en pie, más lejos.
+  - **Una casilla por soldado**: una IA no entra a una casilla ocupada ni elige la que ya eligió otra; así se reparten por lados distintos. Tú sí puedes pasar entre ellas.
+  - Si no hay hueco para disparar, esperan su turno a 3–5 casillas. Si quedan pegadas a ti, retroceden una casilla sin dejar de apuntarte.
+  - Las oleadas del Arcade aparecen en casillas libres, no una encima de otra.
+
+### Corregido
+- Una partida normal iniciada justo después de una de Arcade ya no arrastra reglas del Arcade.
+
 ## [0.15.1] - 2026-11-27
 
 ### Cambiado

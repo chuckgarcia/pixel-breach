@@ -21,6 +21,7 @@ function spawn(e,fixed){
 }
 function startMatch(humans,nAI,aiNames){
  if(!humans&&!NET&&menuMode()==='arcade')return startArcade(arcSel); // ARCADE: empieza el nivel elegido
+ ARC=null; // cualquier otra partida deja atrás el Arcade
  // humans: [{name,color}] — el primero eres tú (anfitrión). Sin argumentos: partida de un jugador.
  humans=humans||[{name:displayName(),color:playerColor,skin:playerSkin}];applyModePreset(menuMode());
  nAI=nAI===undefined?Math.min(PERS.length,MODES[gameMode].max-humans.length):Math.min(nAI,Math.max(0,MODES[gameMode].max-humans.length)); /* bandera: hasta 4, una base por esquina */
@@ -54,6 +55,7 @@ function stepMove(e,want,dt,cont){
    e.dir=want;
    const nx=e.tx+want.dx,ny=e.ty+want.dy;
    if(!walkable(nx,ny))return;
+   if(!e.isPlayer&&!e.hostage&&tileTaken(e,wx(nx),ny))return; // una casilla por soldado: las IAs no se enciman (tú sí pasas)
    e.ntx=nx;e.nty=ny;e.moving=true;
   }else if(want){
    const mdx=e.ntx-e.tx,mdy=e.nty-e.ty;

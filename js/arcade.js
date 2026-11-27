@@ -125,7 +125,7 @@ function arcTick(dt){
 function arcWave(){
  const w=ARC.waves[ARC.waveI],S=ARC.spawns;ARC.waveI++;ARC.waveT=2.5;
  [...w].forEach((c,i)=>{const s=S[(i+ARC.waveI)%S.length],e=arcEnemy(c,ents.length);
-  const f=nearestFloor(s[0],s[1])||s;arcPlace(e,f[0],f[1]);e.invulnT=.8;ents.push(e);reveal(e.ai,arcPlayer(),false);});
+  const f=freeNear(s[0],s[1],e);arcPlace(e,f[0],f[1]);e.invulnT=.8;ents.push(e);reveal(e.ai,arcPlayer(),false);});
  announce={text:`OLEADA ${ARC.waveI}/${ARC.waves.length}`,c:'#f87171',t:1.8};sfx('streak');
 }
 // rehén: se libera al tocarlo y luego camina dos casillas detrás de ti
