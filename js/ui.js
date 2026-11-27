@@ -30,8 +30,8 @@ function syncSettingsUI(){
  const online=!!NET;tog('sFog',online?NET.fog!==false:fog);$('sFog').disabled=online;
  $('sFogNote').textContent=online?'En línea, la niebla la elige el anfitrión.':'';
  $('sVibRow').style.display=isTouch?'':'none';
- {const can=canVibrate()||canTick();$('sVib').disabled=!can;$('sVib').style.opacity=can?1:.45;if(!can)$('sVib').textContent='NO DISPONIBLE';
-  const note=!can?'Tu teléfono no deja que las páginas vibren.':canVibrate()?'':'En iPhone: un toque en cada disparo (Apple no permite vibrar al recibir daño).';
+ {const can=canVibrate();$('sVib').disabled=!can;$('sVib').style.opacity=can?1:.45;if(!can)$('sVib').textContent='NO DISPONIBLE';
+  const note=can?'':'Tu teléfono no deja que las páginas vibren (pasa en iPhone y iPad: Apple lo bloquea en Safari, también instalado como app).';
   $('sVibNote').textContent=note;$('sVibNote').style.display=note?'':'none';}
  $('sFsRow').style.display=fsOK?'':'none';$('sFs').textContent=document.fullscreenElement?'SALIR':'COMPLETA';
  $('sInstall').style.display=installEvt?'':'none';
@@ -60,20 +60,10 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'&&/github\.io$/.te
 
 // ---------- CONTROLES TÁCTILES ----------
 let isTouch=false;
-// ---- vibración: Android usa navigator.vibrate; iPhone (Safari 17.4+) solo da un toque corto con un interruptor
-// escondido, y solo mientras se toca la pantalla, así que allá se siente en los disparos y no al recibir daño.
-const canVibrate=()=>!!navigator.vibrate,canTick=()=>{try{return 'switch' in HTMLInputElement.prototype;}catch(e){return false;}};
-let tickLabel=null;
-function buzz(kind){
- if(!SETTINGS.vibrate||!isTouch)return;
- try{
-  if(canVibrate()){navigator.vibrate(kind==='hurt'?25:8);return;}
-  if(kind!=='shot'||!canTick())return;
-  if(!tickLabel){tickLabel=document.createElement('label');const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');
-   tickLabel.appendChild(i);tickLabel.style.cssText='position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none';tickLabel.setAttribute('aria-hidden','true');document.body.appendChild(tickLabel);}
-  tickLabel.click();
- }catch(e){}
-}
+// ---- vibración: solo donde el navegador lo permite (Android). En iPhone, Safari no deja vibrar a las páginas;
+// el truco del interruptor escondido dejó de funcionar en iOS 26.5, así que allá la opción aparece como no disponible.
+const canVibrate=()=>!!navigator.vibrate;
+function buzz(kind){if(!SETTINGS.vibrate||!isTouch||!canVibrate())return;try{navigator.vibrate(kind==='hurt'?25:8);}catch(e){}}
 function enableTouch(){if(isTouch)return;isTouch=true;document.body.classList.add('touch');if(navigator.share)document.body.classList.add('canshare');}
 try{if(matchMedia('(pointer:coarse)').matches||'ontouchstart' in window)enableTouch();}catch(e){}
 addEventListener('touchstart',enableTouch,{passive:true});

@@ -10,6 +10,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.12.5] - 2026-11-26
+
+### Corregido
+- Se quitó la vibración en iPhone de la v0.12.3: dependía de un truco de Safari que Apple bloqueó en iOS 26.5, así que no vibraba. En iPhone la opción vuelve a aparecer como «NO DISPONIBLE», con la explicación. En Android todo sigue igual.
+
 ## [0.12.4] - 2026-11-26
 
 ### Cambiado
