@@ -10,6 +10,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.11.1] - 2026-11-26
+
+### Corregido
+- Las pruebas automáticas de la simulación vuelven a pasar con el nuevo selector de color (sin cambios para quien juega).
+
 ## [0.11.0] - 2026-11-26
 
 ### Añadido

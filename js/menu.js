@@ -17,7 +17,7 @@ nameEl.value=playerName;
 nameEl.addEventListener('input',()=>{const v=nameEl.value.toUpperCase().replace(/[^A-Z0-9ÑÁÉÍÓÚÜ _-]/g,'').slice(0,10);if(v!==nameEl.value)nameEl.value=v;playerName=v;save();});
 // ---- color: ◀ VERDE ▶, igual que las demás opciones ----
 function colorIdx(c){return Math.max(0,PALETTE.findIndex(p=>p[1]===c));}
-function showColor(el,c){const p=PALETTE[colorIdx(c)];const [i,t]=el.children;i.style.background=p[1];t.textContent=p[0];el.style.color=p[1];el.title=p[0];}
+function showColor(el,c){if(!el||!el.children||el.children.length<2)return;const p=PALETTE[colorIdx(c)];const [i,t]=el.children;i.style.background=p[1];t.textContent=p[0];el.style.color=p[1];el.title=p[0];}
 function buildSwatches(){showColor($('cname'),playerColor);if(typeof NET!=='undefined'&&NET&&state==='lobby')showColor($('lcname'),myLobbyColor());} // nombre histórico: refresca los selectores
 function stepColor(d,taken){ // recorre la paleta dando la vuelta; en la sala salta los colores de otros
  let i=colorIdx(state==='lobby'&&typeof NET!=='undefined'&&NET?myLobbyColor():playerColor);
