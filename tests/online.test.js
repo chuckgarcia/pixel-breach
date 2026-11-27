@@ -70,8 +70,9 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
         assert.strictEqual(await M.innerText('#playAI'),'JUGAR NIVEL 1');
         const r=await M.locator('#playAI').boundingBox();assert.ok(r&&r.y+r.height<=h,'JUGAR fuera de la vista');
         await M.click('#playAI');assert.ok(await M.evaluate("!!ARC&&ARC.lv===0&&state==='play'"));
-        await M.waitForTimeout(1500);assert.ok(await M.evaluate('ARC.cardT>0'),'la tarjeta no esperó');assert.ok(await M.isVisible('#arcReady'),'no se ve ¡LISTO!');
-        await M.click('#arcReady');assert.ok(await M.evaluate('ARC.cardT===0'),'¡LISTO! no empezó el nivel');assert.ok(!(await M.isVisible('#arcReady')));
+        await M.waitForTimeout(1500);assert.ok(await M.evaluate('ARC.cardT>0'),'la tarjeta no esperó');
+        if(mob)await M.evaluate("document.body.classList.add('portrait-ok')"); // en vertical el juego pide girar el teléfonoassert.ok(await M.isVisible('#arcReady'),'no se ve ¡LISTO!');
+        await M.click('#arcReady');assert.ok(await M.evaluate('ARC.cardT===0'),'¡LISTO! no empezó el nivel');await M.waitForSelector('#arcReady',{state:'hidden',timeout:2000});
         await M.evaluate("localStorage.setItem('pb_settings',JSON.stringify(Object.assign(SETTINGS,{mode:'dm'})))");await M.context().close();}});
     await t('el color se cambia con ◀ ▶ y el soldado lo usa',async()=>{
       const M=await page('color');await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
