@@ -120,13 +120,28 @@ function tutStart(){tut=null;if(NET)return;try{if(localStorage.getItem('pb_tut')
 function tutTick(dt){
  if(!tut)return;tut.t+=dt;const m=me();
  if(m){const k=m.tx+','+m.ty;if(k!==tut.last){if(tut.last)tut.moves++;tut.last=k;}}
- if(TUT[tut.i].ok(tut)){tut.i++;tut.t=0;sfx('pick');if(tut.i>=TUT.length){tut=null;try{localStorage.setItem('pb_tut','1');}catch(e){}}}
+ if(TUT[tut.i].ok(tut)){tut.i++;tut.t=0;sfx('pick');if(tut.i>=TUT.length){tut=null;try{localStorage.setItem('pb_tut','1');}catch(e){}syncGuide();}}
 }
+// La guía nunca tapa al soldado: en computadora y celular vertical va fuera del mapa (#guide);
+// en celular horizontal se dibuja en el mapa, en la mitad contraria a donde está el jugador.
+let tutBox=null,tutSide='bottom';
+function guideOutside(){return !isTouch||(typeof matchMedia==='function'&&matchMedia('(orientation:portrait)').matches);}
+function syncGuide(){
+ const el=$('guide');if(!el)return;const on=!!(tut&&state==='play'&&guideOutside());
+ document.body.classList.toggle('guiding',on);
+ if(on){$('guideN').textContent=`GUÍA ${tut.i+1}/${TUT.length}`;const m=TUT[tut.i].m();if($('guideMsg').textContent!==m)$('guideMsg').textContent=m;}
+}
+function skipTut(){if(!tut)return;tut=null;tutBox=null;try{localStorage.setItem('pb_tut','1');}catch(e){}syncGuide();showToast('GUÍA SALTADA · SE REACTIVA EN AJUSTES','#94a3b8');}
 function drawTut(){
- const msg=TUT[tut.i].m();ctx.font=`bold ${fsz(13)}px "Courier New",monospace`;const w=ctx.measureText(msg).width+40;
- ctx.fillStyle='rgba(8,10,16,.88)';ctx.fillRect(W/2-w/2,HUD+8,w,fsz(13)+30);ctx.strokeStyle='#facc15';ctx.lineWidth=2;ctx.strokeRect(W/2-w/2,HUD+8,w,fsz(13)+30);
- txt(`GUÍA ${tut.i+1}/${TUT.length}`,W/2,HUD+18,9,'#facc15','center',false);
- txt(msg,W/2,HUD+18+fsz(13)/2+8,13,'#e2e8f0','center');
+ syncGuide();tutBox=null;if(guideOutside())return;
+ const m=me(),msg=TUT[tut.i].m();
+ if(m){const mid=HUD+(cv.height-HUD)/2;if(m.y<mid-24)tutSide='bottom';else if(m.y>mid+24)tutSide='top';} // con margen para que no parpadee
+ ctx.font=`bold ${fsz(12)}px "Courier New",monospace`;const w=Math.min(W-24,ctx.measureText(msg).width+64),h=fsz(12)+26;
+ const x=W/2-w/2,y=tutSide==='top'?HUD+6:cv.height-h-6;
+ ctx.fillStyle='rgba(8,10,16,.72)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#facc15';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h);
+ txt(`GUÍA ${tut.i+1}/${TUT.length}`,W/2,y+10,9,'#facc15','center',false);
+ txt(msg,W/2,y+h/2+5,12,'#e2e8f0','center');txt('✕',x+w-14,y+h/2,14,'#94a3b8','center',false);
+ tutBox={x,y,w,h};
 }
 const STREAKS={2:'¡DOBLE!',3:'¡TRIPLE!',5:'¡IMPARABLE!',7:'¡LEYENDA!'};
 function kill(e,src,w){

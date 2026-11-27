@@ -43,6 +43,18 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       assert.ok(r&&r.x>=0&&r.x+r.width<=1440&&r.y>=0&&r.y+r.height<=900,'el panel se sale de la pantalla');
       const h=await M.locator('#howto').boundingBox();assert.ok(h.x>=r.x,'el texto se corta a la izquierda');
       await M.click('#howtoBox summary');assert.ok(!(await M.evaluate("document.getElementById('howtoBox').open")));await M.context().close();});
+    for(const [w,h,mob] of [[1200,950,false],[390,844,true],[844,390,true]])await t(`la guía no tapa al soldado (${w}×${h}) y se puede saltar`,async()=>{
+      const M=await page('guía partida',{viewport:{width:w,height:h},isMobile:mob,hasTouch:mob});await M.goto(URL.replace(/\?ps=[^#]*/,''));await M.waitForTimeout(300);
+      await M.evaluate("document.body.classList.add('portrait-ok');localStorage.removeItem('pb_tut');state==='intro'&&endIntro();themeChoice='bunker';startMatch()");await M.waitForTimeout(400);
+      // el soldado, en coordenadas de la página
+      const sold=await M.evaluate("(()=>{const r=document.getElementById('c').getBoundingClientRect(),k=r.width/672,m=me();return {x:r.left+(m.x-18)*k,y:r.top+(m.y-30)*k,w:36*k,h:44*k,k,top:r.top,left:r.left};})()");
+      const outside=await M.evaluate('guideOutside()');let g;
+      if(outside){g=await M.locator('#guide').boundingBox();assert.ok(g,'la guía no se ve');}
+      else{const b=await M.evaluate('tutBox');assert.ok(b,'no hay guía en el mapa');g={x:sold.left+b.x*sold.k,y:sold.top+b.y*sold.k,width:b.w*sold.k,height:b.h*sold.k};}
+      const hit=!(g.x+g.width<sold.x||sold.x+sold.w<g.x||g.y+g.height<sold.y||sold.y+sold.h<g.y);assert.ok(!hit,'la guía tapa al soldado');
+      assert.ok(await M.evaluate("JSON.stringify(ents.slice(1).map(e=>[e.x,e.y]))")===await (async()=>{await M.waitForTimeout(500);return M.evaluate("JSON.stringify(ents.slice(1).map(e=>[e.x,e.y]))");})(),'las IAs deben esperar tu primer paso');
+      if(outside)await M.click('#guideSkip');else await M.keyboard.press('Escape');
+      assert.ok(await M.evaluate('tut===null'),'no se saltó la guía');await M.context().close();});
     await t('el color se cambia con ◀ ▶ y el soldado lo usa',async()=>{
       const M=await page('color');await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
       const c0=await M.evaluate('playerColor');await M.click('#cnext');const c1=await M.evaluate('playerColor');assert.notStrictEqual(c0,c1);

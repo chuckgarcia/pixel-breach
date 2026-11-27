@@ -60,6 +60,10 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'&&/github\.io$/.te
 
 // ---------- CONTROLES TÁCTILES ----------
 let isTouch=false;
+// saltar la guía: botón ✕ (fuera del mapa) o tocar el recuadro dibujado en el mapa (celular horizontal)
+setTimeout(()=>{const b=document.getElementById('guideSkip');if(b&&b.addEventListener)b.addEventListener('click',()=>skipTut());
+ const c=document.getElementById('c');if(c&&c.addEventListener)c.addEventListener('pointerdown',e=>{if(!tutBox||!c.getBoundingClientRect)return;const r=c.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*cv.height/r.height;
+  if(x>=tutBox.x&&x<=tutBox.x+tutBox.w&&y>=tutBox.y&&y<=tutBox.y+tutBox.h)skipTut();});},0);
 // ---- vibración: solo donde el navegador lo permite (Android). En iPhone, Safari no deja vibrar a las páginas;
 // el truco del interruptor escondido dejó de funcionar en iOS 26.5, así que allá la opción aparece como no disponible.
 const canVibrate=()=>!!navigator.vibrate;

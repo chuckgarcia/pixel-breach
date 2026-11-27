@@ -281,3 +281,18 @@ body.touch.menus #logo{width:min(320px,80vw)}
 #countdown b{font:bold 96px "Courier New",monospace;color:#facc15;text-shadow:5px 5px 0 #000;animation:cdpop 1s ease-out infinite}
 @keyframes cdpop{0%{transform:scale(1.5);opacity:.4}25%{transform:scale(1);opacity:1}100%{transform:scale(.95)}}
 body.touch.menus #countdown{position:fixed}
+
+/* guía fuera del mapa: debajo del juego en computadora, en la carcasa en celular vertical */
+#guide{display:none;align-items:center;gap:12px;border:2px solid #facc15;background:rgba(8,10,16,.92);border-radius:4px;padding:7px 12px;
+ font:bold 14px "Courier New",monospace;color:#e2e8f0;box-sizing:border-box;width:min(92vw,calc((100vh - 80px) * 672 / 524));line-height:1.25}
+body.guiding #guide{display:flex}
+#guide small{color:#facc15;font-size:10px;letter-spacing:.1em;white-space:nowrap}
+#guide span{flex:1;min-width:0}
+#guideSkip{margin-left:auto;background:none;border:1px solid #334155;border-radius:3px;color:#94a3b8;font:bold 11px "Courier New",monospace;padding:4px 8px;cursor:pointer;white-space:nowrap}
+#guideSkip:hover{border-color:#facc15;color:#facc15}
+#guideSkip .tc{display:none}
+body.guiding .hint{display:none}
+body.touch #guideSkip .dk{display:none}body.touch #guideSkip .tc{display:inline}
+body.touch #guide{grid-area:brand;width:100%;font-size:13px;padding:6px 8px;gap:8px}
+body.touch.guiding #game::before{display:none}
+@media (orientation:landscape){body.touch #guide,body.touch.guiding #guide{display:none}}

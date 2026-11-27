@@ -5,6 +5,7 @@ const $=id=>document.getElementById(id);
 const menuEl=$('menu'),overEl=$('overBtns'),nameEl=$('pname'),dnameEl=$('dname');
 let shownState=null,shownDiff=null;
 function syncOverlays(){
+ if(typeof syncGuide==='function'&&!(tut&&state==='play'))syncGuide(); // ocultar la guía al salir de la partida
  if(state!==shownState){shownState=state;document.body.classList.toggle('menus',state==='title'||state==='lobby'); /* en celular: menú a pantalla completa, sin controles */menuEl.style.display=state==='title'?'flex':'none';overEl.style.display=state==='over'?'flex':'none';$('lobby').style.display=state==='lobby'?'flex':'none';if(state==='title')buildHowto();
   const host=!NET||NET.role==='host';$('again').style.display=host?'':'none';$('toMenu').textContent=!NET?'MENÚ':host?'SALA':'SALIR';
   if(state==='lobby')renderLobby();}

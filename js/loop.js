@@ -15,7 +15,7 @@ function update(dt){
  for(const e of ents){
   if(!e.alive){e.respawnT-=dt;if(e.respawnT<=0)spawn(e);continue;}
   e.cd-=dt;e.gcd-=dt;e.invulnT-=dt;e.hurtT-=dt;
-  if(e.isPlayer)(e.id===myId?updPlayer(e,dt):updRemote(e,dt));else updAI(e,dt);
+  if(e.isPlayer)(e.id===myId?updPlayer(e,dt):updRemote(e,dt));else if(!(tut&&tut.i===0&&tut.moves===0))updAI(e,dt); /* con la guía, las IAs esperan tu primer paso */
  }
  updBullets(dt);updNades(dt);updPickups(dt);
  tickFx(dt);

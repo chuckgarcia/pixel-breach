@@ -18,6 +18,7 @@ function press(c,repeat){
  }
  if(state==='lobby')return;
  if(state==='over'){if(c==='Enter')overAgain();if(c==='Escape')overMenu();return;}
+ if(c==='Escape'&&tut){skipTut();return;} // con la guía activa, ESC la salta
  if(c==='KeyP'||c==='Escape'){if(NET)showToast('SIN PAUSA EN LÍNEA');else paused=!paused;}
  if(c==='KeyF'){if(NET)showToast('EN LÍNEA LA NIEBLA LA ELIGE EL ANFITRIÓN');else{fog=!fog;SETTINGS.fog=fog;saveSettings();syncSettingsUI();showToast(fog?'NIEBLA DE GUERRA: ON':'NIEBLA DE GUERRA: OFF');}}
  if(c==='KeyM'){SETTINGS.sfx=!SETTINGS.sfx;SETTINGS.music=SETTINGS.sfx;muted=!SETTINGS.sfx;applyVolumes();saveSettings();syncSettingsUI();showToast(muted?'SONIDO: OFF':'SONIDO: ON');}

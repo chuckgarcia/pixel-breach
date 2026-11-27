@@ -10,6 +10,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.13.1] - 2026-11-26
+
+### Cambiado
+- La guía de las primeras partidas ya no tapa a tu soldado: en computadora aparece en una franja debajo del juego y en celular vertical en la carcasa, entre la pantalla y los controles. En celular horizontal se muestra dentro del mapa, siempre en la mitad contraria a donde estás, más compacta y semitransparente.
+- Durante el primer paso de la guía, las IAs esperan a que te muevas.
+
+### Añadido
+- Saltar la guía: botón «ESC · SALTAR» o tecla ESC en computadora, ✕ en celular (o tocar el recuadro en horizontal). Se reactiva en Ajustes.
+
 ## [0.13.0] - 2026-11-26
 
 ### Añadido
