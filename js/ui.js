@@ -57,7 +57,7 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'&&/github\.io$/.te
 
 // ---------- CONTROLES TÁCTILES ----------
 let isTouch=false;
-function enableTouch(){if(isTouch)return;isTouch=true;document.body.classList.add('touch');}
+function enableTouch(){if(isTouch)return;isTouch=true;document.body.classList.add('touch');if(navigator.share)document.body.classList.add('canshare');}
 try{if(matchMedia('(pointer:coarse)').matches||'ontouchstart' in window)enableTouch();}catch(e){}
 addEventListener('touchstart',enableTouch,{passive:true});
 const pad=document.getElementById('pad');

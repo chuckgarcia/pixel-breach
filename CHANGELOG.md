@@ -10,6 +10,18 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.11.0] - 2026-11-26
+
+### Añadido
+- En celular, el menú y la sala ocupan toda la pantalla; la carcasa con cruceta y botones aparece solo al jugar. JUGAR CONTRA IAs, CREAR SALA, UNIRSE, EMPEZAR y SALIR siempre se ven sin desplazarse.
+- En horizontal, el menú y la sala se dividen en dos columnas: quién eres a la izquierda y la partida a la derecha.
+- El color se elige con ◀ ▶ como las demás opciones, con su nombre y el soldado cambiando al momento. En la sala, las flechas se saltan los colores ocupados. También se puede deslizar el dedo sobre el soldado.
+- El soldado se ve más grande en el menú, junto a tu nombre.
+- En celular, el código de sala se escribe tras tocar UNIRSE…, y la sala tiene un solo botón COMPARTIR ENLACE.
+
+### Cambiado
+- Versión MENOR nueva: anfitrión e invitados deben recargar para jugar juntos.
+
 ## [0.10.8] - 2026-11-26
 
 ### Corregido

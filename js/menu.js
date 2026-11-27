@@ -2,10 +2,10 @@
 // Pixel Breach — Menú principal
 // ---------- MENÚ ----------
 const $=id=>document.getElementById(id);
-const menuEl=$('menu'),overEl=$('overBtns'),nameEl=$('pname'),dnameEl=$('dname'),sw=$('swatches');
+const menuEl=$('menu'),overEl=$('overBtns'),nameEl=$('pname'),dnameEl=$('dname');
 let shownState=null,shownDiff=null;
 function syncOverlays(){
- if(state!==shownState){shownState=state;menuEl.style.display=state==='title'?'flex':'none';overEl.style.display=state==='over'?'flex':'none';$('lobby').style.display=state==='lobby'?'flex':'none';if(state==='title')buildHowto();
+ if(state!==shownState){shownState=state;document.body.classList.toggle('menus',state==='title'||state==='lobby'); /* en celular: menú a pantalla completa, sin controles */menuEl.style.display=state==='title'?'flex':'none';overEl.style.display=state==='over'?'flex':'none';$('lobby').style.display=state==='lobby'?'flex':'none';if(state==='title')buildHowto();
   const host=!NET||NET.role==='host';$('again').style.display=host?'':'none';$('toMenu').textContent=!NET?'MENÚ':host?'SALA':'SALIR';
   if(state==='lobby')renderLobby();}
  if(diff!==shownDiff){shownDiff=diff;dnameEl.textContent=DIFF[diff].name;}
@@ -15,13 +15,23 @@ function syncOverlays(){
 function save(){try{localStorage.setItem('pb_name',playerName);localStorage.setItem('pb_color',playerColor);}catch(e){}}
 nameEl.value=playerName;
 nameEl.addEventListener('input',()=>{const v=nameEl.value.toUpperCase().replace(/[^A-Z0-9ÑÁÉÍÓÚÜ _-]/g,'').slice(0,10);if(v!==nameEl.value)nameEl.value=v;playerName=v;save();});
-function buildSwatches(){
- sw.textContent='';
- for(const [n,c] of PALETTE){const b=document.createElement('button');b.style.background=c;b.title=n;b.setAttribute('aria-label',n);
-  if(c===playerColor)b.classList.add('sel');
-  b.addEventListener('click',()=>{playerColor=c;save();buildSwatches();});sw.appendChild(b);}
+// ---- color: ◀ VERDE ▶, igual que las demás opciones ----
+function colorIdx(c){return Math.max(0,PALETTE.findIndex(p=>p[1]===c));}
+function showColor(el,c){const p=PALETTE[colorIdx(c)];const [i,t]=el.children;i.style.background=p[1];t.textContent=p[0];el.style.color=p[1];el.title=p[0];}
+function buildSwatches(){showColor($('cname'),playerColor);if(typeof NET!=='undefined'&&NET&&state==='lobby')showColor($('lcname'),myLobbyColor());} // nombre histórico: refresca los selectores
+function stepColor(d,taken){ // recorre la paleta dando la vuelta; en la sala salta los colores de otros
+ let i=colorIdx(state==='lobby'&&typeof NET!=='undefined'&&NET?myLobbyColor():playerColor);
+ for(let k=0;k<PALETTE.length;k++){i=(i+d+PALETTE.length)%PALETTE.length;if(!taken||!taken.has(PALETTE[i][1]))return PALETTE[i][1];}
+ return null;
 }
+$('cprev').addEventListener('click',()=>{playerColor=stepColor(-1);save();buildSwatches();});
+$('cnext').addEventListener('click',()=>{playerColor=stepColor(1);save();buildSwatches();});
+// deslizar el dedo sobre el soldado también cambia de color
+function swipeColor(el,fn){let x0=null;el.addEventListener('pointerdown',e=>{x0=e.clientX;});el.addEventListener('pointerup',e=>{if(x0===null)return;const dx=e.clientX-x0;x0=null;if(Math.abs(dx)>24)fn(dx<0?1:-1);});el.addEventListener('pointercancel',()=>{x0=null;});}
+swipeColor($('pv'),d=>$(d>0?'cnext':'cprev').click());
 buildSwatches();
+// unirse con código: en celular el campo se abre con «UNIRSE…»
+$('joinOpen').addEventListener('click',()=>{$('joinRow').classList.toggle('open');if($('joinRow').classList.contains('open'))$('jcode').focus();});
 $('dprev').addEventListener('click',()=>{diff=Math.max(1,diff-1);});
 function stepTheme(d){const i=THEME_OPTS.indexOf(themeChoice);themeChoice=THEME_OPTS[(i+d+THEME_OPTS.length)%THEME_OPTS.length];
  if(themeChoice!=='random'&&(state==='title'||state==='lobby')){setTheme(themeChoice);genMap();} // el fondo muestra el escenario elegido

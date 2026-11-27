@@ -315,13 +315,14 @@ function renderLobby(){
  $('lsummary').style.display=host?'none':'';
  $('lpName').textContent=presetLabel(host?SETTINGS.preset:(NET.preset|0)||1);
  $('lsummary').textContent=`${presetLabel(host?SETTINGS.preset:(NET.preset??1))} · ${ais} IA${ais===1?'':'s'} · ${themeLabel(themeChoice)} · NIEBLA ${NET.fog!==false?'SÍ':'NO'} · ${DIFF[diff].name}`;
- // colores: los que ya tomó otro jugador aparecen apagados
- const mine=myLobbyColor(),taken=new Set(players.filter(p=>(host?p.key!=='host':p.key!==NET.peer.id)).map(p=>p.color));
- const ls=$('lswatches');ls.textContent='';
- for(const [n,c] of PALETTE){const b=document.createElement('button');b.style.background=c;b.title=n;b.setAttribute('aria-label',n);
-  if(c===mine)b.classList.add('sel');if(taken.has(c)){b.disabled=true;b.title=n+' (ocupado)';}
-  b.addEventListener('click',()=>pickLobbyColor(c));ls.appendChild(b);}
+ // color: el selector salta los colores que ya tomó otro jugador
+ NET.taken=new Set(players.filter(p=>(host?p.key!=='host':p.key!==NET.peer.id)).map(p=>p.color));
+ showColor($('lcname'),myLobbyColor());
+ $('lshare').textContent=isTouch&&navigator.share?'COMPARTIR ENLACE':'COMPARTIR';
 }
+function lobbyStepColor(d){if(!NET||state!=='lobby')return;const c=stepColor(d,NET.taken);if(c)pickLobbyColor(c);}
+$('lcprev').addEventListener('click',()=>lobbyStepColor(-1));$('lcnext').addEventListener('click',()=>lobbyStepColor(1));
+swipeColor($('lpv'),d=>lobbyStepColor(d));
 $('mkRoom').addEventListener('click',()=>{audio();createRoom();});
 $('joinBtn').addEventListener('click',()=>{audio();joinRoom($('jcode').value);});
 $('jcode').addEventListener('input',()=>{const el=$('jcode');el.value=el.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);});

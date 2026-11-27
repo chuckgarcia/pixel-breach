@@ -50,12 +50,6 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 #menu .lbl{color:#facc15;font-weight:bold;min-width:6.5em;text-align:right}
 #pname{font:bold 1.1em "Courier New",monospace;width:11ch;padding:5px 8px;background:#0f131b;color:#e2e8f0;border:2px solid #334155;border-radius:4px;text-transform:uppercase}
 #pname:focus{outline:none;border-color:#4ade80}
-#swatches,#lswatches{display:flex;flex-wrap:wrap;gap:5px;max-width:198px;justify-content:center}
-#lswatches button{width:28px;height:28px;border-radius:4px;border:3px solid #0f131b;cursor:pointer;padding:0}
-#lswatches button.sel{border-color:#fff;box-shadow:0 0 0 2px #4ade80}
-#lswatches button:disabled{opacity:.25;cursor:not-allowed}
-#swatches button{width:28px;height:28px;border-radius:4px;border:3px solid #0f131b;cursor:pointer;padding:0}
-#swatches button.sel{border-color:#fff;box-shadow:0 0 0 2px #4ade80}
 .mbtn{font:bold 1em "Courier New",monospace;background:#151a24;color:#e2e8f0;border:2px solid #334155;border-radius:4px;padding:4px 10px;cursor:pointer}
 .mbtn:hover{border-color:#4ade80}
 .mbtn.big{font-size:1.15em;padding:8px 22px;background:#14301f;border-color:#4ade80;color:#4ade80}
@@ -88,9 +82,13 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 #menu,#lobby{justify-content:flex-start}
 #menu>:first-child,#lobby>:first-child{margin-top:auto}
 #menu>:last-child,#lobby>:last-child{margin-bottom:auto}
+#menu .colA>:first-child,#lobby .colA>:first-child{margin-top:auto}
+#lobby .colB>:last-child{margin-bottom:auto}
 #lobby .lbl{margin-right:.4em}
 @media (max-height:480px){#lobby .note{display:none}#lobby{gap:4px}#lcode{font-size:30px}}
 #menu .invonly{display:none}
+.colA,.colB{display:contents}
+#menu.invite .colA>:not(.inv){display:none}
 #menu.invite>:not(.inv){display:none}
 #menu.invite .invonly{display:block}
 #menu.invite{justify-content:center}
@@ -100,7 +98,25 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 .linkbtn{background:none;border:none;color:#94a3b8;text-decoration:underline;font-size:.9em}
 #ver{color:#475569;font-size:.8em}
 #menu.invite #ver{display:block;order:9}
-#lpv,#pv{width:2.6em!important;height:3.2em!important;flex:none;image-rendering:pixelated;background:#0f131b;border:2px solid #334155;border-radius:4px;margin-left:4px}
+#lpv,#pv{width:2.6em!important;height:3.2em!important;flex:none;image-rendering:pixelated;background:#0f131b;border:2px solid #334155;border-radius:4px;margin-left:4px;touch-action:pan-y}
+/* ---- héroe (soldado + nombre) y selectores de una línea ---- */
+#menu .hero{display:flex;flex-direction:column;align-items:center;gap:6px}
+#menu .hero #pv{width:3.6em!important;height:4.4em!important;margin:0;cursor:grab}
+#pname{text-align:center}
+#menu .row.sel,#lobby .row.sel{display:grid;grid-template-columns:7.4em 2.4em 26ch 2.4em;align-items:center;gap:6px;flex-wrap:nowrap}
+#lobby .row.sel{grid-template-columns:7.4em 2.4em 26ch 2.4em 3.2em}
+#menu .row.sel .lbl,#lobby .row.sel .lbl{min-width:0;text-align:right;margin:0}
+.row.sel .mbtn{padding:4px 0}
+.row.sel b{text-align:center;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cname{display:inline-flex;align-items:center;justify-content:center;gap:.45em}
+.cname i{width:.85em;height:.85em;border-radius:2px;flex:none;box-shadow:0 0 0 2px #0b0d12,0 0 0 3px #e2e8f0}
+/* botones de abajo: en computadora, JUGAR arriba y CREAR SALA · código · UNIRSE debajo */
+#menu .dock{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;gap:8px}
+#menu .dock #playAI{grid-column:1/-1;justify-self:center}
+#menu .dock .row{display:flex;gap:8px;align-items:center}
+#joinOpen{display:none}
+#menu .mfoot{display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap}
+#lobby .dock .row{display:flex;gap:10px;justify-content:center}
 .tn{min-width:9ch;text-align:center;color:#e2e8f0}
 #settings{inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1.4vh,10px);background:#0b0d12;overflow:auto;padding:10px;box-sizing:border-box;font-size:clamp(12px,1.9vw,15px);z-index:5}
 #settings .sub{color:#facc15;font-size:1.3em;font-weight:bold}
@@ -158,4 +174,60 @@ body.touch #btns .pause.on,body.touch #btns .pause:active{transform:rotate(-22de
  body.touch #game{grid-template-areas:"pad screen btns";grid-template-rows:1fr;padding:8px 12px}
  body.touch #game::before{display:none}
  body.touch canvas{width:min(calc(100vw - 400px),calc((100vh - 30px) * 672 / 524))}
+}
+
+/* ==== celular: menú y sala a pantalla completa (sin carcasa ni controles; aparecen al jugar) ==== */
+body.touch.menus #pad,body.touch.menus #btns,body.touch.menus #game::before{display:none}
+body.touch.menus #game{display:block;padding:0;background:#0b0d12}
+body.touch.menus #wrap{position:fixed;inset:0;box-shadow:none;border-radius:0}
+body.touch.menus canvas{width:100vw;height:100vh;height:100dvh;object-fit:cover}
+body.touch.menus #menu,body.touch.menus #lobby{font-size:16px;gap:10px;background:rgba(8,10,16,.8);
+ padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));box-sizing:border-box}
+body.touch.menus #menu>*,body.touch.menus #lobby>*,body.touch.menus .colA>*,body.touch.menus .colB>*{margin-top:0;margin-bottom:0}
+body.touch.menus .gear{top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right))}
+body.touch.menus #menu h1{font-size:30px;margin-top:6px}
+body.touch.menus #menu .hero #pv{width:84px!important;height:104px!important;border-radius:8px}
+body.touch.menus #pname{width:12ch;font-size:16px}
+body.touch.menus #menu .row.sel,body.touch.menus #lobby .row.sel{width:100%;max-width:430px;grid-template-columns:6.2em 40px minmax(0,1fr) 40px;gap:5px}
+body.touch.menus #lobby .row.sel{grid-template-columns:6.2em 40px minmax(0,1fr) 40px;gap:5px}
+body.touch.menus #lpv{display:none}
+body.touch.menus .row.sel .mbtn{height:40px;font-size:15px}
+body.touch.menus .row.sel .lbl{font-size:.8em}
+body.touch.menus .row.sel b{font-size:14px}
+body.touch.menus .dock{margin-top:auto!important;width:100%;max-width:430px;display:flex!important;flex-direction:column;align-items:stretch!important;gap:8px}
+body.touch.menus .dock .mbtn{padding:11px 6px}
+body.touch.menus #menu .dock #playAI{width:100%;padding:14px 6px;font-size:1.1em}
+body.touch.menus #menu .dock .duo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+body.touch.menus #joinOpen{display:block}
+body.touch.menus #joinRow{display:none;justify-content:center}
+body.touch.menus #joinRow.open{display:flex}
+body.touch.menus #joinRow .or{display:none}
+body.touch.menus #menu .mfoot{flex-direction:row;justify-content:space-between;width:100%;max-width:430px;font-size:.8em}
+body.touch.menus #menu details[open]{position:fixed;inset:auto 10px 10px 10px;max-height:70vh;overflow:auto;background:#0b0d12;border:2px solid #334155;border-radius:6px;padding:10px;z-index:4;max-width:none}
+body.touch.menus #lobby .dock .row{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+body.touch.menus #lobby .dock .mbtn{width:100%}
+body.touch.canshare #llink,body.touch.canshare #lcopy{display:none}
+body.touch.canshare #lobby .lshare{width:100%;max-width:430px}
+body.touch.canshare #lshare{width:100%;padding:9px}
+body.touch.menus #lcode{font-size:44px}
+body.touch.menus #lplayers{width:100%;max-width:430px;border:2px solid #222a38;border-radius:4px;padding:8px 10px;box-sizing:border-box;background:rgba(15,19,27,.7)}
+body.touch.menus #lobby .note{display:none}
+/* invitación: centrada, como hoy */
+body.touch.menus #menu.invite{justify-content:center}
+/* horizontal: dos columnas (quién eres | la partida) */
+@media (orientation:landscape){
+ body.touch.menus #menu:not(.invite),body.touch.menus #lobby{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;align-content:center;column-gap:28px;row-gap:8px;font-size:14px}
+ body.touch.menus #menu:not(.invite) .colA,body.touch.menus #menu:not(.invite) .colB,body.touch.menus #lobby .colA,body.touch.menus #lobby .colB{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
+ body.touch.menus #menu:not(.invite) .colA,body.touch.menus #lobby .colA{flex:0 1 38%}
+ body.touch.menus #menu:not(.invite) .colB,body.touch.menus #lobby .colB{flex:0 1 54%}
+ body.touch.menus #menu .mfoot,body.touch.menus #menu #netMsg{flex:1 0 100%}
+ body.touch.menus #menu h1{font-size:24px;margin:0}
+ body.touch.menus #menu .hero #pv{width:60px!important;height:74px!important}
+ body.touch.menus .dock{margin-top:6px!important}
+ body.touch.menus #menu .dock #playAI{padding:10px 6px}
+ body.touch.menus .dock .mbtn{padding:8px 6px}
+ body.touch.menus .row.sel .mbtn{height:34px}
+ body.touch.menus #lcode{font-size:34px}
+ body.touch.menus #lobby .row.sel{gap:4px}
+}
 }

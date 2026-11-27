@@ -23,19 +23,33 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
     await t('el invitado entra solo con su nombre desde el enlace',async()=>{
       await B.goto(URL+'#'+code);await B.waitForTimeout(300);assert.ok(await B.isVisible('#joinInvite'));
       await B.fill('#pname','LUIS');await B.click('#joinInvite');await B.waitForFunction("state==='lobby'",null,{timeout:15000});});
-    await t('en celular, la vista previa del soldado en la sala es pequeña',async()=>{
+    await t('en celular, la sala ocupa la pantalla y EMPEZAR/SALIR se ven sin desplazarse',async()=>{
       const M=await page('celular',{viewport:{width:844,height:390},isMobile:true,hasTouch:true});await M.goto(URL+'#'+code);await M.waitForTimeout(300);
       await M.tap('#joinInvite');await M.waitForFunction("state==='lobby'",null,{timeout:15000});
-      for(const id of ['lpv']){const b=await M.locator('#'+id).boundingBox();assert.ok(b&&b.width<80&&b.height<100,`#${id} mide ${b&&Math.round(b.width)}x${b&&Math.round(b.height)}`);}
+      const b=await M.locator('#lpv').boundingBox();assert.ok(!b||(b.width<80&&b.height<100),`#lpv mide ${b&&Math.round(b.width)}x${b&&Math.round(b.height)}`);
+      assert.ok(!(await M.isVisible('#pad')),'la cruceta no debe verse en la sala');
+      const lv=await M.locator('#lleave').boundingBox();assert.ok(lv&&lv.y+lv.height<=390,'SALIR fuera de la vista');
       await M.evaluate('netLeave()');await M.context().close();});
-    await t('en celular, la vista previa del soldado en el menú es pequeña',async()=>{
-      const M=await page('celular menú',{viewport:{width:844,height:390},isMobile:true,hasTouch:true});await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
-      await M.waitForFunction("getComputedStyle(document.getElementById('menu')).display==='flex'",null,{timeout:5000});const b=await M.locator('#pv').boundingBox();assert.ok(b&&b.width<80,`#pv mide ${b&&Math.round(b.width)}`);await M.context().close();});
+    for(const [w,h] of [[390,844],[844,390],[375,667]])await t(`en celular ${w}×${h}, el menú usa la pantalla y JUGAR se ve sin desplazarse`,async()=>{
+      const M=await page('celular menú',{viewport:{width:w,height:h},isMobile:true,hasTouch:true});await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
+      await M.waitForFunction("getComputedStyle(document.getElementById('menu')).display!=='none'",null,{timeout:5000});
+      const b=await M.locator('#pv').boundingBox();assert.ok(b&&b.width<130,`#pv mide ${b&&Math.round(b.width)}`);
+      assert.ok(!(await M.isVisible('#pad'))&&!(await M.isVisible('#btns')),'los controles no deben verse en el menú');
+      for(const id of ['playAI','mkRoom','joinOpen']){const r=await M.locator('#'+id).boundingBox();assert.ok(r&&r.y>=0&&r.y+r.height<=h,`#${id} fuera de la vista`);}
+      await M.close();await M.context().close();});
+    await t('el color se cambia con ◀ ▶ y el soldado lo usa',async()=>{
+      const M=await page('color');await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
+      const c0=await M.evaluate('playerColor');await M.click('#cnext');const c1=await M.evaluate('playerColor');assert.notStrictEqual(c0,c1);
+      assert.strictEqual(await M.evaluate("PALETTE.find(p=>p[1]===playerColor)[0]"),await M.innerText('#cname span'));
+      await M.click('#cprev');assert.strictEqual(await M.evaluate('playerColor'),c0);
+      for(let i=0;i<12;i++)await M.click('#cnext');assert.strictEqual(await M.evaluate('playerColor'),c0,'da la vuelta a la paleta');
+      await M.context().close();});
     await t('la sala del invitado se actualiza cuando el anfitrión cambia opciones',async()=>{
       await A.click('#lfNext');await B.waitForFunction("document.getElementById('lsummary').textContent.includes('NIEBLA NO')",null,{timeout:5000});await A.click('#lfNext');});
     await t('el invitado elige un color libre y no uno ocupado',async()=>{
-      await B.click('#lswatches button:nth-child(8)');await A.waitForFunction("[...NET.clients.values()][0].color==='#6366f1'",null,{timeout:5000});
-      assert.ok(await B.isDisabled('#lswatches button:nth-child(1)'));});
+      const hostC=await A.evaluate('playerColor');
+      for(let i=0;i<13;i++){await B.click('#lcnext');await B.waitForTimeout(60);assert.notStrictEqual(await B.evaluate('playerColor'),hostC,'eligió el color del anfitrión');}
+      const mine=await B.evaluate('playerColor');await A.waitForFunction(`[...NET.clients.values()][0].color==='${mine}'`,null,{timeout:5000});});
     await A.evaluate("themeChoice='bunker'");await A.click('#lstart');await B.waitForFunction("state==='play'",null,{timeout:5000});await B.waitForTimeout(600);
     await A.evaluate("for(const e of ents)if(!e.isPlayer){e.alive=false;e.respawnT=1e9;}");
     await t('el invitado se mueve al instante y el anfitrión lo ve',async()=>{
