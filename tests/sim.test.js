@@ -27,4 +27,17 @@ t('rachas y estadísticas',()=>{
   const r=run(`(()=>{themeChoice='bunker';startMatch();const m=ents[0];for(let i=1;i<=3;i++){ents[i].invulnT=0;kill(ents[i],m,'rifle');}return {s:m.streak,a:announce&&announce.text,st:statRow(m)};})()`);
   assert.strictEqual(r.s,3);assert.ok(/TRIPLE/.test(r.a));assert.strictEqual(r.st[2],3); // arma favorita = rifle
 });
+t('cada aspecto tiene frente y lado de 16 × 20, mano para el arma y nombre',()=>{
+  const r=run(`SKINS.map(s=>({k:s.k,n:s.n,v:['down','right'].map(v=>{const g=SKIN_GRID[s.k][v];return g.length===20&&g.every(x=>x.length===16);}),h:!!(SKIN_HAND[s.k]&&SKIN_HAND[s.k].down&&SKIN_HAND[s.k].right),p:!!SKIN_PAL[s.p]}))`);
+  assert.strictEqual(r.length,7);for(const s of r){assert.ok(s.v.every(Boolean),s.k+': tamaño incorrecto');assert.ok(s.h,s.k+': falta la mano');assert.ok(s.p,s.k+': falta la paleta');}
+  // todos los aspectos, en todas las vistas, cuadros y armas, generan su dibujo sin letras desconocidas
+  const bad=run(`(()=>{const out=[];for(const s of SKINS)for(const f of ['down','up','right'])for(const fr of [0,1,2])for(const w of ['pistol','smg','shotgun','rifle']){
+    const pal=Object.assign({},SKIN_BASE,SKIN_PAL[s.p],GUN_PAL,{T:1,t:1,u:1});const c=skinCells(s.k,f,fr,w);
+    c.forEach(r=>r.forEach(x=>{if(x&&!(x.ch in pal))out.push(s.k+f+x.ch);}));}return out;})()`);
+  assert.strictEqual(bad.length,0,'letras sin color: '+[...bad].slice(0,5).join(', '));
+});
+t('las IAs y el jugador llevan un aspecto válido',()=>{
+  const r=run(`(()=>{themeChoice='bunker';startMatch();return ents.map(e=>SKIN_KEYS.includes(e.skin));})()`);
+  assert.ok(r.every(Boolean));
+});
 console.log(`${ok} pruebas OK`);

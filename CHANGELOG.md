@@ -10,6 +10,18 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.12.0] - 2026-11-26
+
+### Añadido
+- Soldados nuevos de 16 × 20 en estilo chibi: cabeza grande, contorno oscuro y tres tonos por material.
+- Cinco aspectos y siete soldados para elegir en ASPECTO (menú y sala): Recluta ♀ y ♂, Comando ♀ y ♂, Operador, Antigás y Ghillie. Son solo visuales: todos miden y resisten lo mismo.
+- Cada arma tiene su propio dibujo (pistola, subfusil, escopeta y rifle) y se ve qué lleva cada rival.
+- Las IAs usan un aspecto al azar en cada partida; en la sala se ve el aspecto de cada jugador.
+- La primera vez, tu soldado es Recluta ♀ o ♂ al azar; después se recuerda lo que elijas.
+
+### Cambiado
+- Versión MENOR nueva: el aspecto viaja en el modo en línea, así que anfitrión e invitados deben recargar para jugar juntos.
+
 ## [0.11.2] - 2026-11-26
 
 ### Añadido

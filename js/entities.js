@@ -2,7 +2,7 @@
 // Pixel Breach — Soldados: aparición, movimiento, disparos, daño, bajas y jugador local
 // ---------- ENTIDADES ----------
 function makeEnt(isPlayer,p,i,name){
- return {id:i,isPlayer,p,name,style:p?p.name:null,color:isPlayer?playerColor:p.color,
+ return {id:i,isPlayer,p,name,style:p?p.name:null,color:isPlayer?playerColor:p.color,skin:isPlayer?playerSkin:SKIN_KEYS[ri(0,SKIN_KEYS.length-1)],
   x:0,y:0,tx:0,ty:0,ntx:0,nty:0,moving:false,dir:RIGHT,
   speed:isPlayer?PLAYER_SPEED:p.speed*DIFF[diff].speed,
   hp:100,alive:true,respawnT:0,invulnT:0,frags:0,deaths:0,inv:null,weapon:'pistol',cd:0,gcd:0,blindT:0,hurtT:0,
@@ -21,12 +21,12 @@ function spawn(e,fixed){
 }
 function startMatch(humans,nAI,aiNames){
  // humans: [{name,color}] — el primero eres tú (anfitrión). Sin argumentos: partida de un jugador.
- humans=humans||[{name:displayName(),color:playerColor}];nAI=nAI===undefined?PERS.length:nAI;
+ humans=humans||[{name:displayName(),color:playerColor,skin:playerSkin}];nAI=nAI===undefined?PERS.length:nAI;
  setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);
  genMap();bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];heard=[];toast=null;netEvents=[];gridVer++;
  const names=Array.isArray(aiNames)&&aiNames.length>=nAI?aiNames:AI_NAMES.slice().sort(()=>Math.random()-.5); /* en línea: los mismos nombres que se vieron en la sala */
  const styles=PERS.slice().sort(()=>Math.random()-.5);
- ents=humans.map((h,i)=>{const e=makeEnt(true,null,i,h.name);e.color=h.color;e.lfc=e.lgc=e.lqc=0;return e;});
+ ents=humans.map((h,i)=>{const e=makeEnt(true,null,i,h.name);e.color=h.color;e.skin=SKIN_KEYS.includes(h.skin)?h.skin:playerSkin;e.lfc=e.lgc=e.lqc=0;return e;});
  for(let i=0;i<nAI;i++){const p=nAI>=PERS.length?PERS[i%PERS.length]:styles[i];ents.push(makeEnt(false,p,ents.length,names[i]));}
  myId=0;
  ents.forEach((e,i)=>{spawn(e,SPAWNS[i]);e.st={shots:0,hits:0,kw:{},nades:0,picks:0,best:0};e.streak=0;});

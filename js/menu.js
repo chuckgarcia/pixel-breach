@@ -46,16 +46,20 @@ $('ver').textContent='v'+VERSION;$('ver').classList.add('inv');
 const pv=$('pv');window.pvxMain=pv.getContext('2d');
 const lpvx=$('lpv').getContext('2d');
 function drawPreview(pvx,color){
- pvx=pvx||window.pvxMain;color=color||playerColor;
+ pvx=pvx||window.pvxMain;color=color||playerColor;if(!pvx||!pvx.clearRect)return;
  const faces=['down','right','up','left'],face=faces[Math.floor(clock/1.1)%4],frame=Math.floor(clock*6)%2?1:2;
  pvx.imageSmoothingEnabled=false;pvx.clearRect(0,0,52,64);
- pvx.fillStyle='rgba(0,0,0,.35)';pvx.fillRect(8,56,36,6);
- const spr=sprite(color,face==='left'?'right':face,frame,false);
- const gun=()=>{const [gx,gy,w,h]=GUN_RECT[face];pvx.fillStyle='#05070b';pvx.fillRect(2+gx*4-2,2+gy*4-2,w*4+4,h*4+4);pvx.fillStyle='#1f2937';pvx.fillRect(2+gx*4,2+gy*4,w*4,h*4);};
- if(face==='up')gun();
- if(face==='left'){pvx.save();pvx.translate(52,0);pvx.scale(-1,1);pvx.drawImage(spr,0,0,52,64);pvx.restore();}else pvx.drawImage(spr,0,0,52,64);
- if(face!=='up')gun();
+ pvx.fillStyle='rgba(0,0,0,.35)';pvx.fillRect(10,56,32,5);
+ drawSkin(pvx,playerSkin,color,face,frame,false,'rifle',26,58,2);
 }
+// ---- aspecto: ◀ RECLUTA ♀ ▶ (solo visual: todos miden y resisten lo mismo) ----
+function showSkin(){const n=skinOf(playerSkin).n;for(const id of ['kname','lkname']){const el=$(id);if(el)el.textContent=n;}
+ const p=PALETTE[colorIdx(playerColor)];for(const id of ['pv','lpv']){const el=$(id);if(el&&el.setAttribute)el.setAttribute('aria-label',`Vista previa de tu soldado: ${n.replace('♀','versión femenina').replace('♂','versión masculina')}, ${p[0].toLowerCase()}`);}}
+function stepSkin(d){const i=SKIN_KEYS.indexOf(playerSkin);playerSkin=SKIN_KEYS[(i+d+SKIN_KEYS.length)%SKIN_KEYS.length];try{localStorage.setItem('pb_skin',playerSkin);}catch(e){}showSkin();
+ if(typeof NET!=='undefined'&&NET&&state==='lobby'){if(NET.role==='host')hostLobbyUpdate();else{try{NET.conn.send({t:'skin',k:playerSkin});}catch(e){}}}}
+$('kprev').addEventListener('click',()=>stepSkin(-1));$('knext').addEventListener('click',()=>stepSkin(1));
+$('lkprev').addEventListener('click',()=>stepSkin(-1));$('lknext').addEventListener('click',()=>stepSkin(1));
+showSkin();
 $('dnext').addEventListener('click',()=>{diff=Math.min(4,diff+1);});
 $('playAI').addEventListener('click',()=>{audio();startMatch();});
 $('again').addEventListener('click',()=>{audio();overAgain();});
@@ -67,6 +71,8 @@ function buildHowto(){
  const add=(a,b,col,cls)=>{const x=document.createElement('div');x.textContent=a;if(cls)x.className=cls;if(col)x.style.color=col;h.appendChild(x);if(b!==undefined){const y=document.createElement('div');y.textContent=b;h.appendChild(y);}};
  add('ESTILOS DE LAS IAs',undefined,null,'h');
  for(const p of PERS)add(p.name,{asaltante:'va directo por ti',flanqueador:'te corta el paso',campero:'espera en pasillos largos',recolector:'junta armas primero'}[p.key],p.color);
+ add('ASPECTO',undefined,null,'h');
+ add('SOLO VISUAL','todos los aspectos miden y resisten lo mismo; cada arma se ve distinta');
  add('CONTROLES',undefined,null,'h');
  const C=isTouch?[['CRUCETA','desliza el dedo para moverte'],['FUEGO','disparar (mantén presionado)'],['GRAN','lanzar granada'],['ARMA','cambiar arma'],['II','pausa']]
   :[['WASD / FLECHAS','moverte'],['ESPACIO / J','disparar'],['G / K','lanzar granada'],['Q / L','cambiar arma'],['F','niebla de guerra (en línea la elige el anfitrión)'],['P / ESC','pausa · M sonido · O ajustes']];

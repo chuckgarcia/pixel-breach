@@ -27,11 +27,9 @@ function drawIntro(){
  const baseY=372,spd=70,gap=64,span=W+gap*6;
  INTRO_COLORS.forEach((c,i)=>{
   const x=((t*spd+i*gap)%span)-gap*2,frame=Math.floor((t*8)+i)%2?1:2;
-  const spr=sprite(c,'right',frame,false);
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-14,baseY+26,28,5);
-  ctx.drawImage(spr,x-19,baseY-20,39,48);
-  ctx.fillStyle='#05070b';ctx.fillRect(x+10,baseY+3,20,5);ctx.fillStyle='#1f2937';ctx.fillRect(x+11,baseY+4,18,3);
-  if(i===0&&(t%1.6)<.08){ctx.fillStyle='#fff7ae';ctx.fillRect(x+30,baseY+1,7,8);}
+  drawSkin(ctx,SKIN_KEYS[i%SKIN_KEYS.length],c,'right',frame,false,['rifle','smg','shotgun','pistol'][i%4],x,baseY+29,2); // el escuadrón luce todos los aspectos
+  if(i===0&&(t%1.6)<.08){ctx.fillStyle='#fff7ae';ctx.fillRect(x+30,baseY+4,7,8);}
  });
  if((t%1.6)<.6){const bx=(((Math.floor(t/1.6)*1.6)*spd)%span)-gap*2+36+((t%1.6)*500);ctx.fillStyle='#ffe066';ctx.fillRect(bx,baseY+4,6,3);}
  ctx.fillStyle='#1f2937';ctx.fillRect(0,baseY+31,W,2);

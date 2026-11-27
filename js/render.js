@@ -164,37 +164,12 @@ function drawFog(){
  ctx.fillStyle=theme.fog;
  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(!vis[idx(x,y)])ctx.fillRect(x*T,y*T,T,T);
 }
-// ---------- SPRITES: soldado pixel art 12x15, escala 2, vista 3/4 ----------
-const SPS=2,SPW=12,SPH=15;
-const SPR_TOP={"down": ["....HHHH....", "..HHhhHHHH..", "..HhHHHHHH..", "..TTTTTTTT..", ".RRRRRRRRRR.", "...SESSES...", "...sSSSSs...", "..BBVBBVBB..", ".SBBVBBVBBS.", ".SBBBBBBBBS.", "..BBBBBBBB.."], "up": ["....HHHH....", "..HHHhhHHH..", "..HHhHHHHH..", "..TTTTTTTT..", ".RRRRRRRRRR.", "...ssssss...", "....ssss....", "..BBbbbbBB..", ".SBbVVVVbBS.", ".SBbVVVVbBS.", "..BBbbbbBB.."], "right": ["....HHHH....", "...HHHHhHH..", "..HHHHHHhH..", "..TTTTTTTT..", "..RRRRRRRRR.", "...sSSSES...", "...sSSSSS...", "...BBBBBB...", "...BVBBSSS..", "...BVBBBB...", "...BBBBBB..."]};
-const SPR_LEGS={"down": [["...PPPPPP...", "...PP..PP...", "...PP..PP...", "..KKK..KKK.."], ["...PPPPPP...", "...PP..PP...", "..KKK..PP...", ".......KKK.."], ["...PPPPPP...", "...PP..PP...", "...PP..KKK..", "..KKK......."]], "right": [["....PPPP....", "....PP.PP...", "....PP.PP...", "...KKK.KKK.."], ["....PPPP....", "...PP...PP..", "..PP....PP..", ".KKK....KKK."], ["....PPPP....", ".....PP.....", ".....PP.....", "....KKKK...."]]};
-const GUN_RECT={right:[8,8,6,1],left:[-2,8,6,1],down:[8,9,1,7],up:[9,-2,1,8]};
-const sprCache=new Map();
-function sprite(color,face,frame,hurt){
- const key=color+face+frame+(hurt?1:0);let c=sprCache.get(key);if(c)return c;
- const rows=SPR_TOP[face].concat(SPR_LEGS[face==='up'?'down':face][frame]);
- const pal={H:'#4d5a2c',h:'#6b7d3c',R:'#2f3a1a',T:color,B:color,b:shade(color,-.3),V:shade(color,-.62),S:'#f2c18d',s:'#c98b5a',E:'#111111',P:'#334155',K:'#0f172a'};
- c=document.createElement('canvas');c.width=SPW*SPS+2;c.height=SPH*SPS+2;const g=c.getContext('2d');
- g.fillStyle='#05070b';
- rows.forEach((r,y)=>{for(let x=0;x<SPW;x++)if(r[x]!=='.')g.fillRect(x*SPS,y*SPS,SPS+2,SPS+2);});
- rows.forEach((r,y)=>{for(let x=0;x<SPW;x++)if(r[x]!=='.'){g.fillStyle=hurt?(color==='#f1f5f9'?'#f87171':'#ffffff'):pal[r[x]];g.fillRect(1+x*SPS,1+y*SPS,SPS,SPS);}});
- sprCache.set(key,c);return c;
-}
-function drawGun(ox,oy,face){
- const [gx,gy,w,h]=GUN_RECT[face];
- ctx.fillStyle='#05070b';ctx.fillRect(ox+gx*SPS-1,oy+gy*SPS-1,w*SPS+2,h*SPS+2);
- ctx.fillStyle='#1f2937';ctx.fillRect(ox+gx*SPS,oy+gy*SPS,w*SPS,h*SPS);
-}
-function drawSoldier(e,x,y,big){
+// ---------- SOLDADOS: los dibujos y aspectos están en skins.js ----------
+function drawSoldier(e,x,y){
  const d=e.dir,face=d.dy<0?'up':d.dy>0?'down':d.dx>0?'right':'left';
  const frame=e.moving?(Math.floor((e.x+e.y)/7)%2?1:2):0;
- const spr=sprite(e.color,face==='left'?'right':face,frame,e.hurtT>0);
- const ox=x-SPW*SPS/2,oy=y-17;
- ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-9,y+11,18,4);
- if(face==='up')drawGun(ox,oy,face);
- if(face==='left'){ctx.save();ctx.translate(ox+SPW*SPS+1,oy-1);ctx.scale(-1,1);ctx.drawImage(spr,0,0);ctx.restore();}
- else ctx.drawImage(spr,ox-1,oy-1);
- if(face!=='up')drawGun(ox,oy,face);
+ ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-10,y+11,20,4);
+ drawSkin(ctx,e.skin,e.color,face,frame,e.hurtT>0,GUN_OF(e.weapon),x,y+13,2);
 }
 function awareOf(e){ // ¿esta IA sabe dónde estoy?
  if(NET&&NET.role==='client'){const v=e.aw&&e.aw[myId];return v===undefined?null:{seen:!!v};}
@@ -206,10 +181,10 @@ function drawEnt(e){
  const x=Math.round(e.x),y=Math.round(e.y),d=e.dir;
  drawSoldier(e,x,y);
  ctx.globalAlpha=1;
- if(e.hp<100){ctx.fillStyle='#3f1d1d';ctx.fillRect(x-11,y-23,22,3);ctx.fillStyle=e.hp>50?'#4ade80':e.hp>25?'#facc15':'#ef4444';ctx.fillRect(x-11,y-23,22*e.hp/100,3);}
- if(e.id===myId&&e.invulnT>0)txt('TÚ',x,y-30,10,'#4ade80','center');
- else if(e.isPlayer&&NET&&e.invulnT>0)txt(e.name,x,y-30,10,e.color,'center');
- if(!e.isPlayer&&e.blindT<=0&&state==='play'){const k=awareOf(e);if(k)txt(k.seen?'!':'?',x+15,y-22,13,k.seen?'#f87171':'#facc15','center');}
+ if(e.hp<100){ctx.fillStyle='#3f1d1d';ctx.fillRect(x-11,y-33,22,3);ctx.fillStyle=e.hp>50?'#4ade80':e.hp>25?'#facc15':'#ef4444';ctx.fillRect(x-11,y-33,22*e.hp/100,3);}
+ if(e.id===myId&&e.invulnT>0)txt('TÚ',x,y-38,10,'#4ade80','center');
+ else if(e.isPlayer&&NET&&e.invulnT>0)txt(e.name,x,y-38,10,e.color,'center');
+ if(!e.isPlayer&&e.blindT<=0&&state==='play'){const k=awareOf(e);if(k)txt(k.seen?'!':'?',x+15,y-30,13,k.seen?'#f87171':'#facc15','center');}
  if(e.blindT>0){ctx.fillStyle='#fde047';for(let k=0;k<3;k++){const an=clock*6+k*2.09;ctx.fillRect(x+Math.cos(an)*11-2,y-24+Math.sin(an)*3-2,4,4);}}
 }
 function drawNades(){

@@ -34,6 +34,7 @@
   <button class="mbtn big invonly inv" id="joinInvite">UNIRSE</button>
   <button class="mbtn invonly inv linkbtn" id="inviteCancel">ir al menú principal</button>
   <div class="row sel" id="colorRow"><span class="lbl">COLOR</span><button class="mbtn" id="cprev" aria-label="Color anterior">◀</button><b id="cname" class="cname"><i></i><span></span></b><button class="mbtn" id="cnext" aria-label="Color siguiente">▶</button></div>
+  <div class="row sel" id="skinRow"><span class="lbl">ASPECTO</span><button class="mbtn" id="kprev" aria-label="Aspecto anterior">◀</button><b id="kname"></b><button class="mbtn" id="knext" aria-label="Aspecto siguiente">▶</button></div>
   </div><div class="colB">
   <div class="row sel"><span class="lbl">DIFICULTAD</span><button class="mbtn" id="dprev" aria-label="Menos difícil">◀</button><b id="dname"></b><button class="mbtn" id="dnext" aria-label="Más difícil">▶</button></div>
   <div class="row sel"><span class="lbl">ESCENARIO</span><button class="mbtn" id="tprev" aria-label="Escenario anterior">◀</button><b id="tname" class="tn"></b><button class="mbtn" id="tnext" aria-label="Escenario siguiente">▶</button></div>
@@ -56,6 +57,7 @@
   <div id="lplayers"></div>
   </div><div class="colB">
   <div class="row sel"><span class="lbl">TU COLOR</span><button class="mbtn" id="lcprev" aria-label="Color anterior">◀</button><b id="lcname" class="cname"><i></i><span></span></b><button class="mbtn" id="lcnext" aria-label="Color siguiente">▶</button><canvas id="lpv" width="52" height="64" aria-label="Vista previa de tu soldado"></canvas></div>
+  <div class="row sel"><span class="lbl">ASPECTO</span><button class="mbtn" id="lkprev" aria-label="Aspecto anterior">◀</button><b id="lkname"></b><button class="mbtn" id="lknext" aria-label="Aspecto siguiente">▶</button></div>
   <div id="lsummary"></div>
   <div class="row sel hostrow" id="laiRow"><span class="lbl">IAs</span><button class="mbtn hostonly" id="aiMinus">◀</button><b id="aiCount"></b><button class="mbtn hostonly" id="aiPlus">▶</button></div>
   <div class="row sel hostrow"><span class="lbl">ESCENARIO</span><button class="mbtn hostonly" id="ltPrev">◀</button><b id="ltName" class="tn"></b><button class="mbtn hostonly" id="ltNext">▶</button></div>
@@ -93,7 +95,7 @@
 </div>
 <div id="rotate"><div>📱↻</div><p>Gira tu teléfono para jugar mejor</p><button class="mbtn" id="rotateOk">SEGUIR EN VERTICAL</button></div>
 <div class="hint">Teclado: WASD/flechas mover · Espacio/J disparar · G/K granada · Q/L cambiar arma · F niebla · M sonido · P pausa</div>
-<script src="js/data.js"></script>
+<script src="js/data.js"></script><script src="js/skins.js"></script>
 <script src="js/map.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/ai.js"></script>

@@ -51,10 +51,16 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       const hostC=await A.evaluate('playerColor');
       for(let i=0;i<13;i++){await B.click('#lcnext');await B.waitForTimeout(60);assert.notStrictEqual(await B.evaluate('playerColor'),hostC,'eligió el color del anfitrión');}
       const mine=await B.evaluate('playerColor');await A.waitForFunction(`[...NET.clients.values()][0].color==='${mine}'`,null,{timeout:5000});});
+    await t('el invitado elige su aspecto y el anfitrión lo ve',async()=>{
+      const k0=await B.evaluate('playerSkin');await B.click('#lknext');const k1=await B.evaluate('playerSkin');assert.notStrictEqual(k0,k1);
+      await A.waitForFunction(`[...NET.clients.values()][0].skin==='${k1}'`,null,{timeout:5000});
+      assert.ok((await B.innerText('#lkname')).length>0);});
     await A.evaluate("themeChoice='bunker'");await A.click('#lstart');await B.waitForFunction("state==='play'",null,{timeout:5000});await B.waitForTimeout(600);
     await A.evaluate("for(const e of ents)if(!e.isPlayer){e.alive=false;e.respawnT=1e9;}");
     await t('las IAs de la partida tienen los nombres que se vieron en la sala',async()=>{
-      assert.ok(await A.evaluate("ents.filter(e=>!e.isPlayer).every((e,i)=>e.name===NET.aiNames[i])"));});
+      assert.ok(await A.evaluate("ents.filter(e=>!e.isPlayer).every((e,i)=>e.name===NET.aiNames[i])"));
+      assert.strictEqual(await B.evaluate('ents[myId].skin'),await B.evaluate('playerSkin'),'el invitado no tiene su aspecto en la partida');
+      assert.strictEqual(await A.evaluate('ents[1].skin'),await B.evaluate('playerSkin'));});
     await t('el invitado se mueve al instante y el anfitrión lo ve',async()=>{
       const x0=await B.evaluate('me().x');await B.keyboard.down('KeyA');await B.waitForTimeout(80);const x1=await B.evaluate('me().x');
       await B.waitForTimeout(500);await B.keyboard.up('KeyA');await B.waitForTimeout(500);
