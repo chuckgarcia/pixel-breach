@@ -351,3 +351,5 @@ body.arcmenu #menu #recRow{cursor:pointer}
 #recClose{left:0;right:0;bottom:5%;display:none;justify-content:center;font-size:clamp(12px,1.9vw,15px)}
 body.touch #recClose{bottom:4%;font-size:15px}
 body.touch #recClose .mbtn{min-width:180px;padding:12px 8px}
+/* hasta completar las 10 misiones el nivel no se elige: las flechas se ocultan sin mover nada de lugar */
+body.lvlock #lvprev,body.lvlock #lvnext{visibility:hidden}

@@ -51,8 +51,10 @@ function showMode(){const m=menuMode(),arc=m==='arcade';$('mname').textContent=M
  if(!arc){$('pname2').textContent=presetLabel(presetIdx(m));$('lpName').textContent=presetLabel(presetIdx(m));}
  document.body.classList.toggle('arcmenu',arc); // ARCADE: nivel en lugar de escenario y partida; sin salas en línea
  $('playAI').textContent=arc?`JUGAR NIVEL ${arcSel+1}`:'JUGAR CONTRA IAs';showLevel();}
-function showLevel(){$('lvname').textContent=arcLevelLabel(arcSel);{const r=arcSave.best[0];$('recName').textContent=(r?`${r.s.toLocaleString('es-MX')} · ${r.i}`:arcSave.recent.length?'SIN RÉCORD AÚN':'SIN PARTIDAS AÚN')+'  VER ›';}if(menuMode()==='arcade')$('playAI').textContent=`JUGAR NIVEL ${arcSel+1}`;}
-function stepLevel(d){arcSel=Math.max(0,Math.min(arcSave.open-1,arcSel+d));showLevel();} // solo los niveles desbloqueados
+function showLevel(){if(!arcSave.all)arcSel=0;$('lvname').textContent=arcLevelLabel(arcSel);document.body.classList.toggle('lvlock',!arcSave.all);
+ $('arcNote').textContent=arcSave.all?'MODO DE UN JUGADOR · SIN SALAS EN LÍNEA':'COMPLETA LAS 10 MISIONES PARA ELEGIR NIVEL';{const r=arcSave.best[0];$('recName').textContent=(r?`${r.s.toLocaleString('es-MX')} · ${r.i}`:arcSave.recent.length?'SIN RÉCORD AÚN':'SIN PARTIDAS AÚN')+' · VER ›';}if(menuMode()==='arcade')$('playAI').textContent=`JUGAR NIVEL ${arcSel+1}`;}
+function stepLevel(d){if(!arcSave.all){showLevel();return;} // hasta completar las 10 se empieza siempre en el nivel 1
+ arcSel=Math.max(0,Math.min(arcSave.open-1,arcSel+d));showLevel();} // solo los niveles desbloqueados
 $('arcReady').addEventListener('click',()=>arcReady());
 $('recRow').addEventListener('click',()=>{if(menuMode()==='arcade')openRecView();}); // RÉCORD del menú: abre la tabla
 $('recName').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openRecView();}});

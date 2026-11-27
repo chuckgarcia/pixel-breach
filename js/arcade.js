@@ -14,18 +14,19 @@ const ARC_CONT=10; // CONTINUE? 9… 8… … 0
 const DIFF_COL={1:'#4ade80',2:'#a3e635',3:'#facc15',4:'#f87171'};
 const arcDiffLabel=()=>`DIFICULTAD ${DIFF[diff].name} · PUNTOS ×${ARC_MULT[diff]}`;
 // ---------- AVANCE GUARDADO (en este navegador) ----------
-const arcSave={open:1,stars:[],best:[],recent:[],ini:'',cmd:false,gold:false};
+const arcSave={open:1,all:false,stars:[],best:[],recent:[],ini:'',cmd:false,gold:false}; // all: ya completaste las 10 misiones
 try{const j=JSON.parse(localStorage.getItem('pb_arc')||'null');if(j&&typeof j==='object'){
- arcSave.open=Math.max(1,Math.min(ARC_LEVELS.length,j.open|0));arcSave.cmd=!!j.cmd;arcSave.gold=!!j.gold;
+ arcSave.open=Math.max(1,Math.min(ARC_LEVELS.length,j.open|0));arcSave.cmd=!!j.cmd;arcSave.gold=!!j.gold;arcSave.all=!!j.all||arcSave.cmd; /* el COMANDANTE se gana al completar las 10: quien ya lo tiene, ya las completó */
  arcSave.best=Array.isArray(j.best)?j.best.filter(r=>r&&typeof r.i==='string').slice(0,10).map(r=>Object.assign({i:r.i.replace(/[^A-ZÑ0-9]/g,'').slice(0,3)||'???',s:Math.max(0,r.s|0),lv:Math.max(1,Math.min(ARC_TOTAL,r.lv|0)),d:DIFF[r.d]?r.d:3,t:+r.t||0},r.c===undefined?{}:{c:Math.max(0,r.c|0)})):[]; /* los récords viejos no tienen continues */arcSave.recent=Array.isArray(j.recent)?j.recent.filter(r=>r&&typeof r.i==='string').slice(0,5).map(r=>({i:r.i.replace(/[^A-ZÑ0-9]/g,'').slice(0,3)||'???',s:Math.max(0,r.s|0),lv:Math.max(1,Math.min(ARC_TOTAL,r.lv|0)),d:DIFF[r.d]?r.d:3,c:Math.max(0,r.c|0),t:+r.t||0,rank:r.rank|0})):[];arcSave.ini=typeof j.ini==='string'?j.ini.slice(0,3):'';arcSave.stars=Array.isArray(j.stars)?j.stars.slice(0,ARC_TOTAL).map(n=>Math.max(0,Math.min(3,n|0))):[];}}catch(e){}
 function arcStore(){try{localStorage.setItem('pb_arc',JSON.stringify(arcSave));}catch(e){}}
-let arcSel=Math.min(arcSave.open,ARC_LEVELS.length)-1; // nivel elegido en el menú
+// Hasta completar las 10 misiones, cada partida empieza en el nivel 1; después puedes elegir cualquiera
+let arcSel=arcSave.all?Math.min(arcSave.open,ARC_LEVELS.length)-1:0; // nivel elegido en el menú
 const arcStars=i=>arcSave.stars[i]|0;
 function arcLevelLabel(i){const L=ARC_LEVELS[i],s=arcStars(i);return `${String(i+1).padStart(2,'0')} · ${L.name} ${'★'.repeat(s)}${'☆'.repeat(3-s)}`;}
 
 // ---------- INICIO Y CARGA DE NIVEL ----------
 function startArcade(i){
- i=Math.max(0,Math.min(arcSave.open-1,ARC_LEVELS.length-1,i|0));
+ i=arcSave.all?Math.max(0,Math.min(arcSave.open-1,ARC_LEVELS.length-1,i|0)):0;
  ARC={lv:i,score:0,lives:3,nextLife:ARC_FIRST_LIFE,cont:0,inv:null,lostHere:false,runBest:0,runLv:i+1,end:null};
  arcLoad();
 }
@@ -211,6 +212,7 @@ function arcComplete(){
   powsN:ARC.powsN,pows:Math.round(pows),stealth:L.goal==='intel'?Math.round(stealth):null,stars};
  arcSave.stars[ARC.lv]=Math.max(arcStars(ARC.lv),stars);arcSave.open=Math.max(arcSave.open,Math.min(ARC_LEVELS.length,ARC.lv+2));
  ARC.rewards=[]; // premios: aspecto COMANDANTE al terminar el nivel 10, color DORADO con 30 estrellas
+ if(ARC.lv===ARC_TOTAL-1&&!arcSave.all){arcSave.all=true;ARC.rewards.push('ELECCIÓN DE NIVEL');}
  if(ARC.lv===ARC_TOTAL-1&&!arcSave.cmd){arcSave.cmd=true;ARC.rewards.push('ASPECTO COMANDANTE');}
  if(!arcSave.gold&&arcStarsTotal()>=30){arcSave.gold=true;ARC.rewards.push('COLOR DORADO');}
  arcStore();
@@ -238,7 +240,7 @@ function arcSpawnMed(){ // botiquín en una casilla libre, lejos de ti y de la e
 const arcHasNext=()=>ARC&&ARC.lv+1<ARC_LEVELS.length;
 function arcAgain(){ // botón principal del fin: siguiente nivel o continuar (tras el GAME OVER ya no hay reintento)
  if(!ARC)return;if(ARC.end){arcEndKey('Enter');return;}
- if(ARC.result==='win'){if(!arcHasNext()){arcEndRun('final');return;}ARC.lv++;ARC.lostHere=false;arcSel=ARC.lv;arcLoad();}
+ if(ARC.result==='win'){if(!arcHasNext()){arcEndRun('final');return;}ARC.lv++;ARC.lostHere=false;if(arcSave.all)arcSel=ARC.lv;arcLoad();}
  else if(ARC.result==='cont'){ // CONTINUAR: 3 vidas y puntos en 0; sigues donde ibas (o se reinicia si la misión falló)
   arcBank(); // lo que llevabas cuenta para el récord de la partida
   Object.assign(ARC,{lives:3,score:0,startScore:0,nextLife:ARC_FIRST_LIFE,result:null,powsN:0});ARC.cont++; // al continuar se pierden los prisioneros del nivel

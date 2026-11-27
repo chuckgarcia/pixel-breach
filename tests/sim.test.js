@@ -110,7 +110,7 @@ t('arcade: los aspectos del bando enemigo se dibujan completos y miden lo mismo'
   for(const v of r){assert.strictEqual(v.bad,0,v.k+': letras sin color');assert.strictEqual(v.h,'18,18',v.k+': altura distinta');assert.ok(!v.pl,v.k+' no debe poder elegirse');}
 });
 t('arcade: acabar con todos abre la extracción; al llegar suma bonos, estrellas y desbloquea el siguiente',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;arcSave.open=1;arcSave.stars=[];startArcade(0);tut=null;ARC.cardT=0;const P=arcPlayer();
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;arcSave.all=true;arcSave.open=1;arcSave.stars=[];startArcade(0);tut=null;ARC.cardT=0;const P=arcPlayer();
     const closed=!ARC.exitOpen;for(const e of ents.filter(e=>e.enemy)){e.invulnT=0;kill(e,P,'pistol');}update(1/30);
     const open=ARC.exitOpen,pts=ARC.score;placeAt(P,ARC.exit);update(1/30);
     const o={closed,open,pts,state,res:ARC.result,stars:ARC.tally.stars,score:ARC.score,openNext:arcSave.open,saved:arcSave.stars[0]};
@@ -159,7 +159,7 @@ t('arcade: botiquines según la dificultad y solo para ti',()=>{
   assert.strictEqual(r.enemy,20,'un enemigo se curó con un botiquín');
 });
 t('arcade: oleadas, rehén y bombas',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;const o={};arcSave.open=4;dirStack=[];for(const k in keys)keys[k]=false;
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;const o={};arcSave.all=true;arcSave.open=4;dirStack=[];for(const k in keys)keys[k]=false;
     startArcade(1);tut=null;ARC.cardT=0;const P=arcPlayer();P.invulnT=1e9;let waves=0;
     for(let k=0;k<20&&!ARC.exitOpen;k++){for(let i=0;i<120;i++)update(1/30);const E=ents.filter(e=>e.enemy&&e.alive);if(E.length)waves=Math.max(waves,ARC.waveI);for(const e of E){e.invulnT=0;kill(e,P,'pistol');}}
     o.waves=waves;o.open2=ARC.exitOpen;
@@ -187,7 +187,7 @@ t('arcade: la tarjeta de misión espera a que confirmes y no la salta una tecla 
   assert.ok(r.held,'la tarjeta se quitó sola o con la tecla que venía presionada');assert.ok(r.go,'ESPACIO no confirmó');assert.ok(r.t,'el nivel no empezó');
 });
 t('IAs: nunca dos soldados en la misma casilla, buscan posición de tiro y no se te pegan',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=4;
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;dirStack=[];for(const k in keys)keys[k]=false;arcSave.all=true;arcSave.open=4;
     startArcade(1);tut=null;ARC.cardT=0;const P=arcPlayer();let stack=0,near=0,far=0,shots=0;
     for(let i=0;i<30*40;i++){P.invulnT=0;P.hp=100;update(1/30);if(ARC.deadT>0){ARC.deadT=0;}
       const E=arcAlive(),m={};for(const e of E){const k=e.tx+','+e.ty;m[k]=(m[k]||0)+1;if(!e.moving&&Object.keys(e.ai.known).length){const d=Math.abs(e.tx-P.tx)+Math.abs(e.ty-P.ty);if(d<=1)near++;else far++;}}
@@ -201,7 +201,7 @@ t('IAs: nunca dos soldados en la misma casilla, buscan posición de tiro y no se
   assert.ok(r.frags>=3,'las IAs de deathmatch dejaron de pelear');assert.ok(r.arc,'el Arcade siguió activo en una partida normal');
 });
 t('arcade: la presión sube por nivel; en Cargas custodian las bombas y desactivar da la alarma; flanquean por otro lado',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=4;const o={};
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=3;dirStack=[];for(const k in keys)keys[k]=false;arcSave.all=true;arcSave.open=4;const o={};
     o.react=[0,3].map(l=>arcPress(l).react);o.alert=[0,3].map(l=>arcPress(l).alert);
     startArcade(3);tut=null;ARC.cardT=0;const P=arcPlayer();P.invulnT=1e9;const E=ents.filter(e=>e.enemy);
     o.guard=E.every(e=>ARC.bombs.some(b=>b.x===e.home[0]&&b.y===e.home[1]));
@@ -217,7 +217,7 @@ t('arcade: la presión sube por nivel; en Cargas custodian las bombas y desactiv
   assert.notStrictEqual(r.sides[0],r.sides[1],'los dos eligieron el mismo lado: '+r.sides.join(' / '));
 });
 t('arcade: al liberar al rehén suena la alarma, emboscan la extracción y llegan refuerzos; la pantalla final muestra la dificultad',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';diff=4;dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=4;
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=4;dirStack=[];for(const k in keys)keys[k]=false;arcSave.all=true;arcSave.open=4;
     startArcade(2);tut=null;ARC.cardT=0;const P=arcPlayer();P.invulnT=1e9;const n0=ents.filter(e=>e.enemy).length;const h=ARC.hostage;
     placeAt(P,[h.tx-1,h.ty]);update(1/30);const E=arcAlive(),X=ARC.exit;
     const o={more:ents.filter(e=>e.enemy).length-n0,ambush:E.filter(e=>e.home&&e.home[0]===X[0]&&e.home[1]===X[1]).length,hunt:E.filter(e=>e.ai.known[0]).length,label:arcDiffLabel()};
@@ -226,7 +226,7 @@ t('arcade: al liberar al rehén suena la alarma, emboscan la extracción y llega
   assert.strictEqual(r.label,'DIFICULTAD DIFÍCIL · PUNTOS ×1.5');
 });
 t('arcade: nivel 1 se reagrupan a la mitad; nivel 2 entran por la puerta más lejana, la última oleada por todas y crece con la dificultad',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=4;const o={};
+  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.all=true;arcSave.open=4;const o={};
     diff=3;startArcade(0);tut=null;ARC.cardT=0;let P=arcPlayer();P.invulnT=1e9;const E=ents.filter(e=>e.enemy);for(const e of E)e.ai.known={};
     for(let i=0;i<2;i++){E[i].invulnT=0;kill(E[i],P,'pistol');}update(1/30);o.before=!ARC.regroup;E[2].invulnT=0;kill(E[2],P,'pistol');update(1/30);
     o.regroup=ARC.regroup&&arcAlive().every(e=>!!e.ai.known[0]);
@@ -242,7 +242,7 @@ t('arcade: nivel 1 se reagrupan a la mitad; nivel 2 entran por la puerta más le
   assert.ok(r.far,'la oleada no entró por la puerta más lejana');assert.strictEqual(r.doors,3,'la última oleada no entró por las 3 puertas');
 });
 t('arcade 5–10: escudo, armadura, granada en arco, láser, fichas, ALERTA ROJA, lava, planos, maletín y fases del jefe',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=10;diff=3;const o={};
+  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.all=true;arcSave.open=10;diff=3;const o={};
     const lv=i=>{startArcade(i);tut=null;ARC.cardT=0;const P=arcPlayer();P.invulnT=1e9;return P;};
     // escudo: de frente no le pasa nada, por la espalda sí
     let P=lv(8);const k=ents.find(e=>e.etype==='k');k.invulnT=0;placeAt(k,[10,9]);k.dir=DIRS[3];const h0=k.hp;
@@ -282,8 +282,17 @@ t('arcade 5–10: escudo, armadura, granada en arco, láser, fichas, ALERTA ROJA
   assert.ok(r.intel&&r.stealth,'planos o bono sin ser visto');assert.strictEqual(r.caseReinf,3,'el maletín no trajo refuerzos');assert.ok(r.caseAlarm);
   assert.ok(r.laser,'el tirador disparó sin apuntar');
 });
+t('arcade: hasta completar las 10 misiones siempre se empieza en el nivel 1; después se elige',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';const o={};arcSave.all=false;arcSave.open=6;arcSel=4;
+    startArcade(4);o.start=ARC.lv;stepLevel(1);o.sel=arcSel;o.lock=true;
+    arcSave.all=true;arcSave.open=10;startArcade(9);tut=null;ARC.cardT=0;arcSave.all=false;arcSave.cmd=false;arcComplete();o.all=arcSave.all;o.rw=ARC.rewards.join('|');
+    stepLevel(1);stepLevel(1);o.sel2=arcSel;startArcade(arcSel);o.start2=ARC.lv;SETTINGS.mode='dm';return o;})()`);
+  assert.strictEqual(r.start,0,'sin completar las 10 debe empezar en el nivel 1');assert.strictEqual(r.sel,0);
+  assert.strictEqual(r.all,true);assert.ok(r.rw.includes('ELECCIÓN DE NIVEL'),r.rw);
+  assert.ok(r.sel2>0&&r.start2===r.sel2,'después de completar las 10 se elige el nivel');
+});
 t('arcade: el GAME OVER registra el mejor crédito y el nivel máximo; iniciales, tabla y de vuelta al inicio',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=10;diff=3;const o={};
+  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.all=true;arcSave.open=10;diff=3;const o={};
     arcSave.best=[{i:'AAA',s:20000,lv:2,d:3,t:1},{i:'BBB',s:5000,lv:6,d:3,t:2}];arcSave.recent=[];arcSave.ini='CGR';
     startArcade(4);tut=null;ARC.cardT=0;ARC.score=18450;ARC.lives=0;arcGameOver();arcAgain(); // continúa: los puntos vuelven a 0
     o.zero=ARC.score;ARC.lv=5;arcLoad();ARC.score=6200;ARC.lives=0;arcGameOver();arcContTick(11);
@@ -313,7 +322,7 @@ t('arcade: el GAME OVER registra el mejor crédito y el nivel máximo; iniciales
   assert.strictEqual(r.leave,'TIE900');assert.strictEqual(r.leaveState,'title');
 });
 t('arcade: prisioneros, rehén en DIFÍCIL, refuerzos de bombas, récords y premios',()=>{
-  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=10;diff=3;const o={};
+  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.all=true;arcSave.open=10;diff=3;const o={};
     startArcade(0);tut=null;ARC.cardT=0;let P=arcPlayer();P.invulnT=1e9;const w=ARC.pows[0];placeAt(P,[w.x,w.y]);arcTickExtra(1/30,ARC_LEVELS[0],P);
     o.pow=ARC.powsN===1&&pickups.length>=1;P.invulnT=0;kill(P,ents[1],'pistol');for(let i=0;i<60;i++)update(1/30);o.keep=ARC.powsN===1;
     ARC.lives=1;P=arcPlayer();P.invulnT=0;kill(P,ents[1],'pistol');for(let i=0;i<60;i++)update(1/30);arcAgain();o.lost=ARC.powsN===0;
