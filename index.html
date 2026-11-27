@@ -41,7 +41,7 @@
   <div class="row sel" id="levelRow"><span class="lbl">NIVEL</span><button class="mbtn" id="lvprev" aria-label="Nivel anterior">◀</button><b id="lvname" class="tn"></b><button class="mbtn" id="lvnext" aria-label="Nivel siguiente">▶</button></div>
   <div class="row sel" id="themeRow"><span class="lbl">ESCENARIO</span><button class="mbtn" id="tprev" aria-label="Escenario anterior">◀</button><b id="tname" class="tn"></b><button class="mbtn" id="tnext" aria-label="Escenario siguiente">▶</button></div>
   <div class="row sel" id="presetRow"><span class="lbl">PARTIDA</span><button class="mbtn" id="pprev" aria-label="Partida más corta">◀</button><b id="pname2" class="tn"></b><button class="mbtn" id="pnext" aria-label="Partida más larga">▶</button></div>
-  <div class="row sel" id="recRow"><span class="lbl">RÉCORD</span><button class="mbtn ph" tabindex="-1" aria-hidden="true" disabled>◀</button><b id="recName" class="tn"></b><button class="mbtn ph" tabindex="-1" aria-hidden="true" disabled>▶</button></div>
+  <div class="row sel" id="recRow"><span class="lbl">RÉCORD</span><button class="mbtn ph" tabindex="-1" aria-hidden="true" disabled>◀</button><b id="recName" class="tn" role="button" tabindex="0" aria-label="Ver la tabla de récords"></b><button class="mbtn ph" tabindex="-1" aria-hidden="true" disabled>▶</button></div>
   <div class="dock">
    <button class="mbtn big" id="playAI">JUGAR CONTRA IAs</button>
    <div class="row" id="arcNote">MODO DE UN JUGADOR · SIN SALAS EN LÍNEA</div>
@@ -92,7 +92,7 @@
  <div id="countdown" class="ovl" aria-live="assertive"><small>EMPEZANDO EN</small><b id="cdNum">3</b></div>
  <div id="pauseBtns" class="ovl"><button class="mbtn big" id="pResume">CONTINUAR</button><button class="mbtn" id="pQuit">SALIR AL MENÚ</button></div>
  <div id="readyBtns" class="ovl"><button class="mbtn big" id="arcReady">¡LISTO!</button></div>
- <div id="hsBox" class="ovl"><b>¡NUEVO RÉCORD! TUS INICIALES</b><input id="hsName" maxlength="3" autocomplete="off" spellcheck="false" aria-label="Tus iniciales"><button class="mbtn big" id="hsSave">GUARDAR</button></div>
+ <div id="recClose" class="ovl"><button class="mbtn" id="recCloseBtn">CERRAR</button></div>
  <div id="overBtns" class="ovl"><button class="mbtn big" id="again">REVANCHA</button><button class="mbtn" id="toMenu">MENÚ</button></div>
 </div>
 <div id="guide" role="status" aria-live="polite"><small id="guideN">GUÍA 1/5</small><span id="guideMsg"></span><button id="guideSkip" aria-label="Saltar la guía"><span class="dk">ESC · SALTAR</span><span class="tc">✕</span></button></div>

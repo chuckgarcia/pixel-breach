@@ -14,10 +14,10 @@ const ARC_CONT=10; // CONTINUE? 9… 8… … 0
 const DIFF_COL={1:'#4ade80',2:'#a3e635',3:'#facc15',4:'#f87171'};
 const arcDiffLabel=()=>`DIFICULTAD ${DIFF[diff].name} · PUNTOS ×${ARC_MULT[diff]}`;
 // ---------- AVANCE GUARDADO (en este navegador) ----------
-const arcSave={open:1,stars:[],best:[],cmd:false,gold:false};
+const arcSave={open:1,stars:[],best:[],recent:[],ini:'',cmd:false,gold:false};
 try{const j=JSON.parse(localStorage.getItem('pb_arc')||'null');if(j&&typeof j==='object'){
  arcSave.open=Math.max(1,Math.min(ARC_LEVELS.length,j.open|0));arcSave.cmd=!!j.cmd;arcSave.gold=!!j.gold;
- arcSave.best=Array.isArray(j.best)?j.best.filter(r=>r&&typeof r.i==='string').slice(0,10).map(r=>({i:r.i.replace(/[^A-ZÑ0-9]/g,'').slice(0,3)||'???',s:Math.max(0,r.s|0),lv:Math.max(1,Math.min(ARC_TOTAL,r.lv|0)),d:DIFF[r.d]?r.d:3})):[];arcSave.stars=Array.isArray(j.stars)?j.stars.slice(0,ARC_TOTAL).map(n=>Math.max(0,Math.min(3,n|0))):[];}}catch(e){}
+ arcSave.best=Array.isArray(j.best)?j.best.filter(r=>r&&typeof r.i==='string').slice(0,10).map(r=>Object.assign({i:r.i.replace(/[^A-ZÑ0-9]/g,'').slice(0,3)||'???',s:Math.max(0,r.s|0),lv:Math.max(1,Math.min(ARC_TOTAL,r.lv|0)),d:DIFF[r.d]?r.d:3,t:+r.t||0},r.c===undefined?{}:{c:Math.max(0,r.c|0)})):[]; /* los récords viejos no tienen continues */arcSave.recent=Array.isArray(j.recent)?j.recent.filter(r=>r&&typeof r.i==='string').slice(0,5).map(r=>({i:r.i.replace(/[^A-ZÑ0-9]/g,'').slice(0,3)||'???',s:Math.max(0,r.s|0),lv:Math.max(1,Math.min(ARC_TOTAL,r.lv|0)),d:DIFF[r.d]?r.d:3,c:Math.max(0,r.c|0),t:+r.t||0,rank:r.rank|0})):[];arcSave.ini=typeof j.ini==='string'?j.ini.slice(0,3):'';arcSave.stars=Array.isArray(j.stars)?j.stars.slice(0,ARC_TOTAL).map(n=>Math.max(0,Math.min(3,n|0))):[];}}catch(e){}
 function arcStore(){try{localStorage.setItem('pb_arc',JSON.stringify(arcSave));}catch(e){}}
 let arcSel=Math.min(arcSave.open,ARC_LEVELS.length)-1; // nivel elegido en el menú
 const arcStars=i=>arcSave.stars[i]|0;
@@ -26,7 +26,7 @@ function arcLevelLabel(i){const L=ARC_LEVELS[i],s=arcStars(i);return `${String(i
 // ---------- INICIO Y CARGA DE NIVEL ----------
 function startArcade(i){
  i=Math.max(0,Math.min(arcSave.open-1,ARC_LEVELS.length-1,i|0));
- ARC={lv:i,score:0,lives:3,nextLife:ARC_FIRST_LIFE,cont:0,inv:null,lostHere:false};
+ ARC={lv:i,score:0,lives:3,nextLife:ARC_FIRST_LIFE,cont:0,inv:null,lostHere:false,runBest:0,runLv:i+1,end:null};
  arcLoad();
 }
 function arcEnemy(k,id){
@@ -40,7 +40,7 @@ function arcEnemy(k,id){
 }
 function arcPlace(e,x,y){placeAt(e,[x,y]);e.home=[x,y];e.invulnT=0;e.alive=true;}
 function arcLoad(){
- const L=ARC_LEVELS[ARC.lv];
+ const L=ARC_LEVELS[ARC.lv];ARC.runLv=Math.max(ARC.runLv||1,ARC.lv+1);
  gameMode='arcade';flag=null;goalSign=null;
  setTheme(L.theme);
  grid=new Uint8Array(COLS*ROWS);crateHP=new Uint8Array(COLS*ROWS);vis=new Uint8Array(COLS*ROWS).fill(1);
@@ -221,7 +221,7 @@ const arcStarsTotal=()=>arcSave.stars.reduce((a,b)=>a+(b|0),0);
 function arcGameOver(){ARC.result='cont';ARC.contT=ARC_CONT-.01;state='over';sfx('die');} // primero CONTINUE? con cuenta regresiva
 function arcContTick(dt){ // corre en la pantalla de CONTINUE?; al llegar a 0 es GAME OVER
  const before=Math.floor(ARC.contT);ARC.contT-=dt;
- if(ARC.contT<0){ARC.result='lose';sfx('die');arcAskRecord();}else if(Math.floor(ARC.contT)!==before)sfx('tick');
+ if(ARC.contT<0){arcEndRun('lose');}else if(Math.floor(ARC.contT)!==before)sfx('tick');
 }
 function arcRespawn(){ // reapareces donde caíste, con pistola, 1 granada y 2.5 s de invencibilidad
  const P=arcPlayer(),s=freeNear(wx(Math.floor(P.x/T)),Math.floor(P.y/T),P);
@@ -236,13 +236,13 @@ function arcSpawnMed(){ // botiquín en una casilla libre, lejos de ti y de la e
  return false;
 }
 const arcHasNext=()=>ARC&&ARC.lv+1<ARC_LEVELS.length;
-function arcAgain(){ // botón principal del fin: siguiente nivel o continuar
- if(!ARC||(ARC.hs&&ARC.hs.pending))return; // primero las iniciales del récord
- if(ARC.result==='win'){if(!arcHasNext()){if(ARC.lv===ARC_TOTAL-1){ARC.result='final';arcAskRecord();}return;}ARC.lv++;ARC.lostHere=false;arcSel=ARC.lv;arcLoad();}
+function arcAgain(){ // botón principal del fin: siguiente nivel o continuar (tras el GAME OVER ya no hay reintento)
+ if(!ARC)return;if(ARC.end){arcEndKey('Enter');return;}
+ if(ARC.result==='win'){if(!arcHasNext()){arcEndRun('final');return;}ARC.lv++;ARC.lostHere=false;arcSel=ARC.lv;arcLoad();}
  else if(ARC.result==='cont'){ // CONTINUAR: 3 vidas y puntos en 0; sigues donde ibas (o se reinicia si la misión falló)
+  arcBank(); // lo que llevabas cuenta para el récord de la partida
   Object.assign(ARC,{lives:3,score:0,startScore:0,nextLife:ARC_FIRST_LIFE,result:null,powsN:0});ARC.cont++; // al continuar se pierden los prisioneros del nivel
   if(ARC.fail){ARC.inv=null;arcLoad();ARC.lostHere=true;}else{state='play';arcRespawn();}}
- else if(ARC.result==='lose'){ARC.lives=3;ARC.score=0;ARC.nextLife=ARC_FIRST_LIFE;ARC.cont++;ARC.inv=null;ARC.lostHere=false;arcLoad();} // REINTENTAR NIVEL
 }
 
 // ---------- DIBUJO ----------
@@ -306,7 +306,7 @@ function drawArcCard(){
  if(!isTouch)txt('Cuando estés listo: ESPACIO o ENTER',W/2,HUD+376,11,'#94a3b8','center',false);
 }
 function drawArcOver(){
- if(ARC.result==='final'){drawArcFinal();return;}
+ if(ARC.end){drawArcEnd();return;}
  overlay(.86);const L=ARC_LEVELS[ARC.lv];
  if(ARC.result==='win'){
   const T_=ARC.tally;txt(`¡NIVEL ${ARC.lv+1} COMPLETO!`,W/2,82,26,'#facc15','center');
@@ -329,12 +329,7 @@ function drawArcOver(){
   txt(String(n),W/2,200,Math.round(70*pulse),n<=3?'#ef4444':'#e2e8f0','center');
   txt(`NIVEL ${ARC.lv+1} · ${L.name}   ·   PUNTOS ${ARC.score.toLocaleString('en-US')}`,W/2,272,13,'#cbd5e1','center');
   txt(ARC.fail?'Sigues con 3 vidas: el nivel se reinicia y tus puntos vuelven a 0.':'Sigues donde caíste con 3 vidas; tus puntos y prisioneros vuelven a 0.',W/2,298,12,'#94a3b8','center');
-  if(!isTouch)txt('ENTER: continuar   ·   ESC: menú',W/2,330,11,'#94a3b8','center');
- }else{
-  txt('GAME OVER',W/2,84,34,'#ef4444','center');txt(`NIVEL ${ARC.lv+1} · ${L.name}`,W/2,122,15,'#e2e8f0','center');txt(arcDiffLabel(),W/2,142,11,DIFF_COL[diff]||'#cbd5e1','center');
-  txt(`PUNTOS ${ARC.score.toLocaleString('en-US')}`,W/2,168,18,'#facc15','center');
-  drawRecords(204,5);
-  if(!isTouch&&!(ARC.hs&&ARC.hs.pending))txt('ENTER: reintentar nivel   ·   ESC: menú',W/2,330,11,'#94a3b8','center');
+  if(!isTouch)txt('ENTER: continuar   ·   ESC: terminar la partida',W/2,330,11,'#94a3b8','center');
  }
 }
 function drawArcPause(){txt(`NIVEL ${ARC.lv+1} · ${ARC_LEVELS[ARC.lv].name}`,W/2,176,16,'#e2e8f0','center');
@@ -466,24 +461,117 @@ function drawArcBoss(){ // barra de vida del jefe
  ctx.fillStyle='#3f1d1d';ctx.fillRect(x,y+13,w,6);ctx.fillStyle=B.armorWeak?'#facc15':'#ef4444';ctx.fillRect(x,y+13,w*f,6);ctx.globalAlpha=1;
 }
 
-// ---------- RÉCORDS (10 mejores, con iniciales; se guardan en este navegador) ----------
-const arcQualifies=s=>s>0&&(arcSave.best.length<10||s>arcSave.best[arcSave.best.length-1].s);
-function arcAskRecord(){if(ARC&&arcQualifies(ARC.score))ARC.hs={pending:true,rank:-1};}
-function arcSaveRecord(ini){
- if(!ARC||!ARC.hs||!ARC.hs.pending)return;
- ini=String(ini||'').toUpperCase().replace(/[^A-ZÑ0-9]/g,'').slice(0,3)||'???';
- const r={i:ini,s:ARC.score,lv:ARC.lv+1,d:diff};arcSave.best.push(r);arcSave.best.sort((a,b)=>b.s-a.s);arcSave.best=arcSave.best.slice(0,10);
- ARC.hs={pending:false,rank:arcSave.best.indexOf(r)};arcStore();sfx('win');
+// ---------- FIN DE LA PARTIDA Y RÉCORDS (se guardan en este navegador) ----------
+// Al terminar la cuenta del CONTINUE (o al vencer al Comandante) la partida acaba: GAME OVER con el resumen,
+// iniciales estilo arcade si entras al top 10, la tabla MEJORES ⇄ RECIENTES y de vuelta al inicio. No hay reintento.
+// Se registra el MEJOR crédito de la partida (los puntos vuelven a 0 al continuar), el nivel más alto y los continues.
+const HS_CHARS='ABCDEFGHIJKLMNÑOPQRSTUVWXYZ0123456789';
+const HS_INI_T=30,HS_BOARD_T=15,HS_FLIP_T=6; // segundos: para elegir iniciales, para volver al inicio, para cambiar de tabla
+const arcIni=()=>{const s=String(arcSave.ini||'').toUpperCase().replace(/[^A-ZÑ0-9]/g,'').slice(0,3);return s.length===3?s:(s+'JUG').slice(0,3);};
+const arcRankCmp=(a,b)=>(b.s-a.s)||(b.lv-a.lv)||((a.t||0)-(b.t||0)); // empate: llegó más lejos; luego el más antiguo
+function arcBank(){if(ARC){ARC.runBest=Math.max(ARC.runBest||0,ARC.score);ARC.runLv=Math.max(ARC.runLv||1,ARC.lv+1);}} // guarda lo mejor antes de que los puntos vuelvan a 0
+function arcRun(){arcBank();return {s:ARC.runBest,lv:ARC.runLv,c:ARC.cont|0,d:diff};}
+const arcQualifies=s=>s>0&&(arcSave.best.length<10||arcRankCmp({s,lv:99,t:1e15},arcSave.best[arcSave.best.length-1])<0);
+function arcRankOf(r){return arcSave.best.filter(b=>arcRankCmp(b,r)<0).length+1;}
+function arcEndRun(kind){ // 'lose' (se acabó el CONTINUE) o 'final' (venciste el último nivel)
+ if(!ARC||ARC.end)return;
+ ARC.result=kind;state='over';toast=null;ARC.end=Object.assign(arcRun(),{phase:'sum',t:kind==='final'?3.5:2,saved:false,tab:'best',flip:HS_FLIP_T,last:ARC.score});
+ if(kind==='lose')sfx('die');
 }
-function drawRecords(y0,n){
- txt('RÉCORDS',W/2,y0,13,'#facc15','center');
- const L=arcSave.best.slice(0,n);if(!L.length){txt('Todavía no hay récords',W/2,y0+24,11,'#64748b','center');return;}
- L.forEach((r,i)=>{const y=y0+22+i*18,me=ARC&&ARC.hs&&ARC.hs.rank===i,c=me?'#4ade80':'#cbd5e1';
-  txt(`${i+1}.`,190,y,12,c,'right');txt(r.i,206,y,12,c);txt(r.s.toLocaleString('en-US'),360,y,12,c,'right');txt(`NIV ${r.lv} · ${DIFF[r.d].name}`,380,y,11,me?c:'#64748b');});
+function arcAskRecord(){ // después del resumen: iniciales si entras al top 10; si no, directo a la tabla
+ if(!ARC)return;if(!ARC.end)ARC.end=Object.assign(arcRun(),{phase:'sum',t:0,saved:false,tab:'best',flip:HS_FLIP_T,last:ARC.score});
+ const E=ARC.end;if(E.saved)return;
+ if(arcQualifies(E.s)){E.phase='ini';ARC.hs={pending:true,rank:-1,ch:arcIni().split(''),pos:0,t:HS_INI_T};}
+ else arcCommit(arcIni());
 }
-function drawArcFinal(){
- overlay(.9);txt('¡MISIÓN CUMPLIDA!',W/2,70,28,'#facc15','center');
- txt(`PUNTOS ${ARC.score.toLocaleString('en-US')}   ·   ${arcDiffLabel()}`,W/2,104,12,'#e2e8f0','center');
- txt(ARC.cont?`Usaste ${ARC.cont} ${ARC.cont===1?'continue':'continues'}`:'¡Sin usar continues!',W/2,124,11,ARC.cont?'#94a3b8':'#4ade80','center');
- drawRecords(158,10);
+function arcCommit(ini){ // guarda la partida: en MEJORES si alcanza y siempre en RECIENTES
+ const E=ARC&&ARC.end;if(!E||E.saved)return;
+ ini=String(ini||'').toUpperCase().replace(/[^A-ZÑ0-9]/g,'').slice(0,3)||arcIni();
+ const r={i:ini,s:E.s,lv:E.lv,d:E.d,c:E.c,t:Date.now()};let rank=-1;
+ if(arcQualifies(r.s)){arcSave.best.push(r);arcSave.best.sort(arcRankCmp);arcSave.best=arcSave.best.slice(0,10);rank=arcSave.best.indexOf(r);}
+ arcSave.recent.unshift(Object.assign({},r,{rank}));arcSave.recent=arcSave.recent.slice(0,5);arcSave.ini=ini;arcStore();
+ Object.assign(E,{saved:true,rank,phase:'board',t:HS_BOARD_T,tab:rank>=0?'best':'recent',flip:HS_FLIP_T,lock:1.2}); // lock: un FUEGO de más al poner las iniciales no salta la tabla
+ ARC.hs={pending:false,rank,ch:ini.split(''),pos:0,t:0};if(rank>=0)sfx('win');
 }
+function arcSaveRecord(ini){if(!ARC||!ARC.hs||!ARC.hs.pending)return;arcCommit(ini===undefined?ARC.hs.ch.join(''):ini);}
+function arcLeaveSave(){ // salir al menú en el CONTINUE, el resumen o las iniciales: la partida se registra igual
+ if(!ARC)return;
+ if(ARC.result==='cont'&&!ARC.end)arcEndRun('lose');
+ if(ARC.end&&!ARC.end.saved){if(ARC.hs&&ARC.hs.pending)arcSaveRecord();else arcCommit(arcIni());}
+}
+function arcEndTick(dt){
+ const E=ARC.end;if(!E)return;
+ if(E.phase==='sum'){E.t-=dt;if(E.t<=0)arcAskRecord();}
+ else if(E.phase==='ini'){ARC.hs.t-=dt;if(ARC.hs.t<=0)arcSaveRecord();}
+ else if(E.phase==='board'){E.t-=dt;E.flip-=dt;E.lock=Math.max(0,(E.lock||0)-dt);if(E.flip<=0){E.flip=HS_FLIP_T;E.tab=E.tab==='best'?'recent':'best';}if(E.t<=0)toTitle();}
+}
+function arcEndKey(c){ // teclas en el fin de la partida; true si la usó
+ const E=ARC&&ARC.end;if(!E)return false;
+ if(E.phase==='sum'){if(c==='Enter'||c==='Space'){E.t=0;arcAskRecord();}return true;}
+ if(E.phase==='board'){if(E.lock>0)return true;
+  if(c==='ArrowLeft'||c==='ArrowRight'||c==='KeyA'||c==='KeyD'){E.tab=E.tab==='best'?'recent':'best';E.flip=HS_FLIP_T;E.t=Math.max(E.t,8);sfx('tick');}
+  else if(c==='Enter'||c==='Space'||c==='Escape')toTitle();
+  return true;}
+ const h=ARC.hs;if(!h||!h.pending)return true;
+ const N=HS_CHARS.length,cur=()=>HS_CHARS.indexOf(h.ch[h.pos]);
+ if(c==='ArrowUp'){h.ch[h.pos]=HS_CHARS[(cur()+1)%N];sfx('tick');}
+ else if(c==='ArrowDown'){h.ch[h.pos]=HS_CHARS[(cur()-1+N)%N];sfx('tick');}
+ else if(c==='ArrowLeft'||c==='Backspace')h.pos=Math.max(0,h.pos-1);
+ else if(c==='ArrowRight')h.pos=Math.min(2,h.pos+1);
+ else if(c==='Space'){if(h.pos<2){h.pos++;sfx('tick');}else arcSaveRecord();}
+ else if(c==='Enter')arcSaveRecord();
+ else{const m=/^Key([A-Z])$/.exec(c)||/^Digit([0-9])$/.exec(c)||(c==='Semicolon'?[0,'Ñ']:null); // en computadora también se escriben
+  if(m){h.ch[h.pos]=m[1];h.pos=Math.min(2,h.pos+1);sfx('tick');}}
+ return true;
+}
+function drawArcEnd(){
+ const E=ARC.end,L=ARC_LEVELS[ARC.lv],fin=ARC.result==='final';overlay(.9);
+ if(E.phase==='sum'){
+  txt(fin?'¡MISIÓN CUMPLIDA!':'GAME OVER',W/2,96,fin?30:38,fin?'#facc15':'#ef4444','center');
+  txt(fin?'VENCISTE AL COMANDANTE':`NIVEL ${ARC.lv+1} · ${L.name}`,W/2,136,15,'#e2e8f0','center');
+  txt(`DIFICULTAD ${DIFF[E.d].name}`,W/2,158,11,DIFF_COL[E.d]||'#cbd5e1','center');
+  [['MEJOR PUNTAJE',E.s.toLocaleString('en-US')],['NIVEL MÁXIMO',String(E.lv)],['CONTINUES',String(E.c)]].forEach(([a,b],i)=>{const x=W/2+(i-1)*190;
+   txt(a,x,212,11,'#94a3b8','center');txt(b,x,246,26,'#facc15','center');});
+  if(E.c&&E.last!==E.s)txt(`Tu mejor crédito hizo ${E.s.toLocaleString('en-US')} puntos; el último, ${E.last.toLocaleString('en-US')}.`,W/2,300,12,'#94a3b8','center');
+  else if(!E.c)txt('¡Sin usar continues!',W/2,300,12,'#4ade80','center');
+  return;}
+ if(E.phase==='ini'){const h=ARC.hs;
+  txt(String(Math.max(0,Math.ceil(h.t))),W-40,HUD+40,22,'#f87171','center');
+  txt('¡NUEVO RÉCORD!',W/2,104,30,'#facc15','center');
+  txt(`PUESTO ${arcRankOf({s:E.s,lv:E.lv,t:1e15})} DE 10   ·   ${E.s.toLocaleString('en-US')} PUNTOS   ·   NIVEL ${E.lv}`,W/2,138,13,'#e2e8f0','center');
+  for(let i=0;i<3;i++){const x=W/2+(i-1)*72,y=210,on=i===h.pos;
+   ctx.fillStyle='#0b0d12';ctx.fillRect(x-26,y-34,52,64);ctx.strokeStyle=on?'#facc15':'#475569';ctx.lineWidth=3;ctx.strokeRect(x-26,y-34,52,64);
+   txt(h.ch[i],x,y,40,on?(Math.floor(clock*3)%2?'#fde68a':'#facc15'):(i<h.pos?'#e2e8f0':'#94a3b8'),'center');
+   if(on){txt('▲',x,y-50,14,'#facc15','center');txt('▼',x,y+50,14,'#facc15','center');}}
+  txt('▲ ▼ cambia la letra   ·   ◀ ▶ mueve   ·   FUEGO acepta',W/2,300,12,'#cbd5e1','center');
+  if(!isTouch)txt('También puedes escribirlas · ENTER guarda',W/2,322,11,'#64748b','center');
+  return;}
+ // tabla
+ txt('RÉCORDS',W/2,84,24,'#facc15','center');
+ const tabs=[['best','MEJORES'],['recent','RECIENTES']];tabs.forEach(([k,n],i)=>{const x=W/2+(i?70:-70),on=E.tab===k;
+  ctx.strokeStyle=on?'#facc15':'#334155';ctx.lineWidth=2;ctx.strokeRect(x-60,104,120,24);txt(n,x,117,12,on?'#facc15':'#64748b','center');});
+ drawBoard(E.tab,E.tab==='best'?E.rank:0,150,true);
+ txt(`Al inicio en ${Math.max(0,Math.ceil(E.t))}…`+(isTouch?'':'   ·   ◀ ▶ cambia de tabla   ·   ENTER: inicio'),W/2,398,11,'#94a3b8','center');
+}
+function drawBoard(tab,hi,y0,blink){ // MEJORES (10) o RECIENTES (5); hi: renglón que parpadea en verde
+ const best=tab==='best',L=best?arcSave.best:arcSave.recent;
+ const cx=best?[150,180,330,350,440]:[150,300,320,410,520];
+ const head=best?['#','INI','PUNTOS','NIVEL','DIFICULTAD']:['INI','PUNTOS','NIVEL','DIFICULTAD','PUESTO'];
+ head.forEach((h,i)=>txt(h,cx[i],y0,10,'#64748b',(best?[0,2]:[1,4]).includes(i)?'right':'left'));
+ if(!L.length){txt(best?'Todavía no hay récords':'Todavía no hay partidas',W/2,y0+40,12,'#64748b','center');return;}
+ L.forEach((r,i)=>{const y=y0+24+i*21,me=i===hi&&(best?hi>=0:true),c=me?(blink&&Math.floor(clock*2.5)%2?'#bbf7d0':'#4ade80'):'#e2e8f0';
+  const lv=`${r.lv}`+(r.c!==undefined?` · ${r.c}C`:''),dc=me?c:(DIFF_COL[r.d]||'#cbd5e1');
+  if(best){txt(`${i+1}`,cx[0],y,13,c,'right');txt(r.i,cx[1],y,13,c);txt(r.s.toLocaleString('en-US'),cx[2],y,13,c,'right');txt(lv,cx[3],y,13,me?c:'#cbd5e1');txt(DIFF[r.d].name,cx[4],y,12,dc);}
+  else{txt(r.i,cx[0],y,13,c);txt(r.s.toLocaleString('en-US'),cx[1],y,13,c,'right');txt(lv,cx[2],y,13,me?c:'#cbd5e1');txt(DIFF[r.d].name,cx[3],y,12,dc);
+   txt(r.rank>=0&&arcSave.best.some(b=>b.t===r.t&&b.s===r.s)?`#${arcSave.best.findIndex(b=>b.t===r.t&&b.s===r.s)+1}`:'—',cx[4],y,13,me?c:'#94a3b8','right');}});
+}
+// tabla desde el menú (renglón RÉCORD): se dibuja encima del fondo del menú
+let recView=null; // {tab}
+function openRecView(){recView={tab:arcSave.best.length||!arcSave.recent.length?'best':'recent'};syncRecView();}
+function closeRecView(){recView=null;syncRecView();}
+function syncRecView(){const m=document.getElementById('menu'),b=document.getElementById('recClose');if(m&&state==='title')m.style.display=recView?'none':'flex';if(b)b.style.display=recView?'flex':'none';}
+function recViewKey(c){if(c==='ArrowLeft'||c==='ArrowRight'||c==='KeyA'||c==='KeyD')recView.tab=recView.tab==='best'?'recent':'best';else closeRecView();}
+function drawRecView(){overlay(.9);txt('RÉCORDS',W/2,84,24,'#facc15','center');
+ [['best','MEJORES'],['recent','RECIENTES']].forEach(([k,n],i)=>{const x=W/2+(i?70:-70),on=recView.tab===k;ctx.strokeStyle=on?'#facc15':'#334155';ctx.lineWidth=2;ctx.strokeRect(x-60,104,120,24);txt(n,x,117,12,on?'#facc15':'#64748b','center');});
+ drawBoard(recView.tab,-1,150,false);
+ txt(isTouch?'Toca las pestañas para cambiar de tabla':'◀ ▶ cambia de tabla   ·   cualquier otra tecla: cerrar',W/2,398,11,'#94a3b8','center');}

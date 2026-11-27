@@ -37,7 +37,7 @@ function startMatch(humans,nAI,aiNames){
  timeLeft=matchTime;pickupT=6;firstBlood=false;announce=null;for(let i=0;i<3;i++)spawnPickup();
  state='play';paused=false;shake=0;flashA=0;winner=null;showToast('ESCENARIO: '+theme.name,'#facc15');tutStart();
 }
-function toTitle(){if(ARC&&ARC.hs&&ARC.hs.pending)arcSaveRecord($('hsName').value); // salir no pierde el récord
+function toTitle(){arcLeaveSave(); // salir durante el CONTINUE o las iniciales no pierde la partida
  state='title';ARC=null;flag=null;goalSign=null;gameMode=menuMode();myId=0;setTheme(themeChoice==='random'?THEME_KEYS[ri(0,THEME_KEYS.length-1)]:themeChoice);genMap();/* el fondo coincide con el escenario elegido */ents=[];bullets=[];nades=[];pickups=[];parts=[];fx=[];feed=[];}
 function endMatch(){
  if(state!=='play')return;

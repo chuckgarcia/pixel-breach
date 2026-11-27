@@ -10,6 +10,24 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.17.6] - 2026-11-27
+
+### Cambiado
+
+- ARCADE: al terminar la cuenta del CONTINUE la partida acaba de verdad: GAME OVER con el resumen,
+  iniciales, tabla de récords y de vuelta al inicio. Ya no hay REINTENTAR NIVEL. Al vencer al
+  Comandante se sigue el mismo camino.
+- Se registra el **mejor crédito** de la partida (los puntos vuelven a 0 al continuar), el **nivel
+  más alto** que alcanzaste y los **continues** usados. En empate va primero quien llegó más lejos.
+- Iniciales estilo arcade: ▲ ▼ cambia la letra, ◀ ▶ mueve y FUEGO acepta (en computadora también se
+  escriben). Empiezan con tus últimas iniciales y a los 30 s se guardan solas. Ya no se abre el teclado
+  del teléfono.
+- Tabla RÉCORDS con dos páginas que se alternan: MEJORES (10) y RECIENTES (las últimas 5 partidas,
+  aunque no entren al top 10). Vuelve sola al inicio a los 15 s.
+- En el menú, el renglón RÉCORD abre la tabla.
+- En el CONTINUE, el botón MENÚ ahora dice TERMINAR y lleva al GAME OVER; salir al menú desde Ajustes
+  también registra la partida.
+
 ## [0.17.5] - 2026-11-27
 
 ### Corregido

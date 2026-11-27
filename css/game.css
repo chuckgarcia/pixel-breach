@@ -79,8 +79,6 @@ body.touch canvas{width:min(calc(100vw - 20px),calc((100vh - 250px) * 672 / 524)
 #netMsg{min-height:1.2em;color:#f87171;font-weight:bold;text-align:center;max-width:90%}
 #netMsg.ok{color:#4ade80}
 #overBtns{left:0;right:0;bottom:5%;display:none;justify-content:center;gap:14px;font-size:clamp(12px,1.9vw,15px)}
-#hsBox{left:0;right:0;bottom:16%;display:none;flex-direction:column;align-items:center;gap:8px;font-family:"Courier New",monospace;color:#facc15;font-size:clamp(12px,1.8vw,15px)} /* récord del Arcade */
-#hsBox input{width:5.2em;text-align:center;font:bold 28px "Courier New",monospace;text-transform:uppercase;letter-spacing:.3em;padding:6px 4px 6px 12px;background:#0b0e14;color:#4ade80;border:2px solid #4ade80;border-radius:4px}
 #readyBtns{left:0;right:0;bottom:6%;display:none;justify-content:center;font-size:clamp(13px,2vw,16px)} /* tarjeta de misión del Arcade */
 #readyBtns .mbtn{min-width:180px;padding:10px 22px}
 #menu,#lobby{justify-content:flex-start}
@@ -346,3 +344,10 @@ body.arcmenu #menu #arcNote{display:flex;position:absolute;left:0;right:0;bottom
  body.touch.menus #lcode{font-size:34px}
  body.touch.menus #lplayers{padding:5px 10px}
 }
+/* tabla de récords desde el menú (Arcade): el renglón RÉCORD es un botón */
+body.arcmenu #menu #recRow{cursor:pointer}
+#menu #recName{color:#4ade80;cursor:pointer}
+#menu #recName:focus-visible{outline:2px solid #facc15;outline-offset:2px}
+#recClose{left:0;right:0;bottom:5%;display:none;justify-content:center;font-size:clamp(12px,1.9vw,15px)}
+body.touch #recClose{bottom:4%;font-size:15px}
+body.touch #recClose .mbtn{min-width:180px;padding:12px 8px}

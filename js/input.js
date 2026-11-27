@@ -9,6 +9,7 @@ function press(c,repeat){
  if(c in KEYDIR){dirStack=dirStack.filter(k=>k!==c);dirStack.push(c);}
  keys[c]=true;
  if(repeat)return;
+ if(state==='title'&&recView){recViewKey(c);return;}
  if(state==='title'){
   if(/^Digit[1-4]$/.test(c))diff=+c.slice(5);
   if(c==='ArrowLeft'||c==='KeyA')diff=Math.max(1,diff-1);
@@ -17,7 +18,7 @@ function press(c,repeat){
   return;
  }
  if(state==='lobby')return;
- if(state==='over'){if(c==='Enter')overAgain();if(c==='Escape')overMenu();return;}
+ if(state==='over'){if(ARC&&ARC.end&&c!=='Escape'&&arcEndKey(c))return;if(c==='Enter')overAgain();if(c==='Escape')overMenu();return;}
  if(c==='Escape'&&tut){skipTut();return;} // con la guía activa, ESC la salta
  if(c==='KeyP'||c==='Escape'){if(NET)showToast('SIN PAUSA EN LÍNEA');else paused=!paused;}
  if(c==='KeyF'){if(NET)showToast('EN LÍNEA LA NIEBLA LA ELIGE EL ANFITRIÓN');else{fog=!fog;SETTINGS.fog=fog;saveSettings();syncSettingsUI();showToast(fog?'NIEBLA DE GUERRA: ON':'NIEBLA DE GUERRA: OFF');}}
@@ -35,7 +36,7 @@ function press(c,repeat){
 }
 function release(c){keys[c]=false;dirStack=dirStack.filter(k=>k!==c);if(NET&&NET.role==='client')sendInput();}
 addEventListener('keydown',ev=>{
- if(ev.target&&ev.target.tagName==='INPUT'){if(ev.code==='Enter'){ev.target.blur();if(ev.target.id==='hsName')arcSaveRecord(ev.target.value);else if(ev.target.id==='jcode')joinRoom(ev.target.value);else if(inviteCode&&ev.target.id==='pname')joinRoom(inviteCode);else{press('Enter');release('Enter');}}return;}
+ if(ev.target&&ev.target.tagName==='INPUT'){if(ev.code==='Enter'){ev.target.blur();if(ev.target.id==='jcode')joinRoom(ev.target.value);else if(inviteCode&&ev.target.id==='pname')joinRoom(inviteCode);else{press('Enter');release('Enter');}}return;}
  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Tab'].includes(ev.code))ev.preventDefault();
  press(ev.code,ev.repeat);
 });
@@ -44,7 +45,10 @@ addEventListener('blur',()=>{for(const k in keys)keys[k]=false;dirStack=[];});
 cv.addEventListener('pointerdown',ev=>{
  cv.focus();audio();
  if(state==='intro'){endIntro();return;}
+ if(state==='title'&&recView){ // tabla de récords del menú: las pestañas cambian de tabla; tocar en otro lado la cierra
+  const r=cv.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width*W,y=(ev.clientY-r.top)/r.height*(HUD+H);
+  if(y>100&&y<132&&Math.abs(x-W/2)<130)recView.tab=x<W/2?'best':'recent';else closeRecView();return;}
  if(ev.pointerType==='touch'||isTouch){ // tocar la pantalla: empezar / revancha / continuar
-  if(state==='over'&&(!NET||NET.role==='host')){press('Enter');release('Enter');}
+  if(state==='over'&&(!NET||NET.role==='host')&&!(ARC&&ARC.hs&&ARC.hs.pending)){press('Enter');release('Enter');} // en las iniciales, tocar la pantalla no guarda por error
  }
 });

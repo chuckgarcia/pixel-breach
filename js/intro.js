@@ -78,7 +78,7 @@ function render(){
  if(flashA>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(1,flashA)})`;ctx.fillRect(0,HUD,W,H);}
  syncOverlays();
  if(state==='intro'){drawIntro();return;}
- if(state==='title'||state==='lobby'){drawTitle();if(state==='title')drawPreview();else if(NET&&lpvx)drawPreview(lpvx,myLobbyColor());return;}
+ if(state==='title'||state==='lobby'){drawTitle();if(state==='title'&&recView){drawRecView();return;}if(state==='title')drawPreview();else if(NET&&lpvx)drawPreview(lpvx,myLobbyColor());return;}
  drawHUD();if(ARC)drawArcHud();else drawModeHud();drawFeed();
  if(announce&&state==='play'){const a=Math.min(1,announce.t*2),k=1+Math.max(0,announce.t-1.6)*1.5;ctx.globalAlpha=a;txt(announce.text,W/2,HUD+78,Math.round(22*k),announce.c||'#facc15','center');ctx.globalAlpha=1;}
  if(tut&&state==='play'&&!(ARC&&ARC.cardT>0))drawTut();
@@ -116,6 +116,7 @@ function step(dt){
  clock+=dt;
  if(state==='play'&&!paused){if(NET&&NET.role==='client')clientUpdate(dt);else update(dt);}
  else if(state==='over'&&ARC&&ARC.result==='cont')arcContTick(dt); // CONTINUE? 9… 0
+ else if(state==='over'&&ARC&&ARC.end)arcEndTick(dt); // GAME OVER → iniciales → tabla → inicio
  else{for(const p of parts)p.t-=dt;}
  if(NET)netTick(dt);
 }

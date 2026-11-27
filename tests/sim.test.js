@@ -140,14 +140,14 @@ t('arcade: al caer reapareces en el mismo lugar y el nivel sigue; sin vidas, CON
     arcContTick(4);o.n2=Math.floor(ARC.contT);arcAgain();P=arcPlayer();
     o.cont=[state,ARC.lives,ARC.score,ARC.cont,P.alive,!E[0].alive].join();
     ARC.lives=1;P.invulnT=0;kill(P,E[1],'pistol');for(let i=0;i<60;i++)update(1/30);arcContTick(11);o.over=ARC.result;
-    arcAgain();o.retry=[state,ARC.lives,ARC.score,ents.filter(e=>e.enemy&&e.alive).length].join();
+    arcAgain();o.retry=[state,ARC.end&&ARC.end.phase].join();
     SETTINGS.mode='dm';return o;})()`);
   assert.strictEqual(r.lives,2);assert.ok(r.alive,'no reapareció');{const [x,y]=r.at.split(',').map(Number);assert.ok(Math.abs(x-5)+Math.abs(y-9)<=1,'no reapareció donde cayó: '+r.at);} // o en la casilla de al lado si un enemigo la ocupa
   assert.ok(r.score,'perdió los puntos al caer');assert.strictEqual(r.smg,0,'debe volver con pistola');assert.strictEqual(r.frag,1);assert.ok(r.inv,'sin invencibilidad al reaparecer');
   assert.ok(r.dead0&&r.same,'el nivel se reinició al caer');
   assert.strictEqual(r.res,'cont');assert.strictEqual(r.n,9,'la cuenta debe empezar en 9');assert.strictEqual(r.n2,5);
   assert.strictEqual(r.cont,'play,3,0,1,true,true','CONTINUAR debe seguir donde ibas con 3 vidas y 0 puntos');
-  assert.strictEqual(r.over,'lose','al llegar a 0 debe ser GAME OVER');assert.strictEqual(r.retry,'play,3,0,6','REINTENTAR debe empezar el nivel de nuevo');
+  assert.strictEqual(r.over,'lose','al llegar a 0 debe ser GAME OVER');assert.ok(/^over,(ini|board)$/.test(r.retry),'tras el GAME OVER no se reintenta: '+r.retry);
 });
 t('arcade: botiquines según la dificultad y solo para ti',()=>{
   const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;const o={};
@@ -281,6 +281,36 @@ t('arcade 5–10: escudo, armadura, granada en arco, láser, fichas, ALERTA ROJA
   assert.ok(r.coin&&r.red&&r.triple&&r.flee,'fichas o ALERTA ROJA: '+JSON.stringify(r));assert.ok(r.coinsOpen,'40 fichas no abrieron la extracción');
   assert.ok(r.intel&&r.stealth,'planos o bono sin ser visto');assert.strictEqual(r.caseReinf,3,'el maletín no trajo refuerzos');assert.ok(r.caseAlarm);
   assert.ok(r.laser,'el tirador disparó sin apuntar');
+});
+t('arcade: el GAME OVER registra el mejor crédito y el nivel máximo; iniciales, tabla y de vuelta al inicio',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=10;diff=3;const o={};
+    arcSave.best=[{i:'AAA',s:20000,lv:2,d:3,t:1},{i:'BBB',s:5000,lv:6,d:3,t:2}];arcSave.recent=[];arcSave.ini='CGR';
+    startArcade(4);tut=null;ARC.cardT=0;ARC.score=18450;ARC.lives=0;arcGameOver();arcAgain(); // continúa: los puntos vuelven a 0
+    o.zero=ARC.score;ARC.lv=5;arcLoad();ARC.score=6200;ARC.lives=0;arcGameOver();arcContTick(11);
+    o.res=ARC.result;o.sum=ARC.end.phase+':'+ARC.end.s+':'+ARC.end.lv+':'+ARC.end.c;
+    arcEndTick(2.1);o.ini=ARC.end.phase+':'+ARC.hs.ch.join('');
+    arcEndKey('ArrowUp');arcEndKey('Space');arcEndKey('KeyX');arcEndKey('Space');o.rank=arcRankOf({s:18450,lv:6,t:1e15});
+    o.board=ARC.end.phase;o.best=arcSave.best.map(b=>b.i+b.s+'/'+b.lv+'/'+(b.c===undefined?'-':b.c)).join(' ');o.rec=arcSave.recent.map(b=>b.i+b.s+'#'+b.rank).join(' ');o.ini2=arcSave.ini;
+    arcEndKey('Enter');o.locked=state;arcEndTick(15);o.home=state;
+    // empate: el que llegó más lejos va primero
+    startArcade(0);ARC.score=5000;ARC.runLv=7;arcAskRecord();arcSaveRecord('TIE');o.tie=arcSave.best.map(b=>b.i).join(',');
+    // no entra al top 10: va a RECIENTES con las últimas iniciales y la tabla abre en RECIENTES
+    arcSave.best=Array.from({length:10},(_,k)=>({i:'ZZZ',s:90000-k,lv:9,d:3,t:k}));startArcade(0);ARC.score=10;ARC.lives=0;arcGameOver();arcContTick(11);arcEndTick(2.1);
+    o.noTop=ARC.end.phase+':'+ARC.end.tab+':'+arcSave.recent[0].i+arcSave.recent[0].s+'#'+arcSave.recent[0].rank;
+    // a los 30 s se guardan solas
+    arcSave.best=[];startArcade(0);ARC.score=700;ARC.lives=0;arcGameOver();arcContTick(11);arcEndTick(2.1);arcEndTick(31);o.auto=ARC.end.phase+':'+arcSave.best[0].i+arcSave.best[0].s;
+    // salir al menú durante el CONTINUE registra la partida
+    arcSave.best=[];startArcade(0);ARC.score=900;ARC.lives=0;arcGameOver();toTitle();o.leave=arcSave.best.length?arcSave.best[0].i+arcSave.best[0].s:'nada';o.leaveState=state;
+    SETTINGS.mode='dm';return o;})()`);
+  assert.strictEqual(r.zero,0);assert.strictEqual(r.res,'lose');
+  assert.strictEqual(r.sum,'sum:18450:6:1','se debe registrar el mejor crédito (18,450), el nivel máximo y los continues');
+  assert.strictEqual(r.ini,'ini:CGR','las iniciales empiezan con las últimas usadas');
+  assert.strictEqual(r.board,'board');assert.strictEqual(r.ini2,'DXR','▲ cambia la letra y escribir también funciona');
+  assert.strictEqual(r.best,'AAA20000/2/- DXR18450/6/1 BBB5000/6/-');assert.strictEqual(r.rec,'DXR18450#1');
+  assert.strictEqual(r.locked,'over','un FUEGO de más no debe saltar la tabla');assert.strictEqual(r.home,'title','a los 15 s vuelve al inicio');
+  assert.ok(r.tie.startsWith('AAA,DXR,TIE,BBB'),'en empate va primero el que llegó más lejos: '+r.tie);
+  assert.strictEqual(r.noTop,'board:recent:TIE10#-1');assert.strictEqual(r.auto,'board:TIE700');
+  assert.strictEqual(r.leave,'TIE900');assert.strictEqual(r.leaveState,'title');
 });
 t('arcade: prisioneros, rehén en DIFÍCIL, refuerzos de bombas, récords y premios',()=>{
   const r=run(`(()=>{SETTINGS.mode='arcade';dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=10;diff=3;const o={};

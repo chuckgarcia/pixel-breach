@@ -44,6 +44,19 @@ function serve(){return new Promise(ok=>{const s=http.createServer((q,r)=>{let f
       const first=await pos();
       for(let k=0;k<await M.evaluate('MODE_KEYS.length');k++){await M.evaluate('stepMode(1)');await M.waitForTimeout(60);assert.strictEqual(await pos(),first,'en '+await M.evaluate('MODES[menuMode()].n'));}
       await M.context().close();});
+    for(const [w,h] of [[844,390],[390,844]])await t(`${w}×${h}: récord del Arcade con la cruceta y FUEGO, sin teclado del teléfono; la tabla se abre desde el menú`,async()=>{
+      const M=await page('récord',{viewport:{width:w,height:h},isMobile:true,hasTouch:true});await M.goto(URL.replace(/\?ps=[^#]*/,''));await M.waitForTimeout(300);
+      await M.evaluate("document.body.classList.add('portrait-ok');localStorage.setItem('pb_tut','1');state==='intro'&&endIntro();SETTINGS.mode='arcade';gameMode='arcade';arcSave.best=[];arcSave.ini='CGR';startArcade(0);tut=null;ARC.cardT=0;ARC.score=4200;ARC.lives=0;arcGameOver();arcContTick(11);arcEndTick(2.1)");
+      await M.waitForTimeout(150);assert.strictEqual(await M.evaluate('ARC.end.phase'),'ini');
+      assert.strictEqual(await M.evaluate("document.querySelectorAll('input:focus').length"),0,'no debe abrir el teclado del teléfono');
+      const b=await M.locator('#again').boundingBox();assert.ok(b&&b.y>=0&&b.y+b.height<=h,'LISTO fuera de la vista');assert.strictEqual(await M.textContent('#again'),'LISTO');
+      for(let i=0;i<3;i++){await M.locator('#btns .fire').dispatchEvent('pointerdown');await M.locator('#btns .fire').dispatchEvent('pointerup');}
+      assert.strictEqual(await M.evaluate('ARC.end.phase'),'board');assert.strictEqual(await M.evaluate('arcSave.best[0].s'),4200);
+      await M.evaluate('toTitle()');await M.waitForTimeout(150);
+      await M.tap('#recName');await M.waitForTimeout(150);assert.ok(await M.evaluate('!!recView'),'la tabla no se abrió desde el menú');
+      const c=await M.locator('#recCloseBtn').boundingBox();assert.ok(c&&c.y+c.height<=h,'CERRAR fuera de la vista');
+      await M.tap('#recCloseBtn');await M.waitForTimeout(100);assert.ok(await M.evaluate('!recView&&getComputedStyle(document.getElementById("menu")).display!=="none"'));
+      await M.context().close();});
     await t('«¿Cómo se juega?» se abre como panel completo y se cierra',async()=>{
       const M=await page('guía',{viewport:{width:1440,height:900}});await M.goto(URL);await M.waitForTimeout(300);await M.evaluate("state==='intro'&&endIntro()");
       await M.click('#howtoBox summary');const r=await M.locator('#howtoBox').boundingBox();

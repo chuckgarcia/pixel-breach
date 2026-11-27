@@ -6,16 +6,16 @@ const menuEl=$('menu'),overEl=$('overBtns'),nameEl=$('pname'),dnameEl=$('dname')
 let shownState=null,shownDiff=null;
 function syncOverlays(){
  if(typeof syncGuide==='function'&&!(tut&&state==='play'))syncGuide(); // ocultar la guía al salir de la partida
- if(state!==shownState){shownState=state;document.body.classList.toggle('menus',state==='title'||state==='lobby'); /* en celular: menú a pantalla completa, sin controles */menuEl.style.display=state==='title'?'flex':'none';overEl.style.display=state==='over'?'flex':'none';$('lobby').style.display=state==='lobby'?'flex':'none';if(state==='title'){buildHowto();showMode();} /* estrellas y niveles nuevos al volver al menú */
+ if(state!==shownState){shownState=state;document.body.classList.toggle('menus',state==='title'||state==='lobby'); /* en celular: menú a pantalla completa, sin controles */menuEl.style.display=state==='title'&&!recView?'flex':'none';syncRecView();overEl.style.display=state==='over'?'flex':'none';$('lobby').style.display=state==='lobby'?'flex':'none';if(state==='title'){buildHowto();showMode();} /* estrellas y niveles nuevos al volver al menú */
   const host=!NET||NET.role==='host';$('again').style.display=host?'':'none';if(!ARC)$('again').textContent='REVANCHA';$('toMenu').textContent=!NET?'MENÚ':host?'SALA':'SALIR';
   if(state==='lobby')renderLobby();}
  {const show=!!(ARC&&state==='play'&&ARC.cardT>0),el=$('readyBtns');if((el.style.display==='flex')!==show)el.style.display=show?'flex':'none';}
- {const hs=!!(ARC&&state==='over'&&ARC.hs&&ARC.hs.pending),el=$('hsBox'); // iniciales para el récord
-  if((el.style.display==='flex')!==hs){el.style.display=hs?'flex':'none';$('overBtns').style.visibility=hs?'hidden':'visible';
-   if(hs){const n=$('hsName');n.value=(displayName()||'').toUpperCase().replace(/[^A-ZÑ0-9]/g,'').slice(0,3);setTimeout(()=>{try{n.focus();n.select();}catch(e){}},50);}}}
- if(state==='over'&&ARC){ // Arcade: SIGUIENTE NIVEL, VER RÉCORDS o CONTINUAR
-  const a=$('again'),t=ARC.result==='win'?(arcHasNext()?'SIGUIENTE NIVEL':ARC.lv===ARC_TOTAL-1?'VER RÉCORDS':''):ARC.result==='cont'?'CONTINUAR':ARC.result==='final'?'':'REINTENTAR NIVEL';
-  if(t&&a.textContent!==t)a.textContent=t;a.style.display=t?'':'none';if($('toMenu').textContent!=='MENÚ')$('toMenu').textContent='MENÚ';}
+ if(state==='over'&&ARC){ // Arcade: SIGUIENTE NIVEL o CONTINUAR; al terminar la partida: LISTO en las iniciales y MENÚ en el resumen y la tabla
+  const a=$('again'),m=$('toMenu'),E=ARC.end,ini=!!(E&&E.phase==='ini');
+  const t=E?(ini?'LISTO':''):ARC.result==='win'?(arcHasNext()?'SIGUIENTE NIVEL':'VER RÉCORDS'):ARC.result==='cont'?'CONTINUAR':'';
+  if(t&&a.textContent!==t)a.textContent=t;a.style.display=t?'':'none';
+  const mt=ARC.result==='cont'?'TERMINAR':'MENÚ';if(m.textContent!==mt)m.textContent=mt;m.style.display=ini?'none':'';}
+ else if(state==='over'&&$('toMenu').style.display==='none')$('toMenu').style.display='';
  if(diff!==shownDiff){shownDiff=diff;dnameEl.textContent=DIFF[diff].name;}
  $('gearMenu').style.display=(state==='title'&&!menuEl.classList.contains('invite'))||state==='lobby'?'block':'none';
  $('gearGame').style.display=state==='play'?'block':'none';
@@ -51,10 +51,12 @@ function showMode(){const m=menuMode(),arc=m==='arcade';$('mname').textContent=M
  if(!arc){$('pname2').textContent=presetLabel(presetIdx(m));$('lpName').textContent=presetLabel(presetIdx(m));}
  document.body.classList.toggle('arcmenu',arc); // ARCADE: nivel en lugar de escenario y partida; sin salas en línea
  $('playAI').textContent=arc?`JUGAR NIVEL ${arcSel+1}`:'JUGAR CONTRA IAs';showLevel();}
-function showLevel(){$('lvname').textContent=arcLevelLabel(arcSel);{const r=arcSave.best[0];$('recName').textContent=r?`${r.s.toLocaleString('es-MX')} · ${r.i}`:'SIN RÉCORD AÚN';}if(menuMode()==='arcade')$('playAI').textContent=`JUGAR NIVEL ${arcSel+1}`;}
+function showLevel(){$('lvname').textContent=arcLevelLabel(arcSel);{const r=arcSave.best[0];$('recName').textContent=(r?`${r.s.toLocaleString('es-MX')} · ${r.i}`:arcSave.recent.length?'SIN RÉCORD AÚN':'SIN PARTIDAS AÚN')+'  VER ›';}if(menuMode()==='arcade')$('playAI').textContent=`JUGAR NIVEL ${arcSel+1}`;}
 function stepLevel(d){arcSel=Math.max(0,Math.min(arcSave.open-1,arcSel+d));showLevel();} // solo los niveles desbloqueados
 $('arcReady').addEventListener('click',()=>arcReady());
-$('hsSave').addEventListener('click',()=>arcSaveRecord($('hsName').value));
+$('recRow').addEventListener('click',()=>{if(menuMode()==='arcade')openRecView();}); // RÉCORD del menú: abre la tabla
+$('recName').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openRecView();}});
+$('recCloseBtn').addEventListener('click',()=>closeRecView());
 $('lvprev').addEventListener('click',()=>stepLevel(-1));$('lvnext').addEventListener('click',()=>stepLevel(1));
 function stepMode(d,maxHumans){ // maxHumans: en la sala, los humanos que ya hay (bandera admite hasta 4)
  let i=MODE_KEYS.indexOf(menuMode());
@@ -104,7 +106,8 @@ function quitMatch(btn){
 $('pResume').addEventListener('click',()=>{paused=false;});
 $('pQuit').addEventListener('click',e=>quitMatch(e.currentTarget));
 $('sQuit').addEventListener('click',e=>quitMatch(e.currentTarget));
-function overMenu(){if(!NET)toTitle();else if(NET.role==='host')hostToLobby();else netLeave();}
+function overMenu(){if(ARC&&ARC.result==='cont'&&!ARC.end){arcEndRun('lose');return;} // TERMINAR en el CONTINUE: GAME OVER, iniciales y tabla
+ if(!NET)toTitle();else if(NET.role==='host')hostToLobby();else netLeave();}
 function buildHowto(){
  const h=$('howto');h.textContent='';
  const add=(a,b,col,cls)=>{const x=document.createElement('div');x.textContent=a;if(cls)x.className=cls;if(col)x.style.color=col;h.appendChild(x);if(b!==undefined){const y=document.createElement('div');y.textContent=b;h.appendChild(y);}};
