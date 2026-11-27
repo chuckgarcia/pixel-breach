@@ -10,6 +10,14 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.17.0] - 2026-11-27
+
+### Añadido
+- Aspecto **CLÁSICO**: el soldado original del juego (casco oliva con la franja de tu color, visera oscura y tirantes), redibujado a 16 × 20 para que mida lo mismo que los demás aspectos y sostenga todas las armas.
+
+### Cambiado
+- Protocolo en línea: el aspecto CLÁSICO viaja en la sala. **Anfitrión e invitados deben recargar** para tener la v0.17.0.
+
 ## [0.16.0] - 2026-11-27
 
 ### Añadido

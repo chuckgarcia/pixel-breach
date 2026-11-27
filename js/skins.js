@@ -2,7 +2,7 @@
 // Pixel Breach — Aspectos de los soldados: dibujos de 16 × 20 en texto, contorno automático y armas.
 // Letras: T/t/u = color del jugador (base, luz, sombra); el resto, por aspecto (SKIN_PAL) o comunes (SKIN_BASE).
 const SKINS=[{k:'recruitF',n:'RECLUTA ♀',p:'recruit'},{k:'recruitM',n:'RECLUTA ♂',p:'recruit'},{k:'commandoF',n:'COMANDO ♀',p:'commando'},{k:'commandoM',n:'COMANDO ♂',p:'commando'},
- {k:'operator',n:'OPERADOR',p:'operator'},{k:'gas',n:'ANTIGÁS',p:'gas'},{k:'ghillie',n:'GHILLIE',p:'ghillie'}];
+ {k:'operator',n:'OPERADOR',p:'operator'},{k:'gas',n:'ANTIGÁS',p:'gas'},{k:'ghillie',n:'GHILLIE',p:'ghillie'},{k:'classic',n:'CLÁSICO',p:'classic'}];
 const SKIN_KEYS=SKINS.map(s=>s.k);
 const skinOf=k=>SKINS.find(s=>s.k===k)||(typeof VSKINS!=='undefined'&&VSKINS.find(s=>s.k===k))||(typeof SKIN_EXTRA!=='undefined'&&SKIN_EXTRA.find(s=>s.k===k))||SKINS[1];
 const SKIN_BASE={S:'#f2c18d',s:'#cf8f5d',E:'#1b1b22',W:'#ffffff',A:'#6b3a1f',a:'#4a2814',P:'#3a4250',p:'#2a303b',K:'#1d2129',L:'#7a5230',l:'#a87443'};
@@ -11,14 +11,15 @@ const SKIN_PAL={
  commando:{B:'#7f1d1d',b:'#b43a3a',c:'#4a6b2a'},
  operator:{H:'#454d5f',h:'#6c7890',d:'#2e3442',G:'#f59e0b',g:'#fde68a',M:'#2f3542',m:'#1f242e',V:'#22262f',v:'#3a404d'},
  gas:{H:'#39435a',h:'#56627d',d:'#262d3d',M:'#7b8597',m:'#555e70',R:'#ef4444',r:'#fca5a5',C:'#3f4654'},
- ghillie:{X:'#4d6b2e',Y:'#6f8f3c',Z:'#33481f',c:'#4a6b2a'}
+ ghillie:{X:'#4d6b2e',Y:'#6f8f3c',Z:'#33481f',c:'#4a6b2a'},
+ classic:{H:'#4d5a2c',h:'#6b7d3c',d:'#3a4421',R:'#2f3a1a'} // el soldado original (v0.1–v0.11): casco oliva, franja y uniforme de tu color
 };
 // De espaldas: lo que en la cara se ve de frente pasa a pelo, capucha o correas (solo arriba del torso)
 const SKIN_BACK={recruitF:{S:'A',s:'a',E:'A',W:'A'},recruitM:{S:'a',E:'a',W:'a'},commandoF:{S:'A',s:'a',E:'A',W:'A',c:'A'},commandoM:{S:'a',E:'a',W:'a',c:'a'},
- operator:{G:'m',g:'m'},gas:{R:'M',r:'M',C:'m'},ghillie:{S:'X',s:'Z',E:'X',c:'X'}};
+ operator:{G:'m',g:'m'},gas:{R:'M',r:'M',C:'m'},ghillie:{S:'X',s:'Z',E:'X',c:'X'},classic:{S:'a',E:'a',s:'a'}};
 // Mano que sostiene el arma (columna, renglón) en cada vista. El lado es el frente girado 45°: mismo diseño, cara hacia el arma.
 const SKIN_HAND={recruitF:{down:[13,14],right:[14,14]},recruitM:{down:[13,14],right:[14,14]},commandoF:{down:[13,15],right:[14,15]},commandoM:{down:[13,15],right:[14,15]},
- operator:{down:[13,15],right:[14,14]},gas:{down:[13,14],right:[14,14]},ghillie:{down:[13,14],right:[14,13]}};
+ operator:{down:[13,15],right:[14,14]},gas:{down:[13,14],right:[14,14]},ghillie:{down:[13,14],right:[14,13]},classic:{down:[13,14],right:[14,14]}};
 const SKIN_GRID={
  recruitF:{down:["................", ".....HHHHHH.....", "....HhhHHHHH....", "...HhHHHHHHHH...", "...HHHHHHHHHd...", "..HHHHHHHHHHdd..", "..AddddddddddA..", "..ASSSSSSSSSSA..", "..ASEESSSSEESA..", ".AASWESSSSWESAA.", ".AASSSSssSSSSAA.", ".AA.sSSSSSSs.AA.", "..A.uTTTTTTu.A..", "...tTTtTTtTTu...", "..STTTuTTuTTTS..", "..sTTTLLlLTTTs..", "....PPPPPPPP....", "....PPp..pPP....", "....KKK..KKK....", "................"],
   right:["................", ".....HHHHHH.....", "....HHhhHHHH....", "...HHhHHHHHHH...", "...HHHHHHHHHHd..", "..HHHHHHHHHHHdd.", "..AAdddddddddd..", "..AASSSSSSSSSS..", ".AAASSSEESSSEE..", ".AAASSSWESSSWE..", ".AAASSSSSSssSS..", ".AA..sSSSSSSs...", "..A..uTTTTTTu...", "....tTTtTTtTTu..", "...sTTuTTuTTTTS.", "...sTTTLLlLTTTs.", ".....PPPPPPPP...", ".....PPp..pPP...", ".....KKK..KKK...", "................"]},
@@ -34,6 +35,8 @@ const SKIN_GRID={
   right:["................", "................", ".....HHHHHH.....", "....HHhhHHHH....", "...HHhHHHHHHH...", "..dHHHHHHHHHHHd.", "..dddddddddddd..", "..mMMMMMMMMMMM..", "..mMMRRrMMMRRr..", "..mMMRRRMMMRRR..", "...mMMMMMmmMMM..", ".....mmCCCCCm...", ".....uTTCCTTu...", "....tTTtTTtTTu..", "...mTTTuTTuTTTM.", "...mTTTTTTTTTTm.", "....TTTLLlLTTT..", ".....PPPPPPPP...", ".....PPp..pPP...", ".....KKK..KKK..."]},
  ghillie:{down:["................", "....Y.YY.Y......", "...YXYXXYXY.Y...", "..YXXYXXXXYXX...", ".YXZXXXXXXXXZXY.", "..XXZZZZZZZZXX..", ".YXZSSSSSSSSZXY.", "..XZSEESSEESZX..", ".YXZcSSssSScZXY.", "..XXZsSSSSsZXX..", ".YXXuTTTTTTuXXY.", "..XXXXXXXXXXXX..", ".YXYXXZXXZXXYXY.", "..TXXXXXXXXXXT..", ".YuXZXXXXXXZXuY.", "..XYXXZXXZXXYX..", "...YXXXXXXXXY...", "....ZZZ..ZZZ....", "....KKK..KKK....", "................"],
   right:["................", "....Y.YY.Y......", "...YXYXXYXY.Y...", "..YXXYXXXXYXX...", ".YXZXXXXXXXXZXY.", "..XXXZZZZZZZZX..", ".YXXZSSSSSSSSZY.", "..XXZSSEESSEEZ..", ".YXXZScSSssScZY.", "..XXXZsSSSSsZX..", ".YXXXuTTTTTTuXY.", "..XXXXXXXXXXXXX.", ".YXYXXZXXZXXYXY.", "..TXXXXXXXXXXTS.", ".YuXZXXXXXXZXuY.", "...XYXXZXXZXXYX.", "....YXXXXXXXXY..", ".....ZZZ..ZZZ...", ".....KKK..KKK...", "................"]},
+ classic:{down:["................","......HHHH......","....HHhhHHHH....","...HHhHHHHHHH...","...HHHHHHHHHd...","...TTTTTTTTTT...","..RRRRRRRRRRRR..","...SSSSSSSSSS...","...SSESSSSESS...","...SSSSSSSSSS...","...sSSSssSSSs...","....sSSSSSSs....","...uTTuTTuTTu...","..STTTuTTuTTTS..","..STTTuTTuTTTS..","...tTTTTTTTTt...","....PPPPPPPP....","....PPp..pPP....","....KKK..KKK....","................"],
+  right:["................","......HHHH......","....HHHhhHHH....","...HHHhHHHHHH...","...HHHHHHHHHHd..","...TTTTTTTTTTT..","..RRRRRRRRRRRRR.","....SSSSSSSSSS..","....SSSSESSSES..","....SSSSSSSSSS..","....sSSSSSSssS..",".....sSSSSSSs...","....uTTuTTuTTu..","...sTTTuTTuTTTS.","...sTTTuTTuTTTS.","....tTTTTTTTTt..",".....PPPPPPPP...",".....PPp..pPP...",".....KKK..KKK...","................"]},
 };
 // ---------- BANDO ENEMIGO (modo Arcade) ----------
 // Aspectos que el jugador no puede elegir: cara cubierta y ojos rojos para reconocerlos al instante.
@@ -98,7 +101,7 @@ function gunTip(skin,face,weapon){
 function skinCells(skin,face,frame,weapon){
  const S=SKIN_GRID[skin]?skin:'recruitM',view=face==='right'?'right':'down';
  let rows=SKIN_GRID[S][view].map(r=>r.split(''));
- const torso=rows.findIndex(r=>r.includes('T')||r.includes('u'));
+ const torso=rows.findIndex((r,y)=>y>=8&&(r.includes('T')||r.includes('u'))); // desde el renglón 8: la franja del casco CLÁSICO no cuenta como torso
  if(face==='up'){const map=SKIN_BACK[S]||{};rows=rows.map((r,y)=>y<torso?r.map(c=>map[c]||c):r.map(c=>c==='C'?'T':c));}
  // pasos: levanta una bota y luego la otra
  let b=-1;rows.forEach((r,y)=>{if(r.includes('K'))b=y;});

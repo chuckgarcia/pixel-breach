@@ -29,7 +29,7 @@ t('rachas y estadísticas',()=>{
 });
 t('cada aspecto tiene frente y lado de 16 × 20, mano para el arma y nombre',()=>{
   const r=run(`SKINS.map(s=>({k:s.k,n:s.n,v:['down','right'].map(v=>{const g=SKIN_GRID[s.k][v];return g.length===20&&g.every(x=>x.length===16);}),h:!!(SKIN_HAND[s.k]&&SKIN_HAND[s.k].down&&SKIN_HAND[s.k].right),p:!!SKIN_PAL[s.p]}))`);
-  assert.strictEqual(r.length,7);
+  assert.strictEqual(r.length,8); // 7 aspectos de v0.12 y el CLÁSICO
   // todos miden lo mismo: 18 renglones del casco (o la boina, o la capucha) a las botas, de frente y de lado
   const alto=run(`SKINS.flatMap(s=>['down','right'].map(v=>{const g=SKIN_GRID[s.k][v],f=g.map((x,i)=>/[^.]/.test(x)?i:-1).filter(i=>i>=0);return s.k+'/'+v+':'+(f[f.length-1]-f[0]+1);}))`);
   for(const a of alto)assert.ok(a.endsWith(':18'),'altura distinta: '+a);for(const s of r){assert.ok(s.v.every(Boolean),s.k+': tamaño incorrecto');assert.ok(s.h,s.k+': falta la mano');assert.ok(s.p,s.k+': falta la paleta');}
@@ -39,7 +39,7 @@ t('cada aspecto tiene frente y lado de 16 × 20, mano para el arma y nombre',()=
     c.forEach(r=>r.forEach(x=>{if(x&&!(x.ch in pal))out.push(s.k+f+x.ch);}));}return out;})()`);
   assert.strictEqual(bad.length,0,'letras sin color: '+[...bad].slice(0,5).join(', '));
 });
-t('la punta del arma queda sobre el carril de la bala en las 4 vistas, 7 aspectos y 4 armas',()=>{
+t('la punta del arma queda sobre el carril de la bala en las 4 vistas, todos los aspectos y 4 armas',()=>{
   const bad=run(`(()=>{const out=[];for(const s of SKINS)for(const f of ['down','up','right','left'])for(const w of ['pistol','smg','shotgun','rifle']){
     const t=gunTip(s.k,f,w);const lateral=(f==='down'||f==='up')?t.dx:t.dy,ahead=f==='down'?t.dy:f==='up'?-t.dy:f==='right'?t.dx:-t.dx;
     if(lateral!==0||ahead<12)out.push(s.k+'/'+f+'/'+w+':'+lateral+','+ahead);
