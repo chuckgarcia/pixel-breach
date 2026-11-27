@@ -11,6 +11,8 @@ const ARC_MED={1:{every:15,max:3,drop:.3},2:{every:22,max:2,drop:.2},3:{every:35
 const arcPress=lv=>({react:Math.max(.72,1.1-.08*lv),alert:Math.round(4+lv*1.5),flank:lv<1?0:3+lv});
 const arcMed=()=>ARC_MED[diff]||ARC_MED[3];
 const ARC_CONT=10; // CONTINUE? 9… 8… … 0
+const DIFF_COL={1:'#4ade80',2:'#a3e635',3:'#facc15',4:'#f87171'};
+const arcDiffLabel=()=>`DIFICULTAD ${DIFF[diff].name} · PUNTOS ×${ARC_MULT[diff]}`;
 // ---------- AVANCE GUARDADO (en este navegador) ----------
 const arcSave={open:1,stars:[]};
 try{const j=JSON.parse(localStorage.getItem('pb_arc')||'null');if(j&&typeof j==='object'){
@@ -157,13 +159,27 @@ function arcWave(){
 function updHostage(h,dt){
  const P=arcPlayer();
  if(!ARC.freed){
-  if(P.alive&&Math.abs(P.x-h.x)<T*1.3&&Math.abs(P.y-h.y)<T*1.3){ARC.freed=true;showToast('¡REHÉN LIBERADO! TE SIGUE','#4ade80');sfx('pick');arcMissionDone();
+  if(P.alive&&Math.abs(P.x-h.x)<T*1.3&&Math.abs(P.y-h.y)<T*1.3){ARC.freed=true;showToast('¡REHÉN LIBERADO! TE SIGUE','#4ade80');sfx('pick');arcMissionDone();arcRescueAlarm();
    pickups.push({tx:h.tx,ty:h.ty,type:'medkit',amt:PICK.medkit.amt,t:0});} // como los prisioneros de Metal Slug: te da algo
   return;
  }
  const tr=ARC.trail,goal=tr.length>=3?tr[tr.length-3]:null;
  if(!h.moving){if(!goal||(goal[0]===h.tx&&goal[1]===h.ty))return;const s=nextStep(h,goal);stepMove(h,s,dt,false);}
  else stepMove(h,null,dt,false);
+}
+// Al liberar al rehén: suena la alarma, la mitad de los enemigos (los más cercanos a la extracción) se queda
+// emboscada ahí y llegan refuerzos por el lado de la extracción para cortarte el paso.
+function arcRescueAlarm(){
+ const P=arcPlayer(),X=ARC.exit,E=arcAlive().sort((a,b)=>(Math.abs(a.tx-X[0])+Math.abs(a.ty-X[1]))-(Math.abs(b.tx-X[0])+Math.abs(b.ty-X[1])));
+ const ambush=E.slice(0,Math.ceil(E.length/2));
+ for(const e of E){if(ambush.includes(e)){e.home=X.slice();e.ai.known={};e.ai.patrol=null;}else reveal(e.ai,P,false);}
+ const extra=ARC.lv>=2?['a','r']:['r'];
+ for(const k of extra){
+  let s=null;for(let t=0;t<80&&!s;t++){const x=ri(1,COLS-2),y=ri(1,ROWS-2),dx=Math.abs(x-X[0])+Math.abs(y-X[1]),dp=Math.abs(x-P.tx)+Math.abs(y-P.ty);
+   if(walkable(x,y)&&dx>=2&&dx<=6&&dp>=7&&!tileTaken(null,x,y))s=[x,y];}
+  if(!s)continue;const e=arcEnemy(k,ents.length);arcPlace(e,s[0],s[1]);e.home=X.slice();e.invulnT=.8;ents.push(e);
+ }
+ announce={text:'¡ALARMA! TE ESPERAN EN LA EXTRACCIÓN',c:'#f87171',t:2.2};sfx('streak');
 }
 function arcComplete(){
  const L=ARC_LEVELS[ARC.lv],m=ARC_MULT[diff],P=arcPlayer();
@@ -231,7 +247,7 @@ function drawArcMap(){ // extracción, bombas y la etiqueta del rehén (dentro d
   txt(b.done?'✓':fmtT(ARC.bombT),x,y-19,9,b.done?'#4ade80':'#f87171','center',false);}
  const h=ARC.hostage;if(h&&h.alive&&canSee(h.x,h.y))txt(ARC.freed?'REHÉN':'¡AYUDA!',h.x,h.y-38,9,ARC.freed?'#e2e8f0':'#facc15','center');
  const P=arcPlayer();
- for(const f of fx)if(f.kind==='pts'){ctx.globalAlpha=Math.min(1,f.t/f.max*1.5);txt(f.s,f.px,f.py-(1-f.t/f.max)*16,11,'#facc15','center');ctx.globalAlpha=1;}
+ if(state==='play')for(const f of fx)if(f.kind==='pts'){ctx.globalAlpha=Math.min(1,f.t/f.max*1.5);txt(f.s,f.px,f.py-(1-f.t/f.max)*16,11,'#facc15','center');ctx.globalAlpha=1;}
 }
 function drawArcHud(){ // etiqueta arriba: nivel y vidas; tarjeta de misión; caída
  if(state!=='play')return;
@@ -258,11 +274,12 @@ function drawArcOver(){
   const T_=ARC.tally;txt(`¡NIVEL ${ARC.lv+1} COMPLETO!`,W/2,92,26,'#facc15','center');
   ctx.font=`bold ${fsz(30)}px "Courier New",monospace`;const sw=ctx.measureText('★★★').width;let sx=W/2-sw/2;
   for(let i=0;i<3;i++){txt('★',sx,136,30,i<T_.stars?'#facc15':'#475569','left');sx+=sw/3;}
+  txt(arcDiffLabel(),W/2,166,12,DIFF_COL[diff]||'#cbd5e1','center'); // con qué dificultad se ganaron las estrellas
   const rows=[[`BAJAS ${T_.n}`,T_.kills],[`MEJOR COMBO ×${Math.max(1,T_.combo)}`,null],[`TIEMPO ${fmtT(T_.t)} (meta ${fmtT(T_.par)})`,T_.time],['MISIÓN CUMPLIDA',T_.mission],['SIN PERDER VIDA',T_.clean]];
-  rows.forEach(([a,b],i)=>{const y=180+i*26;txt(a,150,y,13,'#e2e8f0');if(b!==null)txt(b?b.toLocaleString('en-US'):'—',W-150,y,13,b?'#4ade80':'#64748b','right');});
-  ctx.fillStyle='#334155';ctx.fillRect(150,312,W-300,2);txt('TOTAL',150,334,16,'#e2e8f0');txt(ARC.score.toLocaleString('en-US'),W-150,334,16,'#facc15','right');
-  if(!arcHasNext())txt(ARC_LEVELS.length<ARC_TOTAL?`¡Superaste los ${ARC_LEVELS.length} niveles disponibles! Los niveles ${ARC_LEVELS.length+1} a ${ARC_TOTAL} llegan pronto.`:'¡MISIÓN CUMPLIDA!',W/2,374,11,'#4ade80','center');
-  else if(!isTouch)txt('ENTER: siguiente nivel   ·   ESC: menú',W/2,374,11,'#94a3b8','center');
+  rows.forEach(([a,b],i)=>{const y=194+i*26;txt(a,150,y,13,'#e2e8f0');if(b!==null)txt(b?b.toLocaleString('en-US'):'—',W-150,y,13,b?'#4ade80':'#64748b','right');});
+  ctx.fillStyle='#334155';ctx.fillRect(150,326,W-300,2);txt('TOTAL',150,348,16,'#e2e8f0');txt(ARC.score.toLocaleString('en-US'),W-150,348,16,'#facc15','right');
+  if(!arcHasNext())txt(ARC_LEVELS.length<ARC_TOTAL?`¡Superaste los ${ARC_LEVELS.length} niveles disponibles! Los niveles ${ARC_LEVELS.length+1} a ${ARC_TOTAL} llegan pronto.`:'¡MISIÓN CUMPLIDA!',W/2,386,11,'#4ade80','center');
+  else if(!isTouch)txt('ENTER: siguiente nivel   ·   ESC: menú',W/2,386,11,'#94a3b8','center');
  }else if(ARC.result==='cont'){ // CONTINUE? 9… 8…
   const n=Math.max(0,Math.floor(ARC.contT)),pulse=1+.12*Math.max(0,(ARC.contT%1)-.6)*5;
   txt('CONTINUE?',W/2,110,30,'#facc15','center');
@@ -271,7 +288,7 @@ function drawArcOver(){
   txt(ARC.fail?'Sigues con 3 vidas: el nivel se reinicia y tus puntos vuelven a 0.':'Sigues donde caíste con 3 vidas; tus puntos vuelven a 0.',W/2,298,12,'#94a3b8','center');
   if(!isTouch)txt('ENTER: continuar   ·   ESC: menú',W/2,330,11,'#94a3b8','center');
  }else{
-  txt('GAME OVER',W/2,120,34,'#ef4444','center');txt(`NIVEL ${ARC.lv+1} · ${L.name}`,W/2,170,15,'#e2e8f0','center');
+  txt('GAME OVER',W/2,120,34,'#ef4444','center');txt(`NIVEL ${ARC.lv+1} · ${L.name}`,W/2,162,15,'#e2e8f0','center');txt(arcDiffLabel(),W/2,184,11,DIFF_COL[diff]||'#cbd5e1','center');
   txt(`PUNTOS ${ARC.score.toLocaleString('en-US')}`,W/2,206,18,'#facc15','center');
   txt('REINTENTAR: empiezas este nivel desde el inicio con 3 vidas.',W/2,262,12,'#cbd5e1','center');
   if(!isTouch)txt('ENTER: reintentar   ·   ESC: menú',W/2,330,11,'#94a3b8','center');

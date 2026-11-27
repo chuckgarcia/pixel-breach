@@ -216,4 +216,13 @@ t('arcade: la presión sube por nivel; en Cargas custodian las bombas y desactiv
   assert.ok(r.guard,'en Cargas no custodian las bombas');assert.ok(r.alarm,'desactivar no dio la alarma');
   assert.notStrictEqual(r.sides[0],r.sides[1],'los dos eligieron el mismo lado: '+r.sides.join(' / '));
 });
+t('arcade: al liberar al rehén suena la alarma, emboscan la extracción y llegan refuerzos; la pantalla final muestra la dificultad',()=>{
+  const r=run(`(()=>{SETTINGS.mode='arcade';diff=4;dirStack=[];for(const k in keys)keys[k]=false;arcSave.open=4;
+    startArcade(2);tut=null;ARC.cardT=0;const P=arcPlayer();P.invulnT=1e9;const n0=ents.filter(e=>e.enemy).length;const h=ARC.hostage;
+    placeAt(P,[h.tx-1,h.ty]);update(1/30);const E=arcAlive(),X=ARC.exit;
+    const o={more:ents.filter(e=>e.enemy).length-n0,ambush:E.filter(e=>e.home&&e.home[0]===X[0]&&e.home[1]===X[1]).length,hunt:E.filter(e=>e.ai.known[0]).length,label:arcDiffLabel()};
+    SETTINGS.mode='dm';diff=3;return o;})()`);
+  assert.strictEqual(r.more,2,'no llegaron refuerzos');assert.ok(r.ambush>=3,'nadie embosca la extracción');assert.ok(r.hunt>=1,'nadie te persigue tras la alarma');
+  assert.strictEqual(r.label,'DIFICULTAD DIFÍCIL · PUNTOS ×1.5');
+});
 console.log(`${ok} pruebas OK`);

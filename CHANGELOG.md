@@ -10,6 +10,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.15.5] - 2026-11-27
+
+### Cambiado
+- Arcade · Rescate: al liberar al rehén suena la alarma. La mitad de los enemigos (los más cercanos a la extracción) se queda emboscada ahí, el resto va por ti y llegan refuerzos por el lado de la extracción (1 recluta, o asaltante y recluta a partir del nivel 3).
+- Arcade: la pantalla final (estrellas y conteo) y el GAME OVER muestran la dificultad y su multiplicador de puntos.
+
+### Corregido
+- Los puntos flotantes de las bajas ya no se transparentan sobre el conteo final.
+
 ## [0.15.4] - 2026-11-27
 
 ### Cambiado
