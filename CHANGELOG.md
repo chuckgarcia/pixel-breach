@@ -10,6 +10,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   anfitrión e invitados deben tener la misma versión MAYOR.MENOR para jugar juntos.
 - **PARCHE**: correcciones que no cambian cómo se juega en línea.
 
+## [0.13.3] - 2026-11-26
+
+### Cambiado
+- La intro muestra una pequeña batalla: dos equipos de tres soldados se disparan de lado a lado en tres carriles; los disparos salen de la boca de cada arma, los impactos echan chispas y quien cae vuelve a entrar.
+- Imagen nueva al compartir el enlace (WhatsApp y otras apps) con el logotipo y los soldados actuales. Se genera con `node tools/og.js`.
+
 ## [0.13.2] - 2026-11-26
 
 ### Cambiado
